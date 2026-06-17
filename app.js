@@ -275,8 +275,8 @@ const LEVEL_RULES = {
     label: "Avançado",
     theory: 20,
     exercises: 80,
-    mix: { easy: 10, medium: 50, hard: 40 },
-    note: "Treinar sob pressão, simulado, correção fina e redação forte.",
+    mix: { easy: 20, medium: 45, hard: 35 },
+    note: "Manter fáceis, ampliar médias e difíceis e incluir raras para ganho TRI sem perder coerência.",
   },
 };
 const MATRIX_DATA = window.ENEM_DATA?.matrix || { areas: {} };
@@ -1280,6 +1280,15 @@ const STRUCTURED_QUESTIONS = IMPORTED_QUESTIONS.filter(
 );
 const QUESTION_COUNTS_BY_AREA = buildQuestionCountsByArea();
 const QUESTION_COUNTS_BY_SKILL = buildQuestionCountsBySkill();
+const HIGH_FREQUENCY_SKILL_MAP = buildHighFrequencySkillMap();
+const OFFICIAL_SKILL_FREQUENCY_DOCUMENT = window.HABILIDADES_FREQUENCIA_DATA || { areas: [] };
+const LINGUAGENS_FOREIGN_LANGUAGE_SKILLS = new Set(["H05", "H06", "H07", "H08"]);
+const FREQUENCY_TIER_LABELS = {
+  high: "Muito cobrada",
+  medium: "Cobrança média",
+  low: "Pouco cobrada",
+  unknown: "Incidência em revisão",
+};
 const PLAN = buildPlan();
 const QUESTIONS = buildQuestionBank();
 
@@ -1388,10 +1397,134 @@ function buildQuestionCountsBySkill() {
   }, {});
 }
 
+function buildHighFrequencySkillMap() {
+  return COMPETENCIES.map((competency) => {
+    const areaTotal = QUESTION_COUNTS_BY_AREA[competency.id] || 0;
+    const skills = competency.skills
+      .map((skill) => {
+        const count = QUESTION_COUNTS_BY_SKILL[skill.id] || 0;
+        const recurrence = areaTotal ? Math.round((count / areaTotal) * 1000) / 10 : 0;
+        return {
+          competency,
+          skill,
+          count,
+          recurrence,
+          priority:
+            recurrence >= 18
+              ? "Alta incidência"
+              : recurrence >= 10
+                ? "Incidência média"
+                : count
+                  ? "Aparece na base"
+                  : "Aguardando itens",
+        };
+      })
+      .sort((a, b) => b.count - a.count || a.skill.title.localeCompare(b.skill.title, "pt-BR"));
+    const top = skills[0];
+    return {
+      competency,
+      areaTotal,
+      skills,
+      topSkill: top?.skill?.title || "sem dados suficientes",
+      topRecurrence: top?.recurrence || 0,
+    };
+  });
+}
+
 function getSkillRecurrence(skillId, areaId) {
   const areaTotal = QUESTION_COUNTS_BY_AREA[areaId] || 0;
   if (!areaTotal) return 0;
   return Math.round(((QUESTION_COUNTS_BY_SKILL[skillId] || 0) / areaTotal) * 1000) / 10;
+}
+
+function getQuestionFrequencyProfile(question, skillId = "") {
+  const official = getOfficialFrequencyProfile(question.competencyId, question.matrixSkillCode);
+  if (official.tier !== "unknown") return official;
+  return getLocalSkillFrequencyProfile(skillId, question.competencyId);
+}
+
+function getOfficialFrequencyProfile(areaId, skillCode) {
+  const normalizedCode = normalizeSkillCode(skillCode);
+  if (!normalizedCode) return createFrequencyProfile("unknown", "sem código oficial", 0);
+  if (areaId === "linguagens" && LINGUAGENS_FOREIGN_LANGUAGE_SKILLS.has(normalizedCode)) {
+    return createFrequencyProfile("low", "língua estrangeira fora do treino", 0, { excluded: true });
+  }
+
+  const area = getOfficialFrequencyArea(areaId);
+  if (!area) return createFrequencyProfile("unknown", "área sem régua oficial", 0);
+
+  const regular = getDisplayFrequencyRows(area, "regularApplication2015_2025").find((row) => row.skill === normalizedCode);
+  const recent = getDisplayFrequencyRows(area, "recentRegular2025").find((row) => row.skill === normalizedCode);
+  const broad = getDisplayFrequencyRows(area, "operationalBroad2015_2025").find((row) => row.skill === normalizedCode);
+
+  if (regular) {
+    if (regular.rank <= 5) {
+      return createFrequencyProfile("high", "prioridade forte na 1ª aplicação", regular.total, {
+        rank: regular.rank,
+        competency: regular.competency,
+        description: regular.description,
+      });
+    }
+    return createFrequencyProfile("medium", "prioridade média na 1ª aplicação", regular.total, {
+      rank: regular.rank,
+      competency: regular.competency,
+      description: regular.description,
+    });
+  }
+
+  if (recent && recent.count >= 5) {
+    return createFrequencyProfile("medium", "habilidade emergente no recorte recente", recent.count, {
+      competency: recent.competency,
+      description: recent.description,
+    });
+  }
+
+  if (broad) {
+    return createFrequencyProfile("medium", "presença histórica relevante", broad.total, {
+      rank: broad.rank,
+      competency: broad.competency,
+      description: broad.description,
+    });
+  }
+
+  return createFrequencyProfile("low", "fora do topo operacional", 0);
+}
+
+function getOfficialFrequencyArea(areaId) {
+  const areas = Array.isArray(OFFICIAL_SKILL_FREQUENCY_DOCUMENT.areas)
+    ? OFFICIAL_SKILL_FREQUENCY_DOCUMENT.areas
+    : [];
+  return areas.find((area) => area.id === areaId) || null;
+}
+
+function normalizeSkillCode(skillCode) {
+  const match = String(skillCode || "").toUpperCase().match(/H\d{2}/);
+  return match ? match[0] : "";
+}
+
+function getLocalSkillFrequencyProfile(skillId, areaId) {
+  const recurrence = getSkillRecurrence(skillId, areaId);
+  if (recurrence >= 18) return createFrequencyProfile("high", "alta presença no banco local", recurrence);
+  if (recurrence >= 10) return createFrequencyProfile("medium", "presença média no banco local", recurrence);
+  if (recurrence > 0) return createFrequencyProfile("low", "baixa presença no banco local", recurrence);
+  return createFrequencyProfile("unknown", "incidência aguardando questões", 0);
+}
+
+function createFrequencyProfile(tier, source, score = 0, extra = {}) {
+  return {
+    tier,
+    label: FREQUENCY_TIER_LABELS[tier] || FREQUENCY_TIER_LABELS.unknown,
+    source,
+    score,
+    ...extra,
+  };
+}
+
+function getFrequencyTierWeight(tier) {
+  if (tier === "high") return 100;
+  if (tier === "medium") return 62;
+  if (tier === "low") return 28;
+  return 42;
 }
 
 function getEstimatedDifficulty(question) {
@@ -1482,6 +1615,7 @@ function buildQuestionBank() {
   STRUCTURED_QUESTIONS.forEach((question) => {
     const skillId = SKILL_ID_BY_TITLE[question.skill] || getFallbackSkillId(question.competencyId);
     if (!bank[skillId]) return;
+    const frequencyProfile = getQuestionFrequencyProfile(question, skillId);
     bank[skillId].push({
       id: question.id,
       text: `${question.source} | Questão ${question.number}`,
@@ -1518,6 +1652,12 @@ function buildQuestionBank() {
       alternativesAnalysis: question.alternativesAnalysis,
       cognitiveAxis: question.cognitiveAxis,
       correctionSheet: question.correctionSheet,
+      frequencyTier: frequencyProfile.tier,
+      frequencyLabel: frequencyProfile.label,
+      frequencySource: frequencyProfile.source,
+      frequencyScore: frequencyProfile.score,
+      frequencyRank: frequencyProfile.rank,
+      frequencyExcluded: Boolean(frequencyProfile.excluded),
       imported: true,
     });
   });
@@ -1527,19 +1667,29 @@ function buildQuestionBank() {
       bank[skillId] = [...bank[skillId], ...fallbacks[skillId]].slice(0, 5);
     }
     const skill = findSkillById(skillId);
-    bank[skillId] = bank[skillId].map((question) => ({
-      ...question,
-      skillId,
-      skillTitle: question.skillTitle || skill?.title || "Habilidade",
-      competencyId: question.competencyId || findCompetencyBySkillId(skillId)?.id || "linguagens",
-      matrixCompetencyCode: question.matrixCompetencyCode,
-      matrixCompetencyDescription: question.matrixCompetencyDescription,
-      matrixSkillCode: question.matrixSkillCode,
-      matrixSkillDescription: question.matrixSkillDescription,
-      matrixLinkConfidence: question.matrixLinkConfidence,
-      recurrence: question.recurrence ?? getSkillRecurrence(skillId, findCompetencyBySkillId(skillId)?.id || ""),
-      difficulty: question.difficulty || "easy",
-    }));
+    bank[skillId] = bank[skillId].map((question) => {
+      const competencyId = question.competencyId || findCompetencyBySkillId(skillId)?.id || "linguagens";
+      const localFrequency = getLocalSkillFrequencyProfile(skillId, competencyId);
+      return {
+        ...question,
+        skillId,
+        skillTitle: question.skillTitle || skill?.title || "Habilidade",
+        competencyId,
+        matrixCompetencyCode: question.matrixCompetencyCode,
+        matrixCompetencyDescription: question.matrixCompetencyDescription,
+        matrixSkillCode: question.matrixSkillCode,
+        matrixSkillDescription: question.matrixSkillDescription,
+        matrixLinkConfidence: question.matrixLinkConfidence,
+        recurrence: question.recurrence ?? getSkillRecurrence(skillId, competencyId),
+        difficulty: question.difficulty || "easy",
+        frequencyTier: question.frequencyTier || localFrequency.tier,
+        frequencyLabel: question.frequencyLabel || localFrequency.label,
+        frequencySource: question.frequencySource || localFrequency.source,
+        frequencyScore: question.frequencyScore ?? localFrequency.score,
+        frequencyRank: question.frequencyRank,
+        frequencyExcluded: Boolean(question.frequencyExcluded),
+      };
+    });
   });
 
   return bank;
@@ -1774,9 +1924,28 @@ function calculateSkillPriority(user, areaId, skillId, levelId) {
   const accuracy = getSkillAccuracy(user, skillId);
   const lowPerformance = accuracy === null ? 72 : 100 - accuracy;
   const recurrence = getSkillRecurrence(skillId, areaId);
+  const incidence = getSkillIncidenceScore(skillId, areaId, levelId);
   const difficultyFit = getDifficultyFitScore(levelId, skillId);
   const recentError = hasRecentError(user, skillId) ? 100 : 0;
-  return Math.round(lowPerformance * 0.4 + recurrence * 0.3 + difficultyFit * 0.15 + recentError * 0.15);
+  return Math.round(lowPerformance * 0.32 + incidence * 0.32 + recurrence * 0.12 + difficultyFit * 0.12 + recentError * 0.12);
+}
+
+function getSkillIncidenceScore(skillId, areaId, levelId) {
+  const imported = (QUESTIONS[skillId] || []).filter((question) => question.imported && !question.frequencyExcluded);
+  if (!imported.length) return getFrequencyTierWeight(getLocalSkillFrequencyProfile(skillId, areaId).tier);
+
+  const high = imported.filter((question) => question.frequencyTier === "high").length;
+  const medium = imported.filter((question) => question.frequencyTier === "medium").length;
+  const low = imported.filter((question) => question.frequencyTier === "low").length;
+  const total = imported.length || 1;
+
+  if (levelId === "iniciante") {
+    return Math.round(((high * 100 + medium * 45 + low * 10) / total) * 10) / 10;
+  }
+  if (levelId === "avancado") {
+    return Math.round(((high * 88 + medium * 76 + low * 72) / total) * 10) / 10;
+  }
+  return Math.round(((high * 88 + medium * 82 + low * 46) / total) * 10) / 10;
 }
 
 function getSkillAccuracy(user, skillId) {
@@ -1830,8 +1999,12 @@ function selectMissionQuestions(user, skillId, day, areaId, levelId) {
   const recentIds = previous.passed ? new Set() : new Set(previous.lastQuestionIds || []);
 
   Object.entries(targets).forEach(([difficulty, count]) => {
+    const candidates = getQuestionCandidatesForLevel(pool, difficulty, levelId);
     const matches = prioritizeFreshQuestions(
-      rotateQuestions(pool.filter((question) => question.difficulty === difficulty), day + hashString(areaId) + attemptSeed * 31),
+      orderQuestionsForLevel(
+        rotateQuestions(candidates, day + hashString(areaId) + attemptSeed * 31),
+        levelId,
+      ),
       recentIds,
       count,
     );
@@ -1841,7 +2014,14 @@ function selectMissionQuestions(user, skillId, day, areaId, levelId) {
     });
   });
 
-  prioritizeFreshQuestions(rotateQuestions(pool, day + hashString(skillId) + attemptSeed * 47), recentIds, DAILY_REQUIRED_BY_AREA).forEach((question) => {
+  prioritizeFreshQuestions(
+    orderQuestionsForLevel(
+      rotateQuestions(pool.filter((question) => !question.frequencyExcluded), day + hashString(skillId) + attemptSeed * 47),
+      levelId,
+    ),
+    recentIds,
+    DAILY_REQUIRED_BY_AREA,
+  ).forEach((question) => {
     if (chosen.length >= DAILY_REQUIRED_BY_AREA) return;
     if (used.has(question.id)) return;
     chosen.push(question);
@@ -1849,6 +2029,40 @@ function selectMissionQuestions(user, skillId, day, areaId, levelId) {
   });
 
   return chosen.slice(0, DAILY_REQUIRED_BY_AREA);
+}
+
+function getQuestionCandidatesForLevel(pool, difficulty, levelId) {
+  const byDifficulty = pool.filter((question) => question.difficulty === difficulty && !question.frequencyExcluded);
+  if (levelId !== "iniciante") return byDifficulty;
+
+  const highIncidence = byDifficulty.filter((question) => question.frequencyTier === "high");
+  if (highIncidence.length >= DAILY_REQUIRED_BY_AREA) return highIncidence;
+  return byDifficulty;
+}
+
+function orderQuestionsForLevel(list, levelId) {
+  return list
+    .map((question, index) => ({
+      question,
+      index,
+      score: getQuestionSelectionScore(question, levelId),
+    }))
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .map((item) => item.question);
+}
+
+function getQuestionSelectionScore(question, levelId) {
+  const frequencyWeight = getFrequencyTierWeight(question.frequencyTier);
+  const difficultyWeights = {
+    iniciante: { easy: 100, medium: 12, hard: 0 },
+    mediano: { easy: 78, medium: 100, hard: 38 },
+    avancado: { easy: 92, medium: 95, hard: 100 },
+  };
+  const levelWeights = difficultyWeights[levelId] || difficultyWeights.iniciante;
+  const difficultyWeight = levelWeights[question.difficulty] ?? 50;
+  const rareBonus = levelId === "avancado" && question.frequencyTier === "low" ? 18 : 0;
+  const highBaseBonus = question.difficulty === "easy" && question.frequencyTier === "high" ? 12 : 0;
+  return frequencyWeight * 0.52 + difficultyWeight * 0.34 + rareBonus + highBaseBonus;
 }
 
 function prioritizeFreshQuestions(list, recentIds, minimumFresh = DAILY_REQUIRED_BY_AREA) {
@@ -2130,7 +2344,7 @@ function getPageTitle() {
 function getPageSubtitle(user, completed, unlocked) {
   const level = classifyStudent(user);
   if (activeView === "today") return `20 questões obrigatórias: 5 por área. Nível atual: ${level.label}.`;
-  if (activeView === "plan") return `Semana recalculada por nível, desempenho, recorrência e descanso protegido.`;
+  if (activeView === "plan") return `Semana recalculada por nível, desempenho, erros recentes e descanso protegido.`;
   if (activeView === "bank") return `${IMPORTED_QUESTIONS.length} questões importadas dos PDFs, ${STRUCTURED_QUESTIONS.length} prontas para correção automática.`;
   if (activeView === "redacao") return "Critérios oficiais, checklist de correção e padrões dos textos nota 1000.";
   if (activeView === "news") return "Notícias diárias transformadas em repertório, temas, intervenção e uso nas áreas do ENEM.";
@@ -2237,7 +2451,7 @@ function renderTodayView(user) {
         <div class="panel-header">
           <div>
             <h2>Ambulatório ENEM</h2>
-            <p>Os casos são calibrados por desempenho, recorrência local, dificuldade e erro recente.</p>
+            <p>Os casos são calibrados por desempenho, dificuldade, erros recentes e progressão TRI.</p>
           </div>
           <span class="status-chip">${completion.completedBlocks}/4 áreas</span>
         </div>
@@ -2272,7 +2486,6 @@ function renderMissionBlock(user, day, block, status) {
       <p class="case-skill">Habilidade do plantão: ${escapeHTML(block.skill.title)}.</p>
       <div class="mini-meta">
         <span>${escapeHTML(getMatrixCodeLabel(matrix))}</span>
-        <span>Recorrência ${block.recurrence}%</span>
         <span>Prioridade ${priorityLabel(block.priority)}</span>
         <span>${accuracy === null ? "sem histórico" : `${accuracy}% na habilidade`}</span>
       </div>
@@ -2328,7 +2541,6 @@ function renderMissionQuiz(user, day) {
       <div class="mini-meta question-meta">
         <span>${escapeHTML(getMatrixCodeLabel(question))}</span>
         <span>${escapeHTML(DIFFICULTY_LABELS[question.difficulty] || "Média")}</span>
-        <span>Recorrência ${question.recurrence ?? block.recurrence}%</span>
         <span>${escapeHTML(question.source || "Questão modelo")}</span>
       </div>
       <p class="question-title">${escapeHTML(getQuestionPrompt(question))}</p>
@@ -2457,7 +2669,7 @@ function getQuestionFeedbackParts(question, block, user) {
   const explanation = cleanFeedbackText(question.pedagogicalComment || question.explanation || "Confira o gabarito e refaça o raciocínio.");
   const alternatives = splitAlternativesAnalysis(question.alternativesAnalysis || "");
   const alternativesText = alternatives.length ? `Distratores: ${alternatives.join(" ")}` : "";
-  const studyText = `Conduta: ${block.clinicalCase.vitals}. Recorrência local: ${question.recurrence ?? block.recurrence}% dos itens de ${block.competency.short}. Prioridade: ${priority}${skillAccuracy === null ? " por ausência de histórico." : ` porque seu desempenho atual está em ${skillAccuracy}%.`}`;
+  const studyText = `Conduta: ${block.clinicalCase.vitals}. Prioridade: ${priority}${skillAccuracy === null ? " por ausência de histórico." : ` porque seu desempenho atual está em ${skillAccuracy}%.`} Mantenha as fáceis no radar para proteger a coerência TRI.`;
   return {
     answerLabel,
     explanation,
@@ -2608,7 +2820,7 @@ function renderPlanView(user) {
         <div class="panel-header">
           <div>
             <h2>Prioridades da semana</h2>
-            <p>Ordenadas por baixo desempenho, recorrência, Medicina e erro recente.</p>
+            <p>Ordenadas por desempenho, dificuldade, base TRI e erro recente.</p>
           </div>
         </div>
         <div class="priority-list">
@@ -2660,14 +2872,13 @@ function getWeeklyPriorities(user) {
   return COMPETENCIES.flatMap((competency) =>
     competency.skills.map((skill) => {
       const accuracy = getSkillAccuracy(user, skill.id);
-      const recurrence = getSkillRecurrence(skill.id, competency.id);
       const recent = hasRecentError(user, skill.id);
       const score = calculateSkillPriority(user, competency.id, skill.id, level.id);
       return {
         competency,
         skill,
         score,
-        reason: `${accuracy === null ? "sem histórico suficiente" : `${accuracy}% de acerto`} + recorrência ${recurrence}%${recent ? " + erro recente" : ""}.`,
+        reason: `${accuracy === null ? "sem histórico suficiente" : `${accuracy}% de acerto`} + prioridade pedagógica${recent ? " + erro recente" : ""}.`,
       };
     }),
   ).sort((a, b) => b.score - a.score);
@@ -2682,7 +2893,7 @@ function renderWeekRows(priorities, level) {
     ["Terça", `Teoria dirigida (${level.theory}%) + 20 questões obrigatórias.`],
     ["Quarta", `Exercícios por habilidade + tema de redação da semana.`],
     ["Quinta", `Teoria curta + lista adaptativa em ${second}.`],
-    ["Sexta", `Revisão ativa + questões de maior recorrência em ${third}.`],
+    ["Sexta", `Revisão ativa + lista estratégica em ${third}.`],
     ["Sábado", level.id === "iniciante" ? "Simulado por fase com relatório pedagógico." : "Simulado ENEM rigoroso com tempo controlado."],
     ["Domingo", "Correção final, replanejamento e descanso protegido."],
   ];
@@ -2754,18 +2965,13 @@ function renderBankView() {
     <section id="bankGrid" class="grid bank-grid">
       ${renderSkillCards("")}
     </section>
-    <section class="panel bank-preview-panel">
-      <div class="panel-header">
-        <div>
-          <h2>Amostra da base</h2>
-          <p>Questões reais já prontas para entrar nos blocos diários.</p>
-        </div>
-      </div>
-      <div id="questionPreview" class="question-sample-list">
-        ${renderQuestionSamples("")}
-      </div>
-    </section>
   `;
+}
+
+function getDisplayFrequencyRows(area, key) {
+  const rows = Array.isArray(area?.[key]) ? area[key] : [];
+  if (area?.id !== "linguagens") return rows;
+  return rows.filter((row) => !LINGUAGENS_FOREIGN_LANGUAGE_SKILLS.has(row.skill));
 }
 
 function renderSkillCards(search) {
@@ -3250,7 +3456,7 @@ function renderSimuladoAreaCard(area) {
             (item) => `
               <div>
                 <strong>${escapeHTML(item.skill.title)}</strong>
-                <small>${escapeHTML(item.count)} itens previstos - recorrência ${item.recurrence}%</small>
+                <small>${escapeHTML(item.count)} itens previstos - prioridade de treino ajustada ao nível</small>
               </div>
             `,
           )
@@ -3297,10 +3503,10 @@ function getSimuladoLevelProtocol(level) {
   }
   if (level.id === "avancado") {
     return {
-      short: "médias e difíceis decisivas",
+      short: "simulado completo com base protegida",
       description:
-        "Alta performance já acerta fáceis e médias; por isso o simulado inclui questões difíceis que fazem diferença na TRI.",
-      mix: { easy: 10, medium: 45, hard: 45 },
+        "Alta performance mantém questões fáceis para proteger coerência TRI e acrescenta médias, difíceis e raras para buscar diferenciação.",
+      mix: { easy: 25, medium: 40, hard: 35 },
       skillBreadth: 9,
     };
   }
@@ -3408,7 +3614,7 @@ function renderSkillIndicatorTable(items) {
                 <small>${escapeHTML(item.skill.focus)}</small>
               </div>
               <span>${item.total ? `${item.percent}%` : "sem dados"}</span>
-              <small>${item.total ? `${item.correct}/${item.total}` : `recorrência ${item.recurrence}%`}</small>
+              <small>${item.total ? `${item.correct}/${item.total}` : "aguardando treino"}</small>
             </div>
           `,
         )
@@ -4835,7 +5041,6 @@ function bindViewEvents(user) {
 
   document.getElementById("bankSearch")?.addEventListener("input", (event) => {
     document.getElementById("bankGrid").innerHTML = renderSkillCards(event.target.value);
-    document.getElementById("questionPreview").innerHTML = renderQuestionSamples(event.target.value);
   });
 
   document.getElementById("fetchDailyNewsBtn")?.addEventListener("click", async () => {

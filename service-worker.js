@@ -1,10 +1,11 @@
-const CACHE_NAME = "ultimateenem-experience-v9-github-pages";
+const CACHE_NAME = "ultimateenem-experience-v13-hide-bank-sample";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./styles.css",
   "./app.js",
   "./enem-data.js",
+  "./habilidades-frequencia-data.js",
   "./redacao-db.js",
   "./manifest.webmanifest",
   "./assets/brand/ultimate-enem-prof-cav.png",
