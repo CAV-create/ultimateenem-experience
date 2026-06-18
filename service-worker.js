@@ -1,4 +1,4 @@
-const CACHE_NAME = "ultimateenem-experience-v13-hide-bank-sample";
+const CACHE_NAME = "ultimateenem-experience-v14-daily-news-api";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -8,6 +8,7 @@ const APP_SHELL = [
   "./habilidades-frequencia-data.js",
   "./redacao-db.js",
   "./manifest.webmanifest",
+  "./daily-news-bootstrap.js",
   "./assets/brand/ultimate-enem-prof-cav.png",
   "./assets/brand/plano-diario-foco-prof-cav.png",
   "./assets/icons/apple-touch-icon.png",
