@@ -38,14 +38,17 @@ https://SEU-USUARIO.github.io/ultimateenem-experience/
 
 ## Observacao sobre Atualidades ENEM
 
-Esta publicacao e estatica. A aba `Atualidades` aceita um endpoint externo, mas o GitHub Pages nao executa servidor.
+Esta publicacao e estatica. A aba `Atualidades` usa por padrao o endpoint publico da API publicada na Vercel:
 
-Para noticias automaticas, publique o endpoint em Vercel/Next ou outro servidor e cole a URL publica no campo da aba `Atualidades`.
+https://ultimateenem-experience-api.vercel.app/api/noticias/diarias
+
+No teste em `localhost`, o app aponta para `http://localhost:3000/api/noticias/diarias`. Ao abrir por arquivo ou online, usa a API publicada na Vercel.
 
 ## Arquivos principais
 
 - `index.html`: entrada do app.
 - `app.js`: logica do aplicativo.
+- `daily-news-bootstrap.js`: liga a aba Atualidades ao endpoint publico da API.
 - `enem-data.js`: banco de questoes.
 - `assets/`: imagens, icones e recortes das questoes.
 - `service-worker.js`: cache local do app.
