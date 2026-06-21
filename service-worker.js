@@ -1,4 +1,4 @@
-const CACHE_NAME = "ultimateenem-experience-v14-daily-news-api";
+const CACHE_NAME = "ultimateenem-experience-v37-notas-acertos-tri";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -6,7 +6,12 @@ const APP_SHELL = [
   "./app.js",
   "./enem-data.js",
   "./habilidades-frequencia-data.js",
+  "./enem-tri-acerto-data.js",
+  "./enem-notas-acertos-tri-data.js",
+  "./enem-intelligence-data.js",
   "./redacao-db.js",
+  "./redacao-microdados-data.js",
+  "./redacao-inteligencia-stage9-data.js",
   "./manifest.webmanifest",
   "./daily-news-bootstrap.js",
   "./assets/brand/ultimate-enem-prof-cav.png",

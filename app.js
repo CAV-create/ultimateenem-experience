@@ -7,6 +7,8 @@ const DAILY_REQUIRED_BY_AREA = 5;
 const DAILY_TOTAL_QUESTIONS = 20;
 const SIMULADO_TOTAL_QUESTIONS = 180;
 const SIMULADO_QUESTIONS_BY_AREA = 45;
+const APP_VIEWS = ["today", "clinic", "plan", "bank", "redacao", "news", "simulado", "performance"];
+const TRI_CLINIC_QUANTITIES = [5, 10, 15, 20, 30];
 const SIMULADO_ENEM_TIMES = [
   { label: "Caderno Dia 1 + Redação", start: "13h30", end: "19h00", duration: "5h30", areas: "Linguagens, Humanas e redação manuscrita" },
   { label: "Caderno Dia 2", start: "13h30", end: "18h30", duration: "5h", areas: "Natureza e Matemática" },
@@ -17,10 +19,14 @@ const TIMER_PRESETS = {
   "enem-day-one": { label: "Caderno Dia 1 + Redação", seconds: 5.5 * 60 * 60 },
   "enem-day-two": { label: "Caderno Dia 2", seconds: 5 * 60 * 60 },
 };
-const IS_LOCAL_PREVIEW =
+const IS_LOCAL_SERVER_PREVIEW =
   typeof window !== "undefined" &&
-  (window.location.protocol === "file:" || ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname));
-const DAILY_NEWS_DEFAULT_ENDPOINT = IS_LOCAL_PREVIEW ? "http://localhost:3000/api/noticias/diarias" : "";
+  window.location.protocol !== "file:" &&
+  ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
+const DAILY_NEWS_PRODUCTION_ENDPOINT = "https://ultimateenem-experience-api.vercel.app/api/noticias/diarias";
+const DAILY_NEWS_DEFAULT_ENDPOINT = IS_LOCAL_SERVER_PREVIEW
+  ? "http://localhost:3000/api/noticias/diarias"
+  : DAILY_NEWS_PRODUCTION_ENDPOINT;
 const DAILY_NEWS_SAMPLE_PAYLOAD = {
   generatedAt: "",
   sourceCount: 0,
@@ -61,7 +67,7 @@ const DAILY_NEWS_SAMPLE_PAYLOAD = {
           {
             title: "Conectar endpoint ou colar JSON",
             summary: "Use o endpoint do pacote anexado ou cole a resposta JSON gerada pelo servidor.",
-            enemUse: "O app organiza o material em repertório, temas, intervenção, áreas objetivas e fontes originais.",
+            enemUse: "O app organiza o material em repertório, temas, intervenção, exames por área e fontes originais.",
             enemAreas: ["Redação ENEM", "Linguagens", "Ciências Humanas"],
             sourceIds: [],
           },
@@ -262,7 +268,7 @@ const LEVEL_RULES = {
     theory: 60,
     exercises: 40,
     mix: { easy: 100, medium: 0, hard: 0 },
-    note: "Construir base com questões fáceis e habilidades recorrentes, protegendo a TRI.",
+    note: "Construir base com questões fáceis e habilidades recorrentes, protegendo a coerência da prova.",
   },
   mediano: {
     label: "Mediano",
@@ -276,7 +282,7 @@ const LEVEL_RULES = {
     theory: 20,
     exercises: 80,
     mix: { easy: 20, medium: 45, hard: 35 },
-    note: "Manter fáceis, ampliar médias e difíceis e incluir raras para ganho TRI sem perder coerência.",
+    note: "Manter fáceis, ampliar médias e difíceis e incluir raras para ganho de desempenho sem perder coerência.",
   },
 };
 const MATRIX_DATA = window.ENEM_DATA?.matrix || { areas: {} };
@@ -569,6 +575,8 @@ const COMPETENCIES = [
 ];
 
 const ENEM_DATA = window.ENEM_DATA || { questions: [], redacao: {} };
+const REDACTION_MICRODATA = window.REDACTION_MICRODATA || {};
+const REDACTION_STAGE9_DATA = window.REDACTION_INTELLIGENCE_STAGE9 || {};
 const DEFAULT_REDACTION_LIBRARY = {
   repertories: [
     {
@@ -641,8 +649,8 @@ const DEFAULT_REDACTION_LIBRARY = {
   sourcePacks: [
     {
       id: "cartilha-enem-2025",
-      title: "Cartilha do Participante ENEM 2025",
-      type: "Manual oficial de redação",
+      title: `Cartilha dos Calouros ENEM ${new Date().getFullYear()}`,
+      type: "Manual Oficial dos Preceptores",
       sourceLabel: "INEP/MEC",
       availability: "PDF completo",
       links: [
@@ -683,11 +691,12 @@ const DEFAULT_REDACTION_LIBRARY = {
           url: "https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm",
         },
       ],
-      themes: ["direitos sociais", "cidadania", "saúde", "educação", "meio ambiente"],
+      themes: ["direitos sociais", "cidadania", "saúde", "educação", "meio ambiente", "renda", "trabalho", "economia"],
       readingFocus:
         "Estude os artigos que viram ponte de redação: direitos sociais, saúde, educação, cultura, meio ambiente, criança, adolescente e idoso.",
       essentialPoints: [
         "Art. 6 ajuda em temas de moradia, saúde, alimentação, educação, trabalho, transporte e segurança.",
+        "Art. 170 ajuda em temas econômicos: ordem econômica, valorização do trabalho humano e justiça social.",
         "Art. 196 é forte para saúde pública: direito social, dever do Estado e políticas de acesso.",
         "Art. 205 fundamenta educação como desenvolvimento da pessoa e preparo para cidadania.",
         "Art. 225 sustenta temas ambientais e responsabilidade coletiva.",
@@ -699,6 +708,60 @@ const DEFAULT_REDACTION_LIBRARY = {
         "Não escreva só 'a Constituição garante direitos'. Diga qual direito, qual grupo ficou sem acesso e por qual causa.",
       closingPair:
         "Se abrir com Constituição, feche com agente público específico e uma medida que reduza a distância entre lei e realidade.",
+    },
+    {
+      id: "ibge-sis-leitura",
+      title: "IBGE - Síntese de Indicadores Sociais",
+      type: "Fonte de dados socioeconômicos",
+      sourceLabel: "IBGE",
+      availability: "Página oficial com relatórios e tabelas",
+      links: [
+        {
+          label: "Abrir fonte IBGE",
+          url: "https://www.ibge.gov.br/estatisticas/sociais/populacao/9221-sintese-de-indicadores-sociais.html",
+        },
+      ],
+      themes: ["renda", "pobreza", "desigualdade", "trabalho", "crise financeira", "custo de vida"],
+      readingFocus:
+        "Procure dados sobre renda, pobreza, desigualdade, trabalho e acesso a direitos para transformar economia em problema social concreto.",
+      essentialPoints: [
+        "Dados do IBGE ajudam a evitar argumento genérico sobre crise financeira.",
+        "Use renda, pobreza e trabalho para mostrar grupo afetado e consequência social.",
+        "Cruze o dado com Constituição: direito existe, mas a instabilidade econômica reduz acesso real.",
+      ],
+      howToUse:
+        "Use quando o tema envolver crise financeira, renda, pobreza, custo de vida, desemprego ou desigualdade econômica.",
+      examinerCare:
+        "Não jogue número solto. Explique quem foi afetado, qual direito ficou comprometido e que causa mantém o problema.",
+      closingPair:
+        "Se abrir com IBGE, feche com Ministério do Desenvolvimento Social, Ministério do Trabalho ou políticas de renda, qualificação e proteção social.",
+    },
+    {
+      id: "bcb-cidadania-financeira",
+      title: "Banco Central - Cidadania Financeira",
+      type: "Educação financeira e consumo",
+      sourceLabel: "Banco Central do Brasil",
+      availability: "Portal oficial",
+      links: [
+        {
+          label: "Abrir portal do BC",
+          url: "https://www.bcb.gov.br/cidadaniafinanceira",
+        },
+      ],
+      themes: ["endividamento", "educação financeira", "consumo", "juros", "crédito", "crise financeira"],
+      readingFocus:
+        "Use para temas em que a crise financeira envolve endividamento familiar, consumo, crédito, juros e baixa educação financeira.",
+      essentialPoints: [
+        "Educação financeira só funciona bem no ENEM se vier ligada a renda, proteção social e regulação.",
+        "Endividamento pode ser tratado como efeito de baixa renda, crédito caro e vulnerabilidade informacional.",
+        "A intervenção precisa combinar escola, orientação pública e proteção contra práticas abusivas.",
+      ],
+      howToUse:
+        "Use para defender educação financeira como prevenção, sem culpar individualmente famílias vulneráveis.",
+      examinerCare:
+        "Não transforme crise financeira em falha moral do cidadão. Mostre contexto econômico, renda e acesso desigual à informação.",
+      closingPair:
+        "Se abrir com Banco Central, feche com MEC, Procons, bancos públicos e campanhas de orientação financeira nas escolas e comunidades.",
     },
     {
       id: "sus-lei-8080",
@@ -920,7 +983,7 @@ const DEFAULT_REDACTION_LIBRARY = {
     },
     {
       code: "ZERO",
-      title: "Risco de anulação e tangenciamento",
+      title: "Parada textual: risco de nota zero",
       officialBasis:
         "A cartilha aponta nota zero por fuga total, tipo textual inadequado, texto insuficiente, identificação, ilegibilidade e outras situações.",
       studentCommand:
@@ -930,6 +993,28 @@ const DEFAULT_REDACTION_LIBRARY = {
     },
   ],
   authorCrossovers: [
+    {
+      id: "ibge-constituicao",
+      start: "IBGE",
+      closeWith: "Constituição de 1988",
+      bestThemes: ["crise financeira", "renda", "pobreza", "trabalho", "desigualdade"],
+      bridge:
+        "Comece por dados socioeconômicos para mostrar o impacto concreto da crise; depois feche com a Constituição para provar que renda, trabalho e proteção social não são favores, mas direitos.",
+      closing:
+        "Na C5, use agente público específico e política de renda, qualificação profissional ou proteção social territorializada.",
+      caution: "Não use dado econômico como decoração. O número precisa revelar grupo afetado, causa e consequência.",
+    },
+    {
+      id: "bcb-educacao-financeira",
+      start: "Banco Central",
+      closeWith: "Educação financeira comunitária",
+      bestThemes: ["endividamento", "consumo", "crédito", "juros", "crise financeira"],
+      bridge:
+        "Comece pelo endividamento como sintoma social, não como falha moral; depois proponha educação financeira articulada a renda, proteção do consumidor e orientação pública.",
+      closing:
+        "Na C5, combine MEC, Banco Central, Procons e escolas públicas para oficinas de orçamento, crédito responsável e prevenção ao superendividamento.",
+      caution: "Não culpe a família endividada. A banca valoriza análise de estrutura econômica, informação e acesso.",
+    },
     {
       id: "freire-constituicao",
       start: "Paulo Freire",
@@ -1260,7 +1345,6 @@ const DEFAULT_REDACTION_LIBRARY = {
   ],
 };
 const REDACTION_LIBRARY = mergeRedactionLibrary(DEFAULT_REDACTION_LIBRARY, window.REDACTION_DB);
-const C1_OPENING_TIPS = pickRandomItems(REDACTION_LIBRARY.c1Tips, 3);
 const REDACAO_WEEK_COUNT = Math.ceil(DAY_COUNT / 7);
 const REDACAO_SCORE_FIELDS = [
   { id: "c1", label: "C1", title: "Escrita formal" },
@@ -1282,6 +1366,9 @@ const QUESTION_COUNTS_BY_AREA = buildQuestionCountsByArea();
 const QUESTION_COUNTS_BY_SKILL = buildQuestionCountsBySkill();
 const HIGH_FREQUENCY_SKILL_MAP = buildHighFrequencySkillMap();
 const OFFICIAL_SKILL_FREQUENCY_DOCUMENT = window.HABILIDADES_FREQUENCIA_DATA || { areas: [] };
+const INTERNAL_ENEM_INTELLIGENCE = window.ENEM_INTELLIGENCE_DATA || {};
+const REAL_TRI_ACERTO_DATA = window.ENEM_TRI_ACERTO_DATA || {};
+const NOTAS_ACERTOS_TRI_DATA = window.ENEM_NOTAS_ACERTOS_TRI_DATA || { rows: [] };
 const LINGUAGENS_FOREIGN_LANGUAGE_SKILLS = new Set(["H05", "H06", "H07", "H08"]);
 const FREQUENCY_TIER_LABELS = {
   high: "Muito cobrada",
@@ -1291,14 +1378,17 @@ const FREQUENCY_TIER_LABELS = {
 };
 const PLAN = buildPlan();
 const QUESTIONS = buildQuestionBank();
+const QUESTION_BY_ID = buildQuestionIndex();
 
 const app = document.getElementById("app");
 let store = loadStore();
-let activeView = "today";
-let selectedDay = null;
+let activeView = isValidAppView(store.uiState?.activeView) ? store.uiState.activeView : "today";
+let selectedDay = Number.isFinite(Number(store.uiState?.selectedDay)) ? Number(store.uiState.selectedDay) : null;
 let authMode = "login";
 let quizState = null;
-let shouldScrollTop = true;
+let pendingScrollRestore = Number.isFinite(Number(store.uiState?.scrollY)) ? Number(store.uiState.scrollY) : null;
+let shouldScrollTop = pendingScrollRestore === null;
+let dailyNewsAutoFetchStarted = false;
 let timer = {
   seconds: 50 * 60,
   running: false,
@@ -1360,6 +1450,9 @@ function mergeRedactionLibrary(defaults, custom = {}) {
       ...defaults.nota1000Essays,
       ...(Array.isArray(custom.nota1000Essays) ? custom.nota1000Essays : []),
     ],
+    premiumTopicPacks: Array.isArray(custom.premiumTopicPacks) ? custom.premiumTopicPacks : [],
+    themeArchive: Array.isArray(custom.themeArchive) ? custom.themeArchive : [],
+    themePatternAnalysis: custom.themePatternAnalysis || {},
   };
 }
 
@@ -1439,8 +1532,9 @@ function getSkillRecurrence(skillId, areaId) {
 
 function getQuestionFrequencyProfile(question, skillId = "") {
   const official = getOfficialFrequencyProfile(question.competencyId, question.matrixSkillCode);
-  if (official.tier !== "unknown") return official;
-  return getLocalSkillFrequencyProfile(skillId, question.competencyId);
+  const strategic = getSkillIntelligenceProfile(skillId, question.competencyId, question.matrixSkillCode);
+  if (official.tier !== "unknown") return applyInternalIntelligenceToFrequency(official, strategic);
+  return applyInternalIntelligenceToFrequency(getLocalSkillFrequencyProfile(skillId, question.competencyId), strategic);
 }
 
 function getOfficialFrequencyProfile(areaId, skillCode) {
@@ -1502,12 +1596,107 @@ function normalizeSkillCode(skillCode) {
   return match ? match[0] : "";
 }
 
+function getRealTriSkillProfile(areaId = "", skillCode = "") {
+  const code = normalizeSkillCode(skillCode);
+  if (!code) return null;
+  const byArea = REAL_TRI_ACERTO_DATA.byAreaSkill || {};
+  return byArea[areaId]?.[code] || null;
+}
+
+function getRealTriDifficultyParameter(profile) {
+  const difficulty = profile?.dominantTriDifficulty || profile?.realTriDominantDifficulty || "";
+  if (!difficulty) return null;
+  const proficiency = profile.estimatedProficiency || profile.realTriEstimatedProficiency || {
+    "Fácil": "400-500",
+    "Média": "500-600",
+    "Difícil": "600-700",
+    "Muito Difícil": "700-800+",
+  }[difficulty];
+  return proficiency ? { difficulty, proficiency } : null;
+}
+
 function getLocalSkillFrequencyProfile(skillId, areaId) {
   const recurrence = getSkillRecurrence(skillId, areaId);
   if (recurrence >= 18) return createFrequencyProfile("high", "alta presença no banco local", recurrence);
   if (recurrence >= 10) return createFrequencyProfile("medium", "presença média no banco local", recurrence);
   if (recurrence > 0) return createFrequencyProfile("low", "baixa presença no banco local", recurrence);
   return createFrequencyProfile("unknown", "incidência aguardando questões", 0);
+}
+
+function getSkillIntelligenceProfile(skillId = "", areaId = "", skillCode = "") {
+  const skillProfiles = INTERNAL_ENEM_INTELLIGENCE.skillProfiles || {};
+  const matrixAdjustments = INTERNAL_ENEM_INTELLIGENCE.matrixSkillAdjustments || {};
+  const bySkill = skillProfiles[skillId] || null;
+  const code = normalizeSkillCode(skillCode);
+  const byMatrix = code ? matrixAdjustments[areaId]?.[code] || null : null;
+  const byRealTri = getRealTriSkillProfile(areaId, code);
+  if (!bySkill && !byMatrix && !byRealTri) return null;
+  const levels = INTERNAL_ENEM_INTELLIGENCE.strategicLevels || {};
+  const level = byMatrix?.level || bySkill?.level || byRealTri?.level || "highFrequency";
+  const levelMeta = levels[level] || {};
+  return {
+    ...levelMeta,
+    ...(byRealTri || {}),
+    ...(bySkill || {}),
+    ...(byMatrix || {}),
+    level,
+    skillId,
+    areaId,
+    skillCode: code,
+  };
+}
+
+function applyInternalIntelligenceToFrequency(profile, strategic) {
+  if (!strategic || profile.excluded) return profile;
+  const tierRank = { unknown: 0, low: 1, medium: 2, high: 3 };
+  const strategicTier =
+    strategic.frequencyTier ||
+    (strategic.level === "decline"
+      ? "low"
+      : strategic.level === "emerging"
+        ? "medium"
+        : ["essential", "highFrequency", "medicineCritical"].includes(strategic.level)
+          ? "high"
+          : profile.tier);
+  const tier =
+    strategic.level === "decline"
+      ? "low"
+      : tierRank[strategicTier] > tierRank[profile.tier]
+        ? strategicTier
+        : profile.tier;
+  const source =
+    strategic.level === "decline"
+      ? "nível 5 interno: estudar sem comandar planejamento"
+      : `${strategic.label || "régua interna ENEM Medicina"} + ${profile.source}`;
+  const realAccuracy = strategic.realAccuracy || {};
+
+  return createFrequencyProfile(tier, source, Math.max(Number(profile.score || 0), Number(strategic.priority || 0)), {
+    ...profile,
+    tier,
+    strategicLevel: strategic.level,
+    strategicLabel: strategic.label,
+    strategicNote: strategic.note || strategic.rationale || "",
+    medicineCritical: Boolean(strategic.medicineCritical),
+    beginnerCore: Boolean(strategic.beginnerCore),
+    realMedicineScore: strategic.medicineScore,
+    realMedicineLevel: strategic.medicineLevel,
+    realTrend: strategic.trend,
+    realRankInArea: strategic.rankInArea,
+    realHistoricalPercent: strategic.historicalPercent,
+    realRecentPercent: strategic.percent2023_2025,
+    realDeltaPp: strategic.deltaPp,
+    realTriDominantDifficulty: strategic.dominantTriDifficulty,
+    realTriDifficultyDistribution: strategic.triDifficultyDistribution,
+    realTriEstimatedProficiency: strategic.estimatedProficiency,
+    realTriParameterSummary: strategic.triParameterSummary,
+    realTriEstimatedDiscrimination: strategic.estimatedDiscrimination,
+    realTriEstimatedCasual: strategic.estimatedCasual,
+    realAccuracy,
+    realAccuracyItems: realAccuracy.itemsWithPercentCorrect,
+    realAvgPercentCorrect: realAccuracy.avgPercentCorrect ?? strategic.triParameterSummary?.avgPercentCorrect,
+    realMedianPercentCorrect: realAccuracy.medianPercentCorrect,
+    realAccuracyPriorityIndex: realAccuracy.triPriorityIndex,
+  });
 }
 
 function createFrequencyProfile(tier, source, score = 0, extra = {}) {
@@ -1658,6 +1847,29 @@ function buildQuestionBank() {
       frequencyScore: frequencyProfile.score,
       frequencyRank: frequencyProfile.rank,
       frequencyExcluded: Boolean(frequencyProfile.excluded),
+      strategicLevel: frequencyProfile.strategicLevel,
+      strategicLabel: frequencyProfile.strategicLabel,
+      strategicNote: frequencyProfile.strategicNote,
+      medicineCritical: Boolean(frequencyProfile.medicineCritical),
+      beginnerCore: Boolean(frequencyProfile.beginnerCore),
+      realMedicineScore: frequencyProfile.realMedicineScore,
+      realMedicineLevel: frequencyProfile.realMedicineLevel,
+      realTrend: frequencyProfile.realTrend,
+      realRankInArea: frequencyProfile.realRankInArea,
+      realHistoricalPercent: frequencyProfile.realHistoricalPercent,
+      realRecentPercent: frequencyProfile.realRecentPercent,
+      realDeltaPp: frequencyProfile.realDeltaPp,
+      realTriDominantDifficulty: frequencyProfile.realTriDominantDifficulty,
+      realTriDifficultyDistribution: frequencyProfile.realTriDifficultyDistribution,
+      realTriEstimatedProficiency: frequencyProfile.realTriEstimatedProficiency,
+      realTriParameterSummary: frequencyProfile.realTriParameterSummary,
+      realTriEstimatedDiscrimination: frequencyProfile.realTriEstimatedDiscrimination,
+      realTriEstimatedCasual: frequencyProfile.realTriEstimatedCasual,
+      realAccuracy: frequencyProfile.realAccuracy,
+      realAccuracyItems: frequencyProfile.realAccuracyItems,
+      realAvgPercentCorrect: frequencyProfile.realAvgPercentCorrect,
+      realMedianPercentCorrect: frequencyProfile.realMedianPercentCorrect,
+      realAccuracyPriorityIndex: frequencyProfile.realAccuracyPriorityIndex,
       imported: true,
     });
   });
@@ -1688,11 +1900,43 @@ function buildQuestionBank() {
         frequencyScore: question.frequencyScore ?? localFrequency.score,
         frequencyRank: question.frequencyRank,
         frequencyExcluded: Boolean(question.frequencyExcluded),
+        strategicLevel: question.strategicLevel,
+        strategicLabel: question.strategicLabel,
+        strategicNote: question.strategicNote,
+        medicineCritical: Boolean(question.medicineCritical),
+        beginnerCore: Boolean(question.beginnerCore),
+        realMedicineScore: question.realMedicineScore,
+        realMedicineLevel: question.realMedicineLevel,
+        realTrend: question.realTrend,
+        realRankInArea: question.realRankInArea,
+        realHistoricalPercent: question.realHistoricalPercent,
+        realRecentPercent: question.realRecentPercent,
+        realDeltaPp: question.realDeltaPp,
+        realTriDominantDifficulty: question.realTriDominantDifficulty,
+        realTriDifficultyDistribution: question.realTriDifficultyDistribution,
+        realTriEstimatedProficiency: question.realTriEstimatedProficiency,
+        realTriParameterSummary: question.realTriParameterSummary,
+        realTriEstimatedDiscrimination: question.realTriEstimatedDiscrimination,
+        realTriEstimatedCasual: question.realTriEstimatedCasual,
+        realAccuracy: question.realAccuracy,
+        realAccuracyItems: question.realAccuracyItems,
+        realAvgPercentCorrect: question.realAvgPercentCorrect,
+        realMedianPercentCorrect: question.realMedianPercentCorrect,
+        realAccuracyPriorityIndex: question.realAccuracyPriorityIndex,
       };
     });
   });
 
   return bank;
+}
+
+function buildQuestionIndex() {
+  return Object.values(QUESTIONS).reduce((index, questions) => {
+    questions.forEach((question) => {
+      index[question.id] = question;
+    });
+    return index;
+  }, {});
 }
 
 function getFallbackSkillId(competencyId) {
@@ -1722,6 +1966,10 @@ function loadStore() {
   }
 }
 
+function isValidAppView(view) {
+  return APP_VIEWS.includes(String(view || ""));
+}
+
 function saveStore() {
   try {
     if (typeof localStorage !== "undefined") {
@@ -1730,6 +1978,20 @@ function saveStore() {
   } catch (error) {
     console.warn("Não foi possível salvar os dados locais do app.", error);
   }
+}
+
+function persistUiState(options = {}) {
+  const scrollY = Number.isFinite(Number(options.scrollY))
+    ? Number(options.scrollY)
+    : Math.max(window.scrollY || 0, document.documentElement?.scrollTop || 0, document.body?.scrollTop || 0);
+  store.uiState = {
+    ...(store.uiState || {}),
+    activeView: isValidAppView(activeView) ? activeView : "today",
+    selectedDay: selectedDay || null,
+    scrollY: Math.max(0, Math.round(scrollY)),
+    updatedAt: new Date().toISOString(),
+  };
+  saveStore();
 }
 
 function getCurrentUser() {
@@ -1927,7 +2189,21 @@ function calculateSkillPriority(user, areaId, skillId, levelId) {
   const incidence = getSkillIncidenceScore(skillId, areaId, levelId);
   const difficultyFit = getDifficultyFitScore(levelId, skillId);
   const recentError = hasRecentError(user, skillId) ? 100 : 0;
-  return Math.round(lowPerformance * 0.32 + incidence * 0.32 + recurrence * 0.12 + difficultyFit * 0.12 + recentError * 0.12);
+  const strategic = getStrategicSkillPriorityScore(getSkillIntelligenceProfile(skillId, areaId), levelId);
+  return Math.round(lowPerformance * 0.26 + incidence * 0.3 + recurrence * 0.08 + difficultyFit * 0.1 + recentError * 0.1 + strategic * 0.16);
+}
+
+function getStrategicSkillPriorityScore(profile, levelId) {
+  if (!profile) return 45;
+  const level = profile.level || "highFrequency";
+  const defaults = {
+    essential: { iniciante: 100, mediano: 96, avancado: 92 },
+    highFrequency: { iniciante: 92, mediano: 90, avancado: 84 },
+    medicineCritical: { iniciante: 78, mediano: 92, avancado: 100 },
+    emerging: { iniciante: 42, mediano: 70, avancado: 86 },
+    decline: { iniciante: 8, mediano: 18, avancado: 32 },
+  };
+  return Number(profile.priority || defaults[level]?.[levelId] || defaults.highFrequency[levelId] || 55);
 }
 
 function getSkillIncidenceScore(skillId, areaId, levelId) {
@@ -2035,7 +2311,7 @@ function getQuestionCandidatesForLevel(pool, difficulty, levelId) {
   const byDifficulty = pool.filter((question) => question.difficulty === difficulty && !question.frequencyExcluded);
   if (levelId !== "iniciante") return byDifficulty;
 
-  const highIncidence = byDifficulty.filter((question) => question.frequencyTier === "high");
+  const highIncidence = byDifficulty.filter((question) => question.frequencyTier === "high" || question.beginnerCore);
   if (highIncidence.length >= DAILY_REQUIRED_BY_AREA) return highIncidence;
   return byDifficulty;
 }
@@ -2062,7 +2338,24 @@ function getQuestionSelectionScore(question, levelId) {
   const difficultyWeight = levelWeights[question.difficulty] ?? 50;
   const rareBonus = levelId === "avancado" && question.frequencyTier === "low" ? 18 : 0;
   const highBaseBonus = question.difficulty === "easy" && question.frequencyTier === "high" ? 12 : 0;
-  return frequencyWeight * 0.52 + difficultyWeight * 0.34 + rareBonus + highBaseBonus;
+  const strategic = getSkillIntelligenceProfile(question.skillId, question.competencyId, question.matrixSkillCode);
+  const strategicBonus = (getStrategicSkillPriorityScore(strategic, levelId) - 50) * 0.22;
+  const bniQualityBonus = getBniItemQualityBonus(question) * 0.18;
+  const realMedicineScore = Math.min(Number(question.realMedicineScore || strategic?.medicineScore || 0), 130);
+  const realMedicineBonus = realMedicineScore * 0.04;
+  return frequencyWeight * 0.48 + difficultyWeight * 0.32 + rareBonus + highBaseBonus + strategicBonus + bniQualityBonus + realMedicineBonus;
+}
+
+function getBniItemQualityBonus(question) {
+  const weights = INTERNAL_ENEM_INTELLIGENCE.bniItemModel?.qualitySignals || {};
+  let score = 0;
+  if (question.matrixSkillCode) score += weights.matrixLinked || 0;
+  if (question.hasReliableOptions || question.imported) score += weights.reliableOptions || 0;
+  if (question.cropImage || question.stimulusImage || question.visualSourceType) score += weights.visualContext || 0;
+  if (question.pedagogicalComment || question.explanation) score += weights.pedagogicalComment || 0;
+  if (Array.isArray(question.alternativesAnalysis) && question.alternativesAnalysis.length) score += weights.distractorAnalysis || 0;
+  if (question.source || question.officialAnswer) score += weights.officialSource || 0;
+  return Math.min(score, 52);
 }
 
 function prioritizeFreshQuestions(list, recentIds, minimumFresh = DAILY_REQUIRED_BY_AREA) {
@@ -2098,14 +2391,17 @@ function rotateQuestions(list, seed) {
 function render() {
   const user = getCurrentUser();
   if (!user) {
+    pendingScrollRestore = null;
+    requestScrollTop();
     renderAuth();
-    flushScrollTop();
+    flushScrollPosition();
     return;
   }
 
-  if (!selectedDay) selectedDay = getTargetDay(user);
+  if (!isValidAppView(activeView)) activeView = "today";
+  if (!selectedDay) selectedDay = clamp(Number(store.uiState?.selectedDay || getTargetDay(user)), 1, DAY_COUNT);
   renderApp(user);
-  flushScrollTop();
+  flushScrollPosition();
 }
 
 function renderAuth() {
@@ -2218,7 +2514,9 @@ async function handleAuthSubmit(event) {
     };
     store.users[email] = user;
     store.sessionEmail = email;
+    activeView = "today";
     selectedDay = getTargetDay(user);
+    persistUiState({ scrollY: 0 });
     requestScrollTop();
     saveStore();
     render();
@@ -2232,8 +2530,12 @@ async function handleAuthSubmit(event) {
   }
 
   store.sessionEmail = email;
-  selectedDay = getTargetDay(user);
-  requestScrollTop();
+  selectedDay = Number.isFinite(Number(store.uiState?.selectedDay))
+    ? clamp(Number(store.uiState.selectedDay), 1, DAY_COUNT)
+    : getTargetDay(user);
+  activeView = isValidAppView(store.uiState?.activeView) ? store.uiState.activeView : "today";
+  pendingScrollRestore = Number.isFinite(Number(store.uiState?.scrollY)) ? Number(store.uiState.scrollY) : null;
+  if (pendingScrollRestore === null) requestScrollTop();
   saveStore();
   render();
 }
@@ -2244,6 +2546,7 @@ function renderApp(user) {
   const targetDay = getTargetDay(user);
   const accuracy = getOverallAccuracy(user);
   const mission = getMissionCompletion(user, targetDay);
+  const clinicAccess = getTriClinicAccess(user);
 
   app.innerHTML = `
     <div class="shell">
@@ -2254,7 +2557,8 @@ function renderApp(user) {
           <span>${escapeHTML(user.email)}</span>
         </div>
         <nav class="nav-list" aria-label="Principal">
-          ${navButton("today", "Missão", `${mission.questionsDone}/${DAILY_TOTAL_QUESTIONS}`)}
+          ${navButton("today", "Plantão", `${mission.questionsDone}/${DAILY_TOTAL_QUESTIONS}`)}
+          ${navButton("clinic", "Clínica", clinicAccess.unlocked ? "Rx" : "UTI")}
           ${navButton("plan", "Semana", "7d")}
           ${navButton("bank", "Banco", STRUCTURED_QUESTIONS.length)}
           ${navButton("redacao", "Redação", "1K")}
@@ -2278,6 +2582,7 @@ function renderApp(user) {
     button.addEventListener("click", () => {
       activeView = button.dataset.view;
       quizState = null;
+      persistUiState({ scrollY: 0 });
       requestScrollTop();
       render();
     });
@@ -2287,6 +2592,7 @@ function renderApp(user) {
     stopTimer();
     store.sessionEmail = "";
     selectedDay = null;
+    activeView = "today";
     requestScrollTop();
     saveStore();
     render();
@@ -2299,6 +2605,8 @@ function renderApp(user) {
     user.studyLog = [];
     selectedDay = 1;
     quizState = null;
+    activeView = "today";
+    persistUiState({ scrollY: 0 });
     requestScrollTop();
     saveCurrentUser(user);
     render();
@@ -2330,7 +2638,8 @@ function renderTopbar(user, completed, unlocked) {
 
 function getPageTitle() {
   const titles = {
-    today: "Missão do Dia",
+    today: "Plantão do Dia",
+    clinic: "Clínica de Performance",
     plan: "Planejamento semanal",
     bank: "Banco ENEM",
     redacao: "Redação nota 1000",
@@ -2344,6 +2653,7 @@ function getPageTitle() {
 function getPageSubtitle(user, completed, unlocked) {
   const level = classifyStudent(user);
   if (activeView === "today") return `20 questões obrigatórias: 5 por área. Nível atual: ${level.label}.`;
+  if (activeView === "clinic") return "Plantão eletivo para medianos e alta performance, com prescrição de questões por assunto.";
   if (activeView === "plan") return `Semana recalculada por nível, desempenho, erros recentes e descanso protegido.`;
   if (activeView === "bank") return `${IMPORTED_QUESTIONS.length} questões importadas dos PDFs, ${STRUCTURED_QUESTIONS.length} prontas para correção automática.`;
   if (activeView === "redacao") return "Critérios oficiais, checklist de correção e padrões dos textos nota 1000.";
@@ -2353,6 +2663,7 @@ function getPageSubtitle(user, completed, unlocked) {
 }
 
 function renderView(user) {
+  if (activeView === "clinic") return renderTriClinicView(user);
   if (activeView === "plan") return renderPlanView(user);
   if (activeView === "bank") return renderBankView();
   if (activeView === "redacao") return renderRedacaoView(user);
@@ -2377,7 +2688,7 @@ function renderPerformanceLocked(user, day) {
       <div class="panel-header">
         <div>
           <h2>Painel completo bloqueado por enquanto</h2>
-          <p>Você ainda não concluiu a missão diária. Termine o essencial para liberar o diagnóstico completo.</p>
+          <p>Você ainda não concluiu o plantão diário. Termine o essencial para liberar o diagnóstico completo.</p>
         </div>
         <span class="status-chip">${completion.questionsDone}/${DAILY_TOTAL_QUESTIONS}</span>
       </div>
@@ -2385,7 +2696,7 @@ function renderPerformanceLocked(user, day) {
         ${pendingAreas ? `Áreas pendentes: ${escapeHTML(pendingAreas)}.` : "Falta registrar autopercepção e descanso protegido."}
       </div>
       <div class="button-row">
-        <button class="primary-btn" data-view="today" type="button">Voltar à missão</button>
+        <button class="primary-btn" data-view="today" type="button">Voltar ao plantão</button>
       </div>
     </section>
   `;
@@ -2403,7 +2714,7 @@ function renderTodayView(user) {
 
   return `
     <section class="grid metrics-grid">
-      ${metric("Questões hoje", `${completion.questionsDone}/${DAILY_TOTAL_QUESTIONS}`, completion.complete ? "missão concluída" : "missão em andamento")}
+      ${metric("Questões hoje", `${completion.questionsDone}/${DAILY_TOTAL_QUESTIONS}`, completion.complete ? "plantão concluído" : "plantão em andamento")}
       ${metric("Nível", level.label, level.reason)}
       ${metric("Teoria/exercícios", `${level.theory}/${level.exercises}`, level.note)}
       ${metric("Redação média", redacaoAverage ? `${redacaoAverage}` : "sem dados", "meta competitiva para Medicina")}
@@ -2451,7 +2762,7 @@ function renderTodayView(user) {
         <div class="panel-header">
           <div>
             <h2>Ambulatório ENEM</h2>
-            <p>Os casos são calibrados por desempenho, dificuldade, erros recentes e progressão TRI.</p>
+            <p>Os casos são calibrados por desempenho, dificuldade, erros recentes e coerência de prova.</p>
           </div>
           <span class="status-chip">${completion.completedBlocks}/4 áreas</span>
         </div>
@@ -2462,6 +2773,649 @@ function renderTodayView(user) {
       </article>
     </section>
   `;
+}
+
+function getTriClinicAccess(user) {
+  const level = classifyStudent(user);
+  return {
+    level,
+    unlocked: level.id === "mediano" || level.id === "avancado",
+    ward:
+      level.id === "avancado"
+        ? "Centro cirúrgico de alta performance"
+        : level.id === "mediano"
+          ? "Enfermaria de evolução monitorada"
+          : "Ala de estabilização da base",
+  };
+}
+
+function renderTriClinicView(user) {
+  const access = getTriClinicAccess(user);
+  const settings = getTriClinicSettings(user);
+  const selectedSkill = findSkillById(settings.skillId);
+  const available = (QUESTIONS[settings.skillId] || []).filter((question) => !question.frequencyExcluded).length;
+  const session = user.triClinicSession || null;
+
+  if (!access.unlocked) {
+    return `
+      <section class="panel locked-panel clinic-locked-panel">
+        <div class="panel-header">
+          <div>
+            <h2>Ala em observação</h2>
+            <p>Esta clínica abre quando as fáceis estiverem estáveis. Primeiro, precisamos garantir que a base não derrube a nota.</p>
+          </div>
+          <span class="status-chip">${escapeHTML(access.level.label)}</span>
+        </div>
+        <div class="feedback">
+          Conduta do preceptor: mantenha o plantão diário, bata 80% nas questões fáceis e volte quando os sinais vitais da base estiverem seguros.
+        </div>
+      </section>
+    `;
+  }
+
+  return `
+    <section class="grid metrics-grid clinic-metrics">
+      ${metric("Ala", access.level.id === "avancado" ? "Alta performance" : "Intermediária", access.ward)}
+      ${metric("Assunto", selectedSkill?.title || "Em seleção", "prescrição por habilidade")}
+      ${metric("Dose", `${settings.quantity} questões`, "ajuste eletivo do plantão")}
+      ${metric("Estoque", available, "itens disponíveis para esse assunto")}
+    </section>
+
+    <section class="grid clinic-layout">
+      <article class="panel clinic-control-panel">
+        <div class="panel-header">
+          <div>
+            <h2>Prescrição eletiva</h2>
+            <p>Escolha área, assunto e dose. A seleção fina fica no prontuário interno do app.</p>
+          </div>
+          <span class="status-chip">${escapeHTML(access.ward)}</span>
+        </div>
+        ${renderTriClinicControls(settings)}
+      </article>
+
+      <article class="panel clinic-protocol-panel">
+        <div class="panel-header">
+          <div>
+            <h2>Conduta da clínica</h2>
+            <p>O aluno escolhe o foco; o app escolhe os itens certos para o momento dele.</p>
+          </div>
+          <span class="status-chip">sem bastidores</span>
+        </div>
+        <ul class="task-list">
+          <li>Mediano recebe fáceis importantes, médias e poucas difíceis quando fizer sentido.</li>
+          <li>Alta performance mantém fáceis no radar e recebe médias, difíceis e raras com maior ganho.</li>
+          <li>O resultado entra no prontuário para recalibrar os próximos plantões.</li>
+        </ul>
+      </article>
+    </section>
+
+    ${session ? renderTriClinicSession(user, session) : renderTriClinicEmptyState(settings)}
+  `;
+}
+
+function renderTriClinicControls(settings) {
+  const selectedArea = COMPETENCIES.find((competency) => competency.id === settings.areaId) || COMPETENCIES[0];
+  return `
+    <div class="clinic-form-grid">
+      <label class="field">
+        <span>Área do plantão</span>
+        <select id="triClinicAreaSelect">
+          ${COMPETENCIES.map(
+            (competency) => `<option value="${escapeHTML(competency.id)}" ${competency.id === settings.areaId ? "selected" : ""}>${escapeHTML(competency.name)}</option>`,
+          ).join("")}
+        </select>
+      </label>
+      <label class="field">
+        <span>Assunto em atendimento</span>
+        <select id="triClinicSkillSelect">
+          ${selectedArea.skills
+            .map((skill) => {
+              const count = (QUESTIONS[skill.id] || []).filter((question) => !question.frequencyExcluded).length;
+              return `<option value="${escapeHTML(skill.id)}" ${skill.id === settings.skillId ? "selected" : ""}>${escapeHTML(skill.title)} (${count})</option>`;
+            })
+            .join("")}
+        </select>
+      </label>
+      <label class="field">
+        <span>Dose de questões</span>
+        <select id="triClinicQuantitySelect">
+          ${TRI_CLINIC_QUANTITIES.map(
+            (quantity) => `<option value="${quantity}" ${quantity === settings.quantity ? "selected" : ""}>${quantity} questões</option>`,
+          ).join("")}
+        </select>
+      </label>
+    </div>
+    <div class="button-row">
+      <button class="primary-btn" id="triClinicGenerateBtn" type="button">Abrir plantão eletivo</button>
+      <button class="secondary-btn" id="triClinicClearBtn" type="button">Limpar prescrição</button>
+    </div>
+  `;
+}
+
+function renderTriClinicEmptyState(settings) {
+  const skill = findSkillById(settings.skillId);
+  return `
+    <section class="panel redacao-wide clinic-session-panel">
+      <div class="empty-state">
+        Nenhum plantão eletivo aberto. Escolha a dose para ${escapeHTML(skill?.title || "o assunto selecionado")} e inicie a clínica.
+      </div>
+    </section>
+  `;
+}
+
+function renderTriClinicSession(user, session) {
+  const questions = getTriClinicSessionQuestions(session);
+  const score = getTriClinicSessionScore(session, questions);
+  const answered = Object.keys(session.answers || {}).length;
+  const level = classifyStudent(user);
+  const skill = findSkillById(session.skillId);
+  const passed = session.checked && questions.length && score >= Math.ceil(questions.length * 0.8);
+  return `
+    <section class="panel redacao-wide clinic-session-panel">
+      <div class="panel-header">
+        <div>
+          <h2>Prontuário eletivo aberto</h2>
+          <p>${escapeHTML(skill?.title || "Assunto selecionado")} · ${answered}/${questions.length} respondidas.</p>
+        </div>
+        <span class="status-chip">${session.checked ? `${score}/${questions.length}` : "em atendimento"}</span>
+      </div>
+      ${
+        session.checked
+          ? `<div class="feedback ${passed ? "success" : "fail"}">${
+              passed
+                ? "Alta liberada: o plantão eletivo respondeu bem ao tratamento."
+                : "Paciente ainda em observação: reforce os erros antes de aumentar a dose."
+            }</div>`
+          : ""
+      }
+      <div class="button-row">
+        <button class="primary-btn" id="triClinicCheckBtn" type="button" ${answered < questions.length ? "disabled" : ""}>Dar diagnóstico</button>
+        <button class="secondary-btn" id="triClinicRegenerateBtn" type="button">Nova prescrição</button>
+      </div>
+      <div class="clinic-question-list">
+        ${questions.map((question, index) => renderTriClinicQuestionCard(question, session, index, level)).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function renderTriClinicQuestionCard(question, session, index, level) {
+  const selected = session.answers?.[question.id];
+  const checked = Boolean(session.checked);
+  const report = buildEnemTriItemReport(question);
+  return `
+    <article class="clinic-question-card question-box">
+      <div class="mini-meta question-meta">
+        <span>Questão ${String(index + 1).padStart(2, "0")}</span>
+        <span>${escapeHTML(question.source || "Acervo ENEM")}</span>
+        <span>${escapeHTML(DIFFICULTY_LABELS[question.difficulty] || "Média")}</span>
+        <span>${escapeHTML(getClinicDoseLabel(question, level.id))}</span>
+      </div>
+      <p class="question-title">${escapeHTML(getQuestionPrompt(question))}</p>
+      ${renderQuestionVisual(question, index + 1)}
+      <div class="option-grid">
+        ${(question.options || [])
+          .map((option, optionIndex) => {
+            const isSelected = Number(selected) === optionIndex;
+            const isCorrect = checked && optionIndex === question.answer;
+            const isWrong = checked && isSelected && optionIndex !== question.answer;
+            return `
+              <button class="option-btn ${isSelected ? "selected" : ""} ${isCorrect ? "correct" : ""} ${isWrong ? "wrong" : ""}" data-clinic-answer="${escapeHTML(question.id)}" data-option-index="${optionIndex}" type="button" ${checked ? "disabled" : ""}>
+                <span class="option-letter">${String.fromCharCode(65 + optionIndex)}</span>
+                <span>${escapeHTML(option)}</span>
+              </button>
+            `;
+          })
+          .join("")}
+      </div>
+      ${
+        checked
+          ? `<div class="clinic-feedback">
+              <strong>Conduta do preceptor</strong>
+              <p>${escapeHTML(getTriClinicQuestionFeedback(question, selected, report))}</p>
+            </div>`
+          : ""
+      }
+    </article>
+  `;
+}
+
+function getTriClinicAccessLabel(levelId) {
+  if (levelId === "avancado") return "alta performance";
+  if (levelId === "mediano") return "intermediário";
+  return "base em estabilização";
+}
+
+function getTriClinicSettings(user) {
+  const stored = user.triClinicSettings || {};
+  const area = COMPETENCIES.find((competency) => competency.id === stored.areaId) || COMPETENCIES[0];
+  const skill = area.skills.find((item) => item.id === stored.skillId) || area.skills[0];
+  const quantity = TRI_CLINIC_QUANTITIES.includes(Number(stored.quantity)) ? Number(stored.quantity) : 10;
+  return {
+    areaId: area.id,
+    skillId: skill.id,
+    quantity,
+  };
+}
+
+function saveTriClinicSettings(user, patch = {}) {
+  const current = getTriClinicSettings(user);
+  const next = { ...current, ...patch };
+  const area = COMPETENCIES.find((competency) => competency.id === next.areaId) || COMPETENCIES[0];
+  const skill = area.skills.find((item) => item.id === next.skillId) || area.skills[0];
+  user.triClinicSettings = {
+    areaId: area.id,
+    skillId: skill.id,
+    quantity: TRI_CLINIC_QUANTITIES.includes(Number(next.quantity)) ? Number(next.quantity) : current.quantity,
+  };
+}
+
+function createTriClinicSession(user) {
+  const access = getTriClinicAccess(user);
+  if (!access.unlocked) return;
+  const settings = getTriClinicSettings(user);
+  const questions = selectTriClinicQuestions(user, settings.skillId, settings.quantity, access.level.id);
+  user.triClinicSession = {
+    id: `clinic-${Date.now()}`,
+    areaId: settings.areaId,
+    skillId: settings.skillId,
+    quantity: settings.quantity,
+    levelId: access.level.id,
+    questionIds: questions.map((question) => question.id),
+    answers: {},
+    checked: false,
+    createdAt: new Date().toISOString(),
+  };
+}
+
+function selectTriClinicQuestions(user, skillId, quantity, levelId) {
+  const pool = (QUESTIONS[skillId] || []).filter((question) => !question.frequencyExcluded);
+  const eligible = pool.filter((question) => isTriClinicQuestionEligible(question, levelId));
+  const sourcePool = eligible.length >= Math.min(quantity, 5) ? eligible : pool;
+  const seed = hashString(`${skillId}-${levelId}-${todayISO()}-${user.attemptLog?.length || 0}`);
+  const recentIds = new Set((user.triClinicHistory || []).slice(-5).flatMap((item) => item.questionIds || []));
+  return sourcePool
+    .map((question, index) => ({
+      question,
+      score: getTriClinicQuestionScore(question, levelId) + ((seed + index * 17) % 19) - (recentIds.has(question.id) ? 28 : 0),
+    }))
+    .sort((a, b) => b.score - a.score)
+    .map((item) => item.question)
+    .slice(0, quantity);
+}
+
+function isTriClinicQuestionEligible(question, levelId) {
+  if (levelId === "avancado") return true;
+  if (question.difficulty === "hard" && question.frequencyTier === "low" && !question.medicineCritical) return false;
+  if (question.frequencyTier === "low" && question.difficulty !== "easy") return false;
+  return true;
+}
+
+function getTriClinicQuestionScore(question, levelId) {
+  const report = buildEnemTriItemReport(question);
+  const base = getQuestionSelectionScore(question, levelId);
+  const priorityWeight = {
+    "Prioridade Máxima": 34,
+    "Prioridade Alta": 24,
+    "Prioridade Média": 12,
+    "Prioridade Baixa": 4,
+  }[report.strategy.studyPriority] || 8;
+  const gainWeight = {
+    "Muito alto": 30,
+    Alto: 22,
+    Médio: 12,
+    Baixo: 4,
+  }[report.strategy.triGain] || 8;
+  const levelWeight =
+    levelId === "avancado"
+      ? { easy: 16, medium: 24, hard: 32 }[question.difficulty] || 18
+      : { easy: 30, medium: 28, hard: 12 }[question.difficulty] || 18;
+  return base + priorityWeight + gainWeight + levelWeight;
+}
+
+function getTriClinicSessionQuestions(session = {}) {
+  return (session.questionIds || []).map((id) => QUESTION_BY_ID[id]).filter(Boolean);
+}
+
+function getTriClinicSessionScore(session = {}, questions = getTriClinicSessionQuestions(session)) {
+  return questions.reduce((score, question) => score + (Number(session.answers?.[question.id]) === question.answer ? 1 : 0), 0);
+}
+
+function getClinicDoseLabel(question, levelId) {
+  if (levelId === "avancado" && question.difficulty === "hard") return "Dose alta";
+  if (question.frequencyTier === "high" || question.beginnerCore) return "Dose essencial";
+  if (question.frequencyTier === "low") return "Dose rara";
+  return "Dose monitorada";
+}
+
+function getTriClinicQuestionFeedback(question, selected, report) {
+  const answerLetter = Number.isInteger(question.answer) ? "ABCDE"[question.answer] : question.resolvedAnswer || question.officialAnswer || "";
+  const hit = Number(selected) === question.answer;
+  const explanation = cleanFeedbackText(question.pedagogicalComment || question.explanation || "Revise o comando e refaça o raciocínio antes de avançar.");
+  const dose = report.strategy.triGain === "Muito alto" || report.strategy.triGain === "Alto" ? "boa resposta para ganhar competitividade" : "boa resposta para manter estabilidade";
+  return `${hit ? "Acerto registrado" : "Revisão necessária"}: gabarito ${answerLetter}. ${explanation} Conduta: ${dose}, mantendo as fáceis sob controle.`;
+}
+
+function recordTriClinicAttempt(user, session) {
+  if (!session || session.recordedAt) return;
+  const questions = getTriClinicSessionQuestions(session);
+  const skill = findSkillById(session.skillId);
+  const competency = findCompetencyBySkillId(session.skillId);
+  const score = getTriClinicSessionScore(session, questions);
+  const questionResults = questions.map((question) => ({
+    id: question.id,
+    skillId: session.skillId,
+    areaId: session.areaId,
+    difficulty: question.difficulty || "medium",
+    correct: Number(session.answers?.[question.id]) === question.answer,
+  }));
+  user.attemptLog = user.attemptLog || [];
+  user.attemptLog.push({
+    day: selectedDay || getTargetDay(user),
+    source: "clinic",
+    competencyId: competency?.id || session.areaId,
+    competencyShort: competency?.short || "Clínica",
+    skillId: session.skillId,
+    skillTitle: skill?.title || "Assunto eletivo",
+    score,
+    total: questions.length,
+    passed: questions.length ? score >= Math.ceil(questions.length * 0.8) : false,
+    questionResults,
+    createdAt: new Date().toISOString(),
+  });
+  user.triClinicHistory = user.triClinicHistory || [];
+  user.triClinicHistory.push({
+    sessionId: session.id,
+    skillId: session.skillId,
+    questionIds: session.questionIds || [],
+    score,
+    total: questions.length,
+    createdAt: new Date().toISOString(),
+  });
+  session.recordedAt = new Date().toISOString();
+}
+
+function buildEnemTriItemReport(question = {}) {
+  const competency = findCompetencyBySkillId(question.skillId) || COMPETENCIES.find((item) => item.id === question.competencyId) || null;
+  const skill = findSkillById(question.skillId);
+  const command = inferQuestionCommand(question);
+  const tri = estimateTriParameters(question);
+  const frequency = getHistoricalIncidenceProfile(question);
+  const studyPriority = inferStudyPriority(question, tri, frequency);
+  const triGain = inferTriGainPotential(question, tri, frequency);
+  return {
+    identification: {
+      area: competency?.name || question.area || "Área em revisão",
+      predominantDiscipline: inferPredominantDiscipline(question),
+      mainSubject: skill?.title || question.skillTitle || "Assunto em revisão",
+      secondarySubjects: inferSecondarySubjects(question),
+      interdisciplinarity: inferInterdisciplinarity(question),
+    },
+    matrix: {
+      competencyNumber: question.matrixCompetencyCode || "em revisão",
+      competencyDescription: question.matrixCompetencyDescription || "",
+      primarySkill: question.matrixSkillCode || "em revisão",
+      primarySkillText: question.matrixSkillDescription || "",
+      secondarySkill: "",
+    },
+    cognitive: {
+      bloom: inferBloomLevel(question, command),
+      enemLevel: inferEnemCognitiveLevel(question),
+      explanation: "Classificação estimada pelo comando, texto-base, habilidade vinculada, distratores e dificuldade operacional do item.",
+    },
+    statement: {
+      textBaseImportance: inferTextBaseImportance(question),
+      mainVerb: command.verb,
+      cognitiveAction: command.action,
+    },
+    pedagogy: {
+      resolution: question.pedagogicalComment || question.explanation || "Resolução comentada aguardando curadoria.",
+      prerequisites: inferPrerequisites(question),
+      contents: [skill?.focus || question.skillTitle || "conteúdo em revisão"].filter(Boolean),
+    },
+    distractors: analyzeQuestionDistractors(question),
+    tri,
+    historical: frequency,
+    strategy: {
+      idealTimeMinutes: inferIdealResolutionTime(question),
+      studyPriority,
+      triGain,
+      studentProfile: inferStudentProfile(question, tri),
+    },
+    summary: {
+      area: competency?.name || question.area || "Área em revisão",
+      discipline: inferPredominantDiscipline(question),
+      competency: question.matrixCompetencyCode || "em revisão",
+      skill: question.matrixSkillCode || "em revisão",
+      subject: skill?.title || question.skillTitle || "Assunto em revisão",
+      cognitiveLevel: inferEnemCognitiveLevel(question),
+      triDifficulty: tri.parameterB.difficulty,
+      historicalFrequency: frequency.frequency,
+      studyPriority,
+      triGain,
+    },
+  };
+}
+
+function inferPredominantDiscipline(question = {}) {
+  const skillId = question.skillId || "";
+  const title = normalizeForMatch(question.skillTitle || "");
+  if (question.competencyId === "matematica") return "Matemática";
+  if (skillId.startsWith("bio") || title.includes("biologia")) return "Biologia";
+  if (skillId.startsWith("quim") || title.includes("quim")) return "Química";
+  if (skillId.startsWith("fis") || title.includes("fisica")) return "Física";
+  if (skillId.startsWith("hist") || title.includes("historia")) return "História";
+  if (skillId.startsWith("geo") || title.includes("geografia")) return "Geografia";
+  if (skillId.startsWith("socio") || title.includes("sociologia")) return "Sociologia";
+  if (skillId.startsWith("filo") || title.includes("filosofia")) return "Filosofia";
+  if (question.competencyId === "linguagens") return title.includes("redacao") ? "Redação" : "Linguagens";
+  return question.area || "Disciplina em revisão";
+}
+
+function inferSecondarySubjects(question = {}) {
+  const haystack = normalizeForMatch([question.text, question.extractedStem, question.skillTitle, question.matrixSkillDescription].join(" "));
+  const subjects = [];
+  [
+    ["gráfico/tabela", ["grafico", "tabela", "percentual", "dados"]],
+    ["leitura de texto", ["texto", "enunciado", "excerto", "leitura"]],
+    ["política pública", ["estado", "governo", "politica", "direito"]],
+    ["ambiente e saúde", ["ambiente", "saude", "saneamento", "doenca"]],
+    ["cálculo", ["calcule", "valor", "medida", "funcao"]],
+  ].forEach(([label, tokens]) => {
+    if (tokens.some((token) => haystack.includes(token))) subjects.push(label);
+  });
+  return subjects.slice(0, 3);
+}
+
+function inferInterdisciplinarity(question = {}) {
+  const count = inferSecondarySubjects(question).length + (question.visualSourceType ? 1 : 0);
+  if (count >= 3) return "Alto";
+  if (count >= 1) return "Médio";
+  return "Baixo";
+}
+
+function inferQuestionCommand(question = {}) {
+  const text = normalizeForMatch([question.extractedStem, question.text, question.matrixSkillDescription].join(" "));
+  const commands = [
+    ["calcular", "Calcular"],
+    ["inferir", "Inferir"],
+    ["interpretar", "Interpretar"],
+    ["comparar", "Comparar"],
+    ["relacionar", "Relacionar"],
+    ["avaliar", "Avaliar"],
+    ["explicar", "Explicar"],
+    ["identificar", "Identificar"],
+    ["analisar", "Analisar"],
+    ["determinar", "Calcular"],
+  ];
+  const found = commands.find(([verb]) => text.includes(verb));
+  return {
+    verb: found?.[0] || "identificar",
+    action: found?.[1] || (question.competencyId === "matematica" ? "Calcular" : "Interpretar"),
+  };
+}
+
+function inferBloomLevel(question = {}, command = inferQuestionCommand(question)) {
+  if (["Avaliar"].includes(command.action)) return "Avaliar";
+  if (["Analisar", "Inferir", "Relacionar", "Comparar"].includes(command.action)) return "Analisar";
+  if (["Calcular"].includes(command.action)) return question.difficulty === "hard" ? "Analisar" : "Aplicar";
+  if (question.difficulty === "easy") return "Compreender";
+  return "Aplicar";
+}
+
+function inferEnemCognitiveLevel(question = {}) {
+  if (question.difficulty === "hard") return question.frequencyTier === "low" ? "Alto" : "Médio-Alto";
+  if (question.difficulty === "medium") return "Médio";
+  return "Baixo";
+}
+
+function inferTextBaseImportance(question = {}) {
+  if (question.stimulusImage || question.cropImage || question.visualSourceType) return "Fundamental";
+  const textLength = String(question.extractedStem || question.text || "").length;
+  if (textLength > 240) return "Fundamental";
+  if (textLength > 90) return "Importante";
+  return "Dispensável";
+}
+
+function inferPrerequisites(question = {}) {
+  const skill = findSkillById(question.skillId);
+  const prerequisites = [skill?.core, skill?.focus, question.matrixSkillDescription].filter(Boolean);
+  return [...new Set(prerequisites)].slice(0, 4);
+}
+
+function analyzeQuestionDistractors(question = {}) {
+  const analysis = splitAlternativesAnalysis(question.alternativesAnalysis || "");
+  return (question.options || []).map((option, index) => {
+    const letter = "ABCDE"[index];
+    const correct = index === question.answer;
+    return {
+      alternative: letter,
+      correct,
+      reason: correct ? "Gabarito oficial." : analysis[index] || "Distrator a revisar na curadoria comentada.",
+      type: correct ? "correta" : inferDistractorType(option, question),
+    };
+  });
+}
+
+function inferDistractorType(option = "", question = {}) {
+  const text = normalizeForMatch(`${option} ${question.extractedStem || ""}`);
+  if (/(calculo|valor|medida|porcentagem|percentual)/.test(text)) return "Erro de cálculo";
+  if (/(sempre|nunca|todo|todos|apenas)/.test(text)) return "Generalização indevida";
+  if (/(conceito|definicao|termo)/.test(text)) return "Confusão terminológica";
+  if (question.cropImage || question.stimulusImage) return "Leitura parcial do texto";
+  return "Interpretação superficial";
+}
+
+function estimateTriParameters(question = {}) {
+  const quality = getBniItemQualityBonus(question);
+  const realTriProfile = getRealTriSkillProfile(question.competencyId, question.matrixSkillCode);
+  const realParameterSummary = realTriProfile?.triParameterSummary || question.realTriParameterSummary || {};
+  const realAccuracy = realTriProfile?.realAccuracy || question.realAccuracy || {};
+  const avgPercentCorrect = Number(
+    realAccuracy.avgPercentCorrect ??
+    realParameterSummary.avgPercentCorrect ??
+    question.realAvgPercentCorrect ??
+    0
+  );
+  const percentSnippet = avgPercentCorrect > 0
+    ? `; acerto real médio=${avgPercentCorrect.toFixed(1)}% em ${realAccuracy.itemsWithPercentCorrect || realParameterSummary.itemsWithPercentCorrect || 0} itens`
+    : "";
+  const fallbackDiscrimination =
+    quality >= 70 ? "Muito alto" : quality >= 52 ? "Alto" : quality >= 34 ? "Médio" : quality >= 18 ? "Baixo" : "Muito baixo";
+  const discrimination = realTriProfile?.estimatedDiscrimination || question.realTriEstimatedDiscrimination || fallbackDiscrimination;
+  const difficultyMap = {
+    easy: { difficulty: "Fácil", proficiency: "400-500" },
+    medium: { difficulty: "Média", proficiency: "500-600" },
+    hard: { difficulty: question.frequencyTier === "low" ? "Muito difícil" : "Difícil", proficiency: question.frequencyTier === "low" ? "700-800+" : "600-700" },
+  };
+  const realTriParameter = getRealTriDifficultyParameter(realTriProfile || question);
+  const parameterB = realTriParameter || difficultyMap[question.difficulty] || difficultyMap.medium;
+  const fallbackCasual = Array.isArray(question.options) && question.options.length === 5 && Array.isArray(question.alternativesAnalysis)
+    ? "Baixo"
+    : question.hasReliableOptions
+      ? "Médio"
+      : "Alto";
+  const casual = realTriProfile?.estimatedCasual || question.realTriEstimatedCasual || fallbackCasual;
+  const realJustification = realTriProfile
+    ? `Estimativa baseada nos parâmetros TRI médios da habilidade ${realTriProfile.skill}: A=${realParameterSummary.avgA ?? "s/d"}, B=${realParameterSummary.avgB ?? "s/d"}, C=${realParameterSummary.avgC ?? "s/d"} em ${realParameterSummary.itemsWithTriParams || 0} itens${percentSnippet}.`
+    : "";
+  return {
+    parameterA: {
+      discrimination,
+      justification:
+        realJustification ||
+        "Estimativa baseada em vínculo à matriz, qualidade dos distratores, presença de comentário, fonte oficial e confiabilidade das alternativas.",
+    },
+    parameterB,
+    parameterC: {
+      casual,
+      justification:
+        realJustification || "Estimativa pelo número de alternativas, força dos distratores e confiabilidade da transcrição.",
+    },
+  };
+}
+
+function getHistoricalIncidenceProfile(question = {}) {
+  const realTriProfile = getRealTriSkillProfile(question.competencyId, question.matrixSkillCode);
+  const frequency =
+    question.frequencyTier === "high"
+      ? "Alta"
+      : question.frequencyTier === "medium"
+        ? "Média"
+        : question.frequencyTier === "low"
+          ? "Baixa"
+          : "Média";
+  const sourceYear = String(question.source || "").match(/20\d{2}/)?.[0];
+  const years = sourceYear ? [sourceYear] : [];
+  return {
+    frequency,
+    recurrence: question.frequencyLabel || "Incidência em revisão",
+    years,
+    chargingForms: [question.skillTitle || "habilidade vinculada", question.visualSourceType || "interpretação do comando"].filter(Boolean),
+    reappearanceProbability: question.frequencyTier === "high" ? "Alta" : question.frequencyTier === "low" ? "Baixa" : "Média",
+    justification: realTriProfile
+      ? `${realTriProfile.skill} ocupa o ${realTriProfile.rankInArea}º lugar da área na régua Medicina 2015-2025, com ${realTriProfile.totalItems} itens e tendência ${String(realTriProfile.trend || "estável").replaceAll("_", " ")}.`
+      : question.frequencySource || "Régua interna aguardando ampliação da base histórica.",
+  };
+}
+
+function inferStudyPriority(question = {}, tri = estimateTriParameters(question), frequency = getHistoricalIncidenceProfile(question)) {
+  if (question.medicineCritical || question.beginnerCore || question.frequencyTier === "high") return "Prioridade Máxima";
+  if (frequency.reappearanceProbability === "Alta" || tri.parameterA.discrimination === "Alto") return "Prioridade Alta";
+  if (question.frequencyTier === "medium" || question.difficulty === "medium") return "Prioridade Média";
+  return "Prioridade Baixa";
+}
+
+function inferTriGainPotential(question = {}, tri = estimateTriParameters(question), frequency = getHistoricalIncidenceProfile(question)) {
+  const realTriProfile = getRealTriSkillProfile(question.competencyId, question.matrixSkillCode);
+  const medicineScore = Number(realTriProfile?.medicineScore || question.realMedicineScore || 0);
+  const realAccuracy = realTriProfile?.realAccuracy || question.realAccuracy || {};
+  const avgPercentCorrect = Number(realAccuracy.avgPercentCorrect ?? question.realAvgPercentCorrect ?? 0);
+  if (medicineScore >= 70 && avgPercentCorrect > 0 && avgPercentCorrect < 32) return "Muito alto";
+  if (medicineScore >= 70 && avgPercentCorrect > 0 && avgPercentCorrect < 45 && ["Difícil", "Muito Difícil", "Média"].includes(tri.parameterB.difficulty)) return "Muito alto";
+  if (medicineScore >= 95 && ["Difícil", "Muito Difícil", "Média"].includes(tri.parameterB.difficulty)) return "Muito alto";
+  if (medicineScore >= 70) return "Alto";
+  if (question.difficulty === "hard" && tri.parameterA.discrimination !== "Muito baixo") return "Muito alto";
+  if (question.difficulty === "medium" && frequency.frequency !== "Baixa") return "Alto";
+  if (question.difficulty === "easy" && question.frequencyTier === "high") return "Alto";
+  if (question.frequencyTier === "low") return "Médio";
+  return "Médio";
+}
+
+function inferIdealResolutionTime(question = {}) {
+  if (question.difficulty === "hard") return question.cropImage || question.stimulusImage ? 4 : 3;
+  if (question.difficulty === "medium") return question.cropImage || question.stimulusImage ? 3 : 2;
+  return 2;
+}
+
+function inferStudentProfile(question = {}, tri = estimateTriParameters(question)) {
+  const proficiency = tri.parameterB.proficiency;
+  const skill = findSkillById(question.skillId);
+  return {
+    approximateProficiency: proficiency,
+    masteredSkills: [skill?.core, question.matrixSkillDescription].filter(Boolean),
+    commonErrors: [skill?.trap || "leitura parcial do comando", inferDistractorType("", question)].filter(Boolean),
+  };
 }
 
 function renderMissionBlock(user, day, block, status) {
@@ -2669,7 +3623,7 @@ function getQuestionFeedbackParts(question, block, user) {
   const explanation = cleanFeedbackText(question.pedagogicalComment || question.explanation || "Confira o gabarito e refaça o raciocínio.");
   const alternatives = splitAlternativesAnalysis(question.alternativesAnalysis || "");
   const alternativesText = alternatives.length ? `Distratores: ${alternatives.join(" ")}` : "";
-  const studyText = `Conduta: ${block.clinicalCase.vitals}. Prioridade: ${priority}${skillAccuracy === null ? " por ausência de histórico." : ` porque seu desempenho atual está em ${skillAccuracy}%.`} Mantenha as fáceis no radar para proteger a coerência TRI.`;
+  const studyText = `Conduta: ${block.clinicalCase.vitals}. Prioridade: ${priority}${skillAccuracy === null ? " por ausência de histórico." : ` porque seu desempenho atual está em ${skillAccuracy}%.`} Mantenha as fáceis no radar para proteger a coerência da prova.`;
   return {
     answerLabel,
     explanation,
@@ -2820,7 +3774,7 @@ function renderPlanView(user) {
         <div class="panel-header">
           <div>
             <h2>Prioridades da semana</h2>
-            <p>Ordenadas por desempenho, dificuldade, base TRI e erro recente.</p>
+            <p>Ordenadas por desempenho, dificuldade, base interna e erro recente.</p>
           </div>
         </div>
         <div class="priority-list">
@@ -3050,7 +4004,7 @@ function renderDailyNewsView(user) {
       <div class="panel-header">
         <div>
           <h2>${escapeHTML(brief.headline || "Plantão de atualidades ENEM")}</h2>
-          <p>Use o pacote anexado para transformar notícias do dia em repertório, tema provável, proposta C5 e conexões com as áreas objetivas.</p>
+          <p>Como doses homeopáticas de atualidades diariamente podem lhe tirar da internação e virar repertório, tema provável, proposta C5 e conexões com as áreas do ENEM.</p>
         </div>
         <span class="status-chip">${escapeHTML(isSample ? "modo preparo" : "notícias carregadas")}</span>
       </div>
@@ -3107,6 +4061,30 @@ function normalizeDailyNewsPayload(raw) {
     brief: payload.brief,
     sources: Array.isArray(payload.sources) ? payload.sources : [],
   };
+}
+
+async function fetchDailyNewsForUser(user, endpoint, status, options = {}) {
+  const targetEndpoint = endpoint || DAILY_NEWS_DEFAULT_ENDPOINT;
+  if (!targetEndpoint) {
+    if (status) status.textContent = "Endpoint de Atualidades não configurado.";
+    return false;
+  }
+
+  if (status) status.textContent = options.auto ? "Carregando plantão de hoje..." : "Buscando plantão...";
+
+  try {
+    const response = await fetch(targetEndpoint, { cache: "no-store" });
+    if (!response.ok) throw new Error(`Resposta ${response.status}`);
+    const payload = normalizeDailyNewsPayload(await response.json());
+    user.dailyNewsEndpoint = targetEndpoint;
+    user.dailyNewsPayload = payload;
+    saveCurrentUser(user);
+    render();
+    return true;
+  } catch (error) {
+    if (status) status.textContent = `Não consegui buscar agora. Confira a API ou tente novamente. ${error.message || error}`;
+    return false;
+  }
 }
 
 function renderDailyNewsRedacao(redacao) {
@@ -3167,17 +4145,17 @@ function renderInterventionAngle(angle) {
 
 function renderDailyNewsObjectiveAreas(areas) {
   const items = [
-    { key: "linguagens", label: "Linguagens", tag: "LG" },
-    { key: "matematica", label: "Matemática", tag: "MT" },
-    { key: "cienciasHumanas", label: "Ciências Humanas", tag: "CH" },
-    { key: "cienciasDaNatureza", label: "Ciências da Natureza", tag: "CN" },
+    { key: "linguagens", label: "Linguagens", tag: "LG", prescription: "Anamnese textual da notícia" },
+    { key: "matematica", label: "Matemática", tag: "MT", prescription: "Raio-X dos números do dia" },
+    { key: "cienciasHumanas", label: "Ciências Humanas", tag: "CH", prescription: "Anamnese social do Brasil" },
+    { key: "cienciasDaNatureza", label: "Ciências da Natureza", tag: "CN", prescription: "Exame laboratorial da notícia" },
   ];
   return `
     <section class="panel redacao-wide">
       <div class="panel-header">
         <div>
-          <h2>Uso nas áreas objetivas</h2>
-          <p>Como a notícia do dia pode virar leitura, dado, contexto ou problema científico.</p>
+          <h2>Doses homeopáticas de atualidades</h2>
+          <p>Como uma notícia por dia pode tirar o futuro médico da internação e virar leitura, dado, contexto ou problema científico.</p>
         </div>
       </div>
       <div class="daily-news-area-grid">
@@ -3186,6 +4164,7 @@ function renderDailyNewsObjectiveAreas(areas) {
             (item) => `
               <article class="news-card">
                 <span class="competency-tag">${escapeHTML(item.tag)}</span>
+                <span class="news-medical-dose"><strong>${escapeHTML(item.prescription)}</strong></span>
                 <strong>${escapeHTML(item.label)}</strong>
                 ${renderNewsList(toTextList(areas[item.key]), "Aguardando conexão didática.")}
               </article>
@@ -3350,11 +4329,12 @@ function renderSimuladoView(user) {
     </section>
 
     ${renderSimuladoTimer()}
+    ${renderNotasPorAcertosTriPanel()}
 
     <section class="panel simulado-hero-panel">
       <div class="panel-header">
         <div>
-          <h2>Protocolo TRI do sábado</h2>
+          <h2>Protocolo de prova do sábado</h2>
           <p>${escapeHTML(getSimuladoLevelProtocol(level).description)}</p>
         </div>
         <span class="status-chip">${escapeHTML(level.label)}</span>
@@ -3437,6 +4417,91 @@ function renderSimuladoView(user) {
   `;
 }
 
+function renderNotasPorAcertosTriPanel() {
+  const rows = Array.isArray(NOTAS_ACERTOS_TRI_DATA.rows) ? NOTAS_ACERTOS_TRI_DATA.rows : [];
+  const year = Number(NOTAS_ACERTOS_TRI_DATA.latestYear) || Math.max(...rows.map((row) => Number(row.year)).filter(Number.isFinite));
+  if (!rows.length || !Number.isFinite(year)) return "";
+
+  const reference = [
+    { area: "LC", label: "Linguagens", hits: 31 },
+    { area: "CH", label: "Humanas", hits: 34 },
+    { area: "CN", label: "Natureza", hits: 22 },
+    { area: "MT", label: "Matemática", hits: 24 },
+  ];
+
+  return `
+    <section class="panel redacao-wide">
+      <div class="panel-header">
+        <div>
+          <h2>Nota provável por acertos</h2>
+          <p>Veja quanto alunos com esses acertos costumaram tirar no ENEM.</p>
+        </div>
+        <span class="status-chip">${year}</span>
+      </div>
+      <div class="simulado-area-grid">
+        ${reference.map((item) => renderNotasPorAcertosTriCard(item, year)).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function renderNotasPorAcertosTriCard(item, year) {
+  const row = findNotasPorAcertosTriRow(year, item.area, item.hits);
+  if (!row) {
+    return `
+      <article class="simulado-area-card">
+        <div class="plan-card-header">
+          <span class="competency-tag">${escapeHTML(item.area)}</span>
+          <span class="day-pill">${item.hits}/45</span>
+        </div>
+        <h3>${escapeHTML(item.label)}</h3>
+        <p>Faixa ainda não disponível para este recorte.</p>
+      </article>
+    `;
+  }
+
+  return `
+    <article class="simulado-area-card">
+      <div class="plan-card-header">
+        <span class="competency-tag">${escapeHTML(item.area)}</span>
+        <span class="day-pill">${item.hits}/45</span>
+      </div>
+      <h3>${escapeHTML(item.label)}</h3>
+      <div class="simulado-difficulty-row">
+        <span>Nota média: <strong>${formatTriScore(row.mean)}</strong></span>
+        <span>Nota do meio: <strong>${formatTriScore(row.median)}</strong></span>
+      </div>
+      <div class="simulado-skill-list">
+        <div>
+          <strong>${formatTriScore(row.p25)} a ${formatTriScore(row.p75)}</strong>
+          <small>faixa mais comum para esses acertos</small>
+        </div>
+        <div>
+          <strong>${formatTriScore(row.p90)}</strong>
+          <small>nota alta de referência; ${formatTriSample(row.sample)} alunos na base</small>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function findNotasPorAcertosTriRow(year, area, hits) {
+  const rows = Array.isArray(NOTAS_ACERTOS_TRI_DATA.rows) ? NOTAS_ACERTOS_TRI_DATA.rows : [];
+  return rows.find((row) => Number(row.year) === Number(year) && row.area === area && Number(row.hits) === Number(hits));
+}
+
+function formatTriScore(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return "s/d";
+  return numeric.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+}
+
+function formatTriSample(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return "amostra sem dado";
+  return numeric.toLocaleString("pt-BR");
+}
+
 function renderSimuladoAreaCard(area) {
   return `
     <article class="simulado-area-card">
@@ -3496,7 +4561,7 @@ function getSimuladoLevelProtocol(level) {
     return {
       short: "somente fáceis recorrentes",
       description:
-        "Iniciante faz somente questões fáceis das competências e habilidades mais recorrentes. O objetivo é consolidar base e proteger a TRI.",
+        "Iniciante faz somente questões fáceis das competências e habilidades mais recorrentes. O objetivo é consolidar base e proteger a coerência da prova.",
       mix: { easy: 100, medium: 0, hard: 0 },
       skillBreadth: 5,
     };
@@ -3505,15 +4570,15 @@ function getSimuladoLevelProtocol(level) {
     return {
       short: "simulado completo com base protegida",
       description:
-        "Alta performance mantém questões fáceis para proteger coerência TRI e acrescenta médias, difíceis e raras para buscar diferenciação.",
+        "Alta performance mantém questões fáceis para proteger coerência de prova e acrescenta médias, difíceis e raras para buscar diferenciação.",
       mix: { easy: 25, medium: 40, hard: 35 },
       skillBreadth: 9,
     };
   }
   return {
-    short: "fáceis e médias com incremento TRI",
+    short: "fáceis e médias com incremento de desempenho",
     description:
-      "Intermediário mantém fáceis importantes, amplia médias e insere poucas difíceis para ganhar repertório sem destruir a TRI.",
+      "Intermediário mantém fáceis importantes, amplia médias e insere poucas difíceis para ganhar repertório sem quebrar a coerência da prova.",
     mix: { easy: 35, medium: 55, hard: 10 },
     skillBreadth: 7,
   };
@@ -3589,7 +4654,7 @@ function renderCompetencyIndicatorGrid(items) {
             <article class="indicator-card">
               <span class="competency-tag ${item.competency.colorClass}">${item.competency.short}</span>
               <strong>${item.total ? `${item.percent}%` : "sem dados"}</strong>
-              <small>${item.total ? `${item.correct}/${item.total} acertos` : "aguardando simulado ou missão"}</small>
+              <small>${item.total ? `${item.correct}/${item.total} acertos` : "aguardando simulado ou plantão"}</small>
               <div class="bar-track"><div class="bar-fill" style="width: ${item.percent}%"></div></div>
             </article>
           `,
@@ -3640,7 +4705,7 @@ function renderPostSimuladoPlan(weakSkills, level) {
               <span class="day-pill">${index + 1}</span>
               <h3>${escapeHTML(item.skill.title)}</h3>
               <p>${escapeHTML(item.skill.focus)}</p>
-              <small>${escapeHTML(level.id === "iniciante" ? "Revisar com questões fáceis recorrentes." : level.id === "avancado" ? "Inserir médias e difíceis para ganho TRI." : "Reforçar fáceis e médias antes das difíceis.")}</small>
+              <small>${escapeHTML(level.id === "iniciante" ? "Revisar com questões fáceis recorrentes." : level.id === "avancado" ? "Inserir médias e difíceis para ganho de desempenho." : "Reforçar fáceis e médias antes das difíceis.")}</small>
             </article>
           `,
         )
@@ -3665,9 +4730,13 @@ function renderRedacaoView(user) {
   const sourcePacks = REDACTION_LIBRARY.sourcePacks;
   const rubricAlerts = REDACTION_LIBRARY.rubricAlerts;
   const authorCrossovers = REDACTION_LIBRARY.authorCrossovers;
-  const tipCount = C1_OPENING_TIPS.length;
+  const premiumTopicPacks = REDACTION_LIBRARY.premiumTopicPacks || [];
+  const themeArchive = REDACTION_LIBRARY.themeArchive || [];
+  const themePatternAnalysis = REDACTION_LIBRARY.themePatternAnalysis || {};
+  const dailyC1Tips = getDailyC1Tips(user);
   const redacaoWeek = getActiveRedacaoWeek(user);
   const redacaoSummary = getRedacaoWeekSummary(user, redacaoWeek);
+  const activeEssayYear = user.redacaoEssayYear || "todos";
 
   return `
     <section class="grid metrics-grid">
@@ -3681,8 +4750,8 @@ function renderRedacaoView(user) {
       <article class="panel">
         <div class="panel-header">
           <div>
-            <h2>Critérios oficiais</h2>
-            <p>O aluno deve mirar os cinco blocos de avaliação em todos os simulados.</p>
+            <h2>Medicação Caseira para o 1000</h2>
+            <p>Os cinco critérios oficiais funcionam como sinais vitais: se um cai, a nota sente.</p>
           </div>
         </div>
         <div class="competency-list">
@@ -3706,8 +4775,8 @@ function renderRedacaoView(user) {
       <article class="panel">
         <div class="panel-header">
           <div>
-            <h2>Tema da semana</h2>
-            <p>Ao cadastrar o tema, o app entrega uma rota de escrita para treino.</p>
+            <h2>Prontuário do tema da semana</h2>
+            <p>Ao cadastrar o tema, o app abre uma prescrição de escrita para treino.</p>
           </div>
         </div>
         <label class="field">
@@ -3715,8 +4784,8 @@ function renderRedacaoView(user) {
           <input id="essayThemeInput" value="${escapeHTML(theme)}" />
         </label>
         <div class="button-row">
-          <button class="primary-btn" id="saveEssayThemeBtn" type="button">Gerar roteiro</button>
-          <button class="secondary-btn" id="spinEssayPlanBtn" type="button">Girar possibilidades</button>
+          <button class="primary-btn" id="saveEssayThemeBtn" type="button">Gerar prescrição</button>
+          <button class="secondary-btn" id="spinEssayPlanBtn" type="button">Nova conduta</button>
         </div>
         <div class="essay-plan" id="essayPlan">
           ${renderEssayPlan(theme, user.essayPlanSeed || 0)}
@@ -3724,13 +4793,17 @@ function renderRedacaoView(user) {
       </article>
     </section>
 
+    ${renderPremiumTopicPacks(premiumTopicPacks)}
+
     ${renderRedacaoScoreTracker(user, redacaoWeek)}
+
+    ${renderRedacaoMicrodataPanel(REDACTION_MICRODATA)}
 
     <section class="panel redacao-wide redacao-official-panel">
       <div class="panel-header">
         <div>
-          <h2>Manual do corretor na prática</h2>
-          <p>Resumo operacional da cartilha oficial: o que protege a nota e o que pode derrubar o texto.</p>
+          <h2>Protocolo do corretor na prática</h2>
+          <p>Condutas oficiais da cartilha: o que estabiliza a nota e o que manda o texto para observação.</p>
         </div>
         <span class="status-chip">INEP 2025</span>
       </div>
@@ -3740,18 +4813,20 @@ function renderRedacaoView(user) {
     <section class="panel redacao-wide source-library-panel">
       <div class="panel-header">
         <div>
-          <h2>Sala de leitura ENEM</h2>
-          <p>Links, partes essenciais e condutas de uso para leis, livros, autores e documentos citados no treino.</p>
+          <h2>Prontuário de Leitura ENEM</h2>
+          <p>Fontes, trechos de consulta e modo de uso para prescrever repertório sem abrir documento gigante.</p>
         </div>
-        <span class="status-chip">${sourcePacks.length} fontes guiadas</span>
+        <span class="status-chip">${sourcePacks.length} fontes em estoque</span>
       </div>
       ${renderSourceReadingRoom(sourcePacks)}
     </section>
 
+    ${renderThemePatternMap(themePatternAnalysis, themeArchive)}
+
     <section class="panel redacao-wide author-crossover-panel">
       <div class="panel-header">
-        <div>
-          <h2>Cruzamentos autorais</h2>
+          <div>
+          <h2>Junta médica de repertórios</h2>
           <p>Combinações para abrir com repertório forte e fechar com intervenção coerente, sem parecer modelo decorado.</p>
         </div>
         <span class="status-chip">${authorCrossovers.length} rotas</span>
@@ -3762,21 +4837,29 @@ function renderRedacaoView(user) {
     <section class="panel redacao-wide">
       <div class="panel-header">
         <div>
-          <h2>Plantão C1: 3 alertas de hoje</h2>
-          <p>Regras em vermelho extraídas de padrões recorrentes em redações ENEM nota alta/nota 1000 do acervo.</p>
+          <h2>Farmácia da Norma Culta</h2>
+          <p>Plantão C1 com 3 prescrições do dia e lupa para resgatar qualquer regra do prontuário.</p>
         </div>
-        <span class="status-chip">acervo ENEM</span>
+        <span class="status-chip">plantão do dia</span>
       </div>
-      ${renderC1TipBoard(C1_OPENING_TIPS)}
+      <div class="c1-pharmacy-toolbar">
+        <label class="field">
+          <span>Lupa do prontuário C1</span>
+          <input id="c1TipSearchInput" placeholder="Ex.: crase, vírgula, concordância, registro formal..." />
+        </label>
+      </div>
+      <div id="c1TipBoard">
+        ${renderC1TipBoard(dailyC1Tips)}
+      </div>
     </section>
 
     <section class="panel redacao-wide">
       <div class="panel-header">
         <div>
-          <h2>Acervo de repertórios</h2>
-          <p>Base inicial para você ampliar com novos autores, leis, dados e referências culturais.</p>
+          <h2>Farmácia de Repertórios</h2>
+          <p>Doses de autores, leis, dados e referências culturais para montar argumentos com alta argumentativa.</p>
         </div>
-        <span class="status-chip">${repertories.length} acervos</span>
+        <span class="status-chip">${repertories.length} prescrições</span>
       </div>
       ${renderRepertoryBank(repertories)}
     </section>
@@ -3785,7 +4868,7 @@ function renderRedacaoView(user) {
       <article class="panel">
         <div class="panel-header">
           <div>
-            <h2>Exemplos por competência</h2>
+            <h2>Exames por competência</h2>
             <p>C2, C4 e C5 com diagnóstico rápido: fraco versus forte.</p>
           </div>
         </div>
@@ -3795,8 +4878,8 @@ function renderRedacaoView(user) {
       <article class="panel">
         <div class="panel-header">
           <div>
-            <h2>Checklist de escrita</h2>
-            <p>Antes de enviar, revise como corretor: forma, argumento e intervenção.</p>
+            <h2>Checklist de alta textual</h2>
+            <p>Antes de enviar, revise como banca: forma, argumento e intervenção.</p>
           </div>
         </div>
         <ul class="task-list">
@@ -3812,21 +4895,243 @@ function renderRedacaoView(user) {
     <section class="panel essay-panel redacao-wide">
       <div class="panel-header">
         <div>
-          <h2>Redações nota 1000 editáveis</h2>
+          <h2>Prontuário de redações nota 1000</h2>
           <p>Organizadas por ano, tema, aluno e parágrafos. Pesquise trechos e ajuste quando novos anexos entrarem.</p>
         </div>
       </div>
       <div class="essay-search-toolbar">
         <label class="field">
-          <span>Pesquisar trecho, tema, ano ou aluno</span>
+          <span>Buscar no prontuário: trecho, tema, ano ou aluno</span>
           <input id="essaySearchInput" placeholder="Ex.: crase, Constituição, 2024, Caio..." />
         </label>
+        <button class="secondary-btn compact-btn" id="clearEssaySearchBtn" type="button">Limpar</button>
       </div>
+      ${renderEssayYearTabs(essays, activeEssayYear)}
       <div class="editable-essay-grid" id="essayLibrary">
-        ${renderEssayCards(essays, "")}
+        ${renderEssayCards(essays, "", activeEssayYear)}
       </div>
     </section>
   `;
+}
+
+function renderPremiumTopicPacks(packs = []) {
+  if (!packs.length) return "";
+  return `
+    <section class="panel redacao-wide premium-topic-panel">
+      <div class="panel-header">
+        <div>
+          <h2>Plantão de Repertório por Competência</h2>
+          <p>Prescrições curtas para transformar tema, repertório e intervenção em texto autoral de alto desempenho.</p>
+        </div>
+        <span class="status-chip">prescrição ativa</span>
+      </div>
+      <div class="premium-topic-grid">
+        ${packs.map((pack) => renderPremiumTopicPack(pack)).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function renderPremiumTopicPack(pack) {
+  return `
+    <article class="premium-topic-card">
+      <div class="premium-topic-head">
+        <div>
+          <span>Prontuário do tema</span>
+          <h3>${escapeHTML(pack.title)}</h3>
+          <p>${escapeHTML(pack.theme)}</p>
+        </div>
+      </div>
+      <div class="premium-protocol-box">
+        <strong>Diagnóstico do plantão</strong>
+        <p>Use as caixas abaixo como doses de repertório e escrita: cada competência recebe apenas o trecho necessário para montar uma redação própria, sem abrir material corrido.</p>
+      </div>
+      <div class="premium-competency-grid">
+        ${(pack.competencyBoxes || []).map((box) => renderPremiumCompetencyBox(pack.id, box)).join("")}
+      </div>
+    </article>
+  `;
+}
+
+function renderPremiumCompetencyBox(packId, box) {
+  const copyId = `premium-${packId}-${box.code}`.replace(/[^a-z0-9_-]/gi, "-");
+  return `
+    <article class="premium-competency-box">
+      <div class="training-paragraph-head">
+        <span class="day-pill">${escapeHTML(box.code)}</span>
+        <div>
+          <h4>${escapeHTML(box.title)}</h4>
+          <small>${escapeHTML(box.focus)}</small>
+        </div>
+      </div>
+      <textarea id="${escapeHTML(copyId)}" class="premium-copy-text" rows="7">${escapeHTML(box.text)}</textarea>
+      <div class="premium-note">
+        <strong>Olhar de corretor</strong>
+        <span>${escapeHTML(box.note)}</span>
+      </div>
+      <button class="secondary-btn compact-btn" type="button" data-copy-target="${escapeHTML(copyId)}" data-copy-label="Copiar trecho">Copiar trecho</button>
+    </article>
+  `;
+}
+
+function renderThemePatternMap(analysis = {}, themes = []) {
+  const trendCards = analysis.trendCards || [];
+  const indispensable = analysis.indispensableRepertories2026 || [];
+  if (!trendCards.length && !indispensable.length && !themes.length) return "";
+  return `
+    <section class="panel redacao-wide theme-pattern-panel">
+      <div class="panel-header">
+        <div>
+          <h2>Tomografia ENEM 2009-2025</h2>
+          <p>Tomografia dos temas oficiais para orientar repertório, tese e intervenção sem abrir PDFs inteiros.</p>
+        </div>
+        <span class="status-chip">${themes.length} temas catalogados</span>
+      </div>
+      <div class="theme-pattern-grid">
+        ${trendCards
+          .map(
+            (item) => `
+              <article class="theme-pattern-card">
+                <h3>${escapeHTML(item.title)}</h3>
+                <p>${escapeHTML(item.insight)}</p>
+              </article>
+            `,
+          )
+          .join("")}
+      </div>
+      <div class="indispensable-panel">
+        <div>
+          <h3>Prescrições de repertório para 2026</h3>
+          <p>${escapeHTML(analysis.prediction2026 || "A central clínica de redação deve priorizar repertórios que cruzem direito social, grupo afetado e política pública executável.")}</p>
+        </div>
+        <div class="indispensable-grid">
+          ${indispensable
+            .map(
+              (item) => `
+                <article class="indispensable-card">
+                  <strong>${escapeHTML(item.title)}</strong>
+                  <span>${escapeHTML(item.use)}</span>
+                </article>
+              `,
+            )
+            .join("")}
+        </div>
+      </div>
+      ${renderThemeArchiveCompact(themes)}
+    </section>
+  `;
+}
+
+function renderThemeArchiveCompact(themes = []) {
+  if (!themes.length) return "";
+  const families = countBy(themes, "family");
+  const topFamilies = Object.entries(families)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8);
+  return `
+    <div class="theme-archive-compact">
+      <div class="plan-shelf-head">
+        <h3>Sinais recorrentes por família temática</h3>
+        <span>2009-2025</span>
+      </div>
+      <div class="theme-family-row">
+        ${topFamilies.map(([family, count]) => `<span>${escapeHTML(family)} <strong>${count}</strong></span>`).join("")}
+      </div>
+      <details class="theme-archive-details">
+        <summary>Abrir temas catalogados em lista curta</summary>
+        <div class="theme-archive-list">
+          ${themes
+            .map(
+              (item) => `
+                <div class="theme-archive-row">
+                  <strong>${escapeHTML(item.year)}</strong>
+                  <span>${escapeHTML(item.theme)}</span>
+                  <small>${escapeHTML(item.application)} · ${escapeHTML(item.axis)}</small>
+                </div>
+              `,
+            )
+            .join("")}
+        </div>
+      </details>
+    </div>
+  `;
+}
+
+function countBy(items, key) {
+  return (items || []).reduce((acc, item) => {
+    const value = item?.[key] || "outros";
+    acc[value] = (acc[value] || 0) + 1;
+    return acc;
+  }, {});
+}
+
+function renderRedacaoMicrodataPanel(data = {}) {
+  const global = data.global || {};
+  const profile = data.promptProfile || {};
+  if (!global.validRedactions || !profile.targets?.length) return "";
+  const competencies = global.competencies || [];
+  const weakest = [...competencies].sort((a, b) => Number(a.average || 999) - Number(b.average || 999))[0];
+  const strongest = [...competencies].sort((a, b) => Number(b.average || 0) - Number(a.average || 0))[0];
+  const threshold840 = global.thresholds?.["840"]?.percent ?? 0;
+  const threshold940 = global.thresholds?.["940"]?.percent ?? 0;
+  const threshold960 = global.thresholds?.["960"]?.percent ?? 0;
+  const diagnosis = profile.statisticalDiagnosis || [];
+  const zeroRisk = profile.zeroRisk?.mainStatus;
+  return `
+    <section class="panel redacao-wide theme-pattern-panel">
+      <div class="panel-header">
+        <div>
+          <h2>Tomografia estatística da redação</h2>
+          <p>Microdados oficiais de 2015 a 2024 convertidos em meta, risco e prescrição C1-C5.</p>
+        </div>
+        <span class="status-chip">microdados oficiais</span>
+      </div>
+      <section class="grid metrics-grid">
+        ${metric("Média nacional", formatRedacaoMicroNumber(global.averageScore), "redações válidas 2015-2024")}
+        ${metric("Meta 840+", `${formatRedacaoMicroNumber(threshold840)}%`, "primeira alta da enfermaria")}
+        ${metric("Meta 940+", `${formatRedacaoMicroNumber(threshold940)}%`, "alta performance Medicina")}
+        ${metric("Meta 960+", `${formatRedacaoMicroNumber(threshold960)}%`, "zona elite do centro cirúrgico")}
+      </section>
+      <div class="theme-pattern-grid">
+        <article class="theme-pattern-card">
+          <h3>Sinal vital mais sensível</h3>
+          <p>${escapeHTML(weakest ? `${weakest.code}: ${weakest.title}, média ${weakest.average}. Reforçar essa competência evita queda brusca da nota.` : "Competência em análise.")}</p>
+        </article>
+        <article class="theme-pattern-card">
+          <h3>Sinal vital mais estável</h3>
+          <p>${escapeHTML(strongest ? `${strongest.code}: ${strongest.title}, média ${strongest.average}. Use essa estabilidade como base, sem abandonar revisão.` : "Competência em análise.")}</p>
+        </article>
+        <article class="theme-pattern-card">
+          <h3>Risco de nota zero</h3>
+          <p>${escapeHTML(zeroRisk ? `${zeroRisk.label} foi o status irregular mais frequente fora das redações sem problemas. Conduta: tema explícito, prosa dissertativo-argumentativa e texto completo.` : "Sem intercorrência dominante no agregado.")}</p>
+        </article>
+      </div>
+      <div class="indispensable-panel">
+        <div>
+          <h3>Prescrição por meta</h3>
+          <p>${escapeHTML(diagnosis[0] || "Use os microdados para calibrar metas, sem transformar o treino em tabela fria.")}</p>
+        </div>
+        <div class="indispensable-grid">
+          ${profile.targets
+            .map(
+              (target) => `
+                <article class="indispensable-card">
+                  <strong>${escapeHTML(target.level)} · ${escapeHTML(target.target)}</strong>
+                  <span>${escapeHTML(`${formatRedacaoMicroNumber(target.microdataPercent)}% atingiram essa marca. ${target.prescription}`)}</span>
+                </article>
+              `,
+            )
+            .join("")}
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function formatRedacaoMicroNumber(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return "--";
+  return number.toLocaleString("pt-BR", { minimumFractionDigits: number < 10 ? 2 : 0, maximumFractionDigits: 2 });
 }
 
 function renderRedacaoScoreTracker(user, week) {
@@ -4067,8 +5372,38 @@ function getRedacaoCompetencies(redacao) {
   ];
 }
 
-function renderC1TipBoard(tips) {
+function getDailyC1Tips(user) {
+  const tips = REDACTION_LIBRARY.c1Tips || [];
+  if (tips.length <= 3) return tips;
+  const seed = hashString(`${todayISO()}-${selectedDay || getTargetDay(user)}-farmacia-c1`);
+  return pickRotating(tips, seed, 3);
+}
+
+function getC1TipSearchResults(term = "") {
+  const clean = normalizeForMatch(term).trim();
+  if (!clean) return [];
+  const tokens = clean.split(/\s+/).filter((token) => token.length > 2);
+  return (REDACTION_LIBRARY.c1Tips || []).filter((tip) => {
+    const haystack = normalizeForMatch([
+      tip.title,
+      tip.rule,
+      tip.memory,
+      tip.reason,
+      tip.sourceEssay,
+      tip.sourceExcerpt,
+      ...(tip.examples || []).flat(),
+    ].join(" "));
+    return tokens.every((token) => haystack.includes(token));
+  });
+}
+
+function renderC1TipBoard(tips, options = {}) {
+  const searchTerm = options.searchTerm || "";
+  if (!tips.length) {
+    return `<div class="empty-state">Nenhuma prescrição encontrada na Farmácia da Norma Culta para "${escapeHTML(searchTerm)}".</div>`;
+  }
   return `
+    ${searchTerm ? `<p class="c1-search-result-note">Resultado da lupa: ${tips.length} prescrição${tips.length === 1 ? "" : "ões"} encontrada${tips.length === 1 ? "" : "s"}.</p>` : ""}
     <div class="c1-tip-grid">
       ${tips
         .map(
@@ -4091,9 +5426,12 @@ function renderC1TipBoard(tips) {
                     </div>`
                   : ""
               }
-              <div class="c1-example-list">
-                ${tip.examples.map((example, index) => renderRuleExampleLines(example, tip.rule, index)).join("")}
-              </div>
+              <details class="c1-example-drawer">
+                <summary>Abrir receitas de aplicação</summary>
+                <div class="c1-example-list">
+                  ${(tip.examples || []).map((example, index) => renderRuleExampleLines(example, tip.rule, index)).join("")}
+                </div>
+              </details>
             </article>
           `,
         )
@@ -4133,11 +5471,11 @@ function renderRepertoryBank(repertories) {
                 ${item.themes.map((theme) => `<span>${escapeHTML(theme)}</span>`).join("")}
               </div>
               <div class="repertory-use">
-                <strong>Frase ponte</strong>
+                <strong>Ponte de aplicação</strong>
                 <p>${escapeHTML(item.bridge)}</p>
-                <strong>Como usar</strong>
+                <strong>Prescrição no texto</strong>
                 <p>${escapeHTML(item.sample)}</p>
-                <strong>Evite</strong>
+                <strong>Contraindicação</strong>
                 <p>${escapeHTML(item.avoid)}</p>
               </div>
             </article>
@@ -4152,8 +5490,9 @@ function renderRubricAlerts(alerts) {
   return `
     <div class="rubric-alert-grid">
       ${(alerts || [])
-        .map(
-          (item) => `
+        .map((item) => {
+          const isZero = item.code === "ZERO";
+          return `
             <article class="rubric-alert-card">
               <div class="rubric-alert-head">
                 <span class="day-pill">${escapeHTML(item.code)}</span>
@@ -4163,16 +5502,16 @@ function renderRubricAlerts(alerts) {
                 </div>
               </div>
               <div class="rubric-alert-body">
-                <strong>Conduta do aluno</strong>
+                <strong>${isZero ? "Conduta de quem quer ser Calouro Med ano que vem" : "Conduta do futuro médico"}</strong>
                 <p>${escapeHTML(item.studentCommand)}</p>
-                <strong>Evite no plantão</strong>
+                <strong>${isZero ? "Não entre na zona de anulação" : "Evite no plantão médico"}</strong>
                 <p>${escapeHTML(item.avoid)}</p>
-                <strong>Checagem rápida</strong>
+                <strong>${isZero ? "Checagem anti-zero antes da entrega" : "Checagem rápida para alta"}</strong>
                 <p>${escapeHTML(item.trainingCheck)}</p>
               </div>
             </article>
-          `,
-        )
+          `;
+        })
         .join("")}
     </div>
   `;
@@ -4187,8 +5526,8 @@ function renderSourceReadingRoom(sourcePacks) {
             <article class="source-card">
               <div class="source-card-head">
                 <div>
-                  <span>${escapeHTML(item.type)}</span>
-                  <h3>${escapeHTML(item.title)}</h3>
+                  <span>${escapeHTML(getSourceDisplayType(item))}</span>
+                  <h3>${escapeHTML(getSourceDisplayTitle(item))}</h3>
                 </div>
                 <small>${escapeHTML(item.sourceLabel)}</small>
               </div>
@@ -4196,22 +5535,22 @@ function renderSourceReadingRoom(sourcePacks) {
                 ${(item.links || []).map((link) => renderExternalLink(link)).join("")}
               </div>
               <div class="source-pill-row">
-                <span>${escapeHTML(item.availability)}</span>
+                <span>${escapeHTML(getSourceDisplayAvailability(item))}</span>
                 ${(item.themes || []).slice(0, 5).map((theme) => `<span>${escapeHTML(theme)}</span>`).join("")}
               </div>
               <p class="source-reading-focus">${escapeHTML(item.readingFocus)}</p>
               <div class="source-essential-box">
-                <strong>Partes essenciais</strong>
+                <strong>Trechos para consulta</strong>
                 <ul>
                   ${(item.essentialPoints || []).map((point) => `<li>${escapeHTML(point)}</li>`).join("")}
                 </ul>
               </div>
               <div class="source-use-box">
-                <strong>Como usar no texto</strong>
+                <strong>Prescrição no texto</strong>
                 <p>${escapeHTML(item.howToUse)}</p>
-                <strong>Cuidado de corretor</strong>
+                <strong>Dica dos residentes</strong>
                 <p>${escapeHTML(item.examinerCare)}</p>
-                <strong>Cruzamento recomendado</strong>
+                <strong>A junta médica recomenda</strong>
                 <p>${escapeHTML(item.closingPair)}</p>
               </div>
             </article>
@@ -4240,9 +5579,9 @@ function renderAuthorCrossovers(crossovers) {
               <div class="crossover-copy">
                 <strong>Ponte autoral</strong>
                 <p>${escapeHTML(item.bridge)}</p>
-                <strong>Fechamento C5</strong>
+                <strong>A junta médica recomenda</strong>
                 <p>${escapeHTML(item.closing)}</p>
-                <strong>Alerta</strong>
+                <strong>Dica dos residentes</strong>
                 <p>${escapeHTML(item.caution)}</p>
               </div>
             </article>
@@ -4256,6 +5595,25 @@ function renderAuthorCrossovers(crossovers) {
 function renderExternalLink(link = {}) {
   const href = normalizeExternalURL(link.url);
   return `<a class="source-link" href="${escapeHTML(href)}" target="_blank" rel="noreferrer">${escapeHTML(link.label || "Abrir fonte")}</a>`;
+}
+
+function getCurrentEnemYear() {
+  return new Date().getFullYear();
+}
+
+function getSourceDisplayTitle(item = {}) {
+  if (item.id === "cartilha-enem-2025") return `Cartilha dos Calouros ENEM ${getCurrentEnemYear()}`;
+  return item.title || "Fonte ENEM";
+}
+
+function getSourceDisplayType(item = {}) {
+  if (item.id === "cartilha-enem-2025") return "Manual Oficial dos Preceptores";
+  return item.type || "Fonte guiada";
+}
+
+function getSourceDisplayAvailability(item = {}) {
+  if (item.id === "cartilha-enem-2025") return "Leitura guiada por competência";
+  return item.availability || "Fonte guiada";
 }
 
 function normalizeExternalURL(url = "") {
@@ -4295,12 +5653,40 @@ function renderCompetencyExamples() {
 }
 
 function getEditableEssays(user, redacao = ENEM_DATA.redacao || {}) {
+  const officialStage9 = getStage9Nota1000Essays();
   const seeded = REDACTION_LIBRARY.nota1000Essays;
   const legacy = Array.isArray(redacao.essays)
     ? redacao.essays.map((essay, index) => normalizeLegacyEssay(essay, index)).filter(Boolean)
     : [];
-  const base = [...seeded, ...legacy];
+  const base = uniqueEssaysById([...officialStage9, ...seeded, ...legacy]);
   return base.map((essay) => applyEssayEdit(essay, user.redacaoEssayEdits?.[essay.id]));
+}
+
+function getStage9Nota1000Essays() {
+  const rows = Array.isArray(REDACTION_STAGE9_DATA.note1000) ? REDACTION_STAGE9_DATA.note1000 : [];
+  return rows.map((essay, index) => ({
+    id: essay.id || `oficial-1000-${index + 1}`,
+    year: essay.year || essay.ano || "Ano a revisar",
+    theme: essay.theme || essay.tema || "Tema oficial a revisar",
+    student: essay.student || essay.autor || `Redação oficial ${index + 1}`,
+    source: `Cartilha oficial INEP ${essay.fonte_arquivo || ""}`.trim(),
+    paragraphs: Array.isArray(essay.paragraphs) && essay.paragraphs.length >= 3
+      ? essay.paragraphs
+      : splitLegacyEssay(essay.texto_integral || ""),
+    officialComment: essay.comentario_oficial || "",
+    score: essay.score || essay.nota_total || "1000",
+    officialExtracted: true,
+  }));
+}
+
+function uniqueEssaysById(essays = []) {
+  const seen = new Set();
+  return essays.filter((essay) => {
+    const id = essay.id || `${essay.year}-${essay.student}-${essay.theme}`;
+    if (seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  });
 }
 
 function normalizeLegacyEssay(essay, index) {
@@ -4381,15 +5767,24 @@ function applyEssayEdit(essay, edit = {}) {
   };
 }
 
-function renderEssayCards(essays, searchTerm = "") {
+function renderEssayCards(essays, searchTerm = "", activeYear = "todos") {
   const filtered = essays.filter((essay) => matchesEssaySearch(essay, searchTerm));
+  if (!searchTerm.trim()) {
+    const byYear = activeYear === "todos" ? filtered : filtered.filter((essay) => String(essay.year) === String(activeYear));
+    if (!byYear.length) return `<div class="empty-state">Nenhuma redação encontrada nesta aba.</div>`;
+    return `
+      <div class="essay-summary-grid">
+        ${byYear.map((essay) => renderEssaySummaryCard(essay)).join("")}
+      </div>
+    `;
+  }
   if (!filtered.length) {
     return `<div class="empty-state">Nenhuma redação encontrada para essa busca.</div>`;
   }
   return filtered
     .map(
       (essay) => `
-        <article class="editable-essay-card">
+        <article class="editable-essay-card" data-essay-card-id="${escapeHTML(essay.id)}">
           <div class="essay-meta-grid">
             <label class="field">
               <span>Ano</span>
@@ -4408,6 +5803,11 @@ function renderEssayCards(essays, searchTerm = "") {
             <span>Fonte / observação</span>
             <input data-redacao-edit data-essay-id="${escapeHTML(essay.id)}" data-field="source" value="${escapeHTML(essay.source || "")}" />
           </label>
+          <div class="essay-copy-row">
+            <button class="secondary-btn compact-btn" type="button" data-copy-essay>Copiar modelo para Word</button>
+            <small>Use como instrumento de montagem autoral: adapte tese, recorte e repertório ao seu tema.</small>
+          </div>
+          ${renderEssayThemeUses(essay)}
           <div class="essay-paragraphs">
             ${(essay.paragraphs || [])
               .map(
@@ -4426,6 +5826,49 @@ function renderEssayCards(essays, searchTerm = "") {
     .join("");
 }
 
+function renderEssaySummaryCard(essay) {
+  const preview = (essay.paragraphs || []).join(" ").slice(0, 220);
+  return `
+    <article class="essay-summary-card">
+      <div class="essay-summary-top">
+        <span class="day-pill">${escapeHTML(essay.year)}</span>
+        <small>${escapeHTML(essay.source || "Acervo ENEM")}</small>
+      </div>
+      <h3>${escapeHTML(essay.theme)}</h3>
+      <strong>${escapeHTML(essay.student)}</strong>
+      ${renderEssayThemeUses(essay, { compact: true })}
+      <p>${escapeHTML(preview)}${preview.length >= 220 ? "..." : ""}</p>
+      <button class="secondary-btn compact-btn" type="button" data-essay-open="${escapeHTML(essay.id)}">Abrir em parágrafos</button>
+    </article>
+  `;
+}
+
+function renderEssayThemeUses(essay, options = {}) {
+  const uses = Array.isArray(essay.themeUses) ? essay.themeUses : [];
+  if (!uses.length) return "";
+  return `
+    <div class="${options.compact ? "essay-use-chips compact" : "essay-use-chips"}">
+      <strong>Indicações de uso</strong>
+      ${uses.map((theme) => `<span>${escapeHTML(theme)}</span>`).join("")}
+    </div>
+  `;
+}
+
+function renderEssayYearTabs(essays, activeYear = "todos") {
+  const years = ["todos", ...Array.from(new Set((essays || []).map((essay) => String(essay.year)).filter(Boolean))).sort((a, b) => Number(b) - Number(a))];
+  return `
+    <div class="essay-year-tabs" role="tablist" aria-label="Filtrar redações por ano">
+      ${years
+        .map((year) => {
+          const active = String(activeYear) === String(year);
+          const label = year === "todos" ? "Todos" : year;
+          return `<button class="${active ? "active" : ""}" type="button" data-essay-year-filter="${escapeHTML(year)}">${escapeHTML(label)}</button>`;
+        })
+        .join("")}
+    </div>
+  `;
+}
+
 function matchesEssaySearch(essay, searchTerm) {
   const term = searchTerm.trim().toLowerCase();
   if (!term) return true;
@@ -4433,10 +5876,75 @@ function matchesEssaySearch(essay, searchTerm) {
 }
 
 function serializeEssayForSearch(essay) {
-  return `${essay.year} ${essay.theme} ${essay.student} ${essay.source} ${(essay.paragraphs || []).join(" ")}`.toLowerCase();
+  return `${essay.id} ${essay.year} ${essay.theme} ${essay.student} ${essay.source} ${(essay.paragraphs || []).join(" ")}`.toLowerCase();
 }
 
 const ESSAY_THEME_PROFILES = [
+  {
+    id: "doacao-orgaos-transplantes",
+    label: "doação de órgãos e confiança pública",
+    keywords: [
+      "doacao de orgaos",
+      "doacao",
+      "orgaos",
+      "orgao",
+      "transplante",
+      "transplantes",
+      "recusa familiar",
+      "morte encefalica",
+      "morte cerebral",
+      "doador",
+      "doadores",
+      "lista de espera",
+      "snt",
+      "sistema nacional de transplantes",
+      "abto",
+      "cihdott",
+      "prodot",
+      "luto",
+      "familia",
+      "autorizacao familiar",
+      "comunicacao hospitalar",
+      "morte",
+      "saude publica",
+    ],
+    problem: "a recusa familiar que impede potenciais doadores de se tornarem doadores efetivos",
+    group: "pacientes em lista de espera, familiares em luto, equipes hospitalares e usuários do SUS",
+    causes: [
+      "desinformação sobre morte encefálica",
+      "comunicação hospitalar pouco humanizada",
+      "ausência de conversa prévia sobre a vontade de doar",
+      "desconfiança pública no sistema de transplantes",
+    ],
+    consequences: [
+      "perda de potenciais doações",
+      "ampliação do tempo em lista de espera",
+      "fragilização da confiança no SUS",
+      "redução do acesso a tratamentos de alta complexidade",
+    ],
+    sourceIds: [
+      "sistema-nacional-transplantes",
+      "lei-transplantes-autorizacao",
+      "cfm-morte-encefalica",
+      "abto-registro-transplantes",
+      "philippe-aries-morte",
+      "habermas-agir-comunicativo-saude",
+      "hans-jonas-responsabilidade",
+      "decreto-9175-transplantes",
+      "cf-1988-leitura",
+    ],
+    crossoverIds: [
+      "snt-constituicao-abto",
+      "cfm-educacao-morte-encefalica",
+      "habermas-cihdott-prodot",
+      "aries-lei10211-conversa-familiar",
+      "hans-jonas-bioetica-vida",
+    ],
+    agents: ["Ministério da Saúde", "Sistema Nacional de Transplantes", "hospitais com CIHDOTT"],
+    action: "promover educação pública permanente e acolhimento hospitalar humanizado sobre doação de órgãos",
+    means: "campanhas em linguagem simples, módulos escolares, UBS, comunicação pública, capacitação de equipes e protocolos de abordagem familiar",
+    purpose: "reduzir mitos, estimular conversa familiar em vida e aumentar a confiança social no sistema de transplantes",
+  },
   {
     id: "saude",
     label: "saúde pública",
@@ -4468,6 +5976,70 @@ const ESSAY_THEME_PROFILES = [
     purpose: "fortalecer autonomia, permanência escolar e participação cidadã",
   },
   {
+    id: "juventude-negra-periferica",
+    label: "juventude negra, periferia e oportunidades",
+    keywords: [
+      "jovem",
+      "jovens",
+      "juventude",
+      "negro",
+      "negra",
+      "pretos",
+      "pardos",
+      "periferia",
+      "periferico",
+      "perifericos",
+      "ensino superior",
+      "universidade",
+      "universitario",
+      "cotas",
+      "permanencia",
+      "assistencia estudantil",
+      "mercado de trabalho",
+      "empregabilidade",
+      "estagio",
+      "trainee",
+      "mobilidade social",
+    ],
+    problem: "as barreiras raciais e territoriais que restringem acesso, permanência e inserção profissional",
+    group: "jovens negros e periféricos que buscam formação superior e trabalho qualificado",
+    causes: [
+      "racismo estrutural",
+      "desigualdade educacional de base",
+      "insuficiência de permanência estudantil",
+      "discriminação e redes restritas no mercado de trabalho",
+    ],
+    consequences: [
+      "evasão universitária",
+      "sub-representação em ocupações qualificadas",
+      "bloqueio de mobilidade social",
+      "manutenção da informalidade e da desigualdade de renda",
+    ],
+    sourceIds: [
+      "lei-cotas-ensino-superior",
+      "ibge-pnad-educacao-racial",
+      "pnaes-permanencia",
+      "bourdieu-capital-cultural",
+      "estatuto-igualdade-racial",
+      "florestan-integracao-negro",
+      "carolina-quarto-despejo",
+      "cf-1988-leitura",
+      "ibge-sis-leitura",
+    ],
+    crossoverIds: [
+      "florestan-lei-cotas",
+      "bourdieu-pnaes",
+      "carolina-constituicao",
+      "estatuto-igualdade-mercado",
+      "djamila-constituicao",
+    ],
+    agents: ["Ministério da Educação", "universidades federais", "Ministério do Trabalho e Ministério da Igualdade Racial"],
+    action: "integrar acesso, permanência universitária e entrada em oportunidades profissionais qualificadas",
+    means:
+      "bolsas, moradia estudantil, alimentação, transporte, tutoria acadêmica, apoio psicossocial, estágios afirmativos e mentorias",
+    purpose: "reduzir evasão, ampliar conclusão de curso e converter formação em mobilidade social concreta",
+  },
+  {
     id: "afro",
     label: "memória, racismo e herança africana",
     keywords: ["africana", "afro", "racismo", "negro", "negra", "quilombo", "matriz", "religiao", "heranca", "ancestralidade"],
@@ -4483,6 +6055,134 @@ const ESSAY_THEME_PROFILES = [
     purpose: "reparar apagamentos e valorizar a herança africana como eixo da identidade brasileira",
   },
   {
+    id: "protecao-infantojuvenil-violencia-sexual",
+    label: "proteção infantojuvenil e rede de acolhimento",
+    keywords: [
+      "exploracao sexual",
+      "violencia sexual",
+      "abuso",
+      "aliciamento",
+      "infantojuvenil",
+      "crianca",
+      "criancas",
+      "adolescente",
+      "adolescentes",
+      "eca",
+      "conselho tutelar",
+      "creas",
+      "disque 100",
+      "escuta protegida",
+      "depoimento especial",
+      "revitimizacao",
+      "subnotificacao",
+      "impunidade",
+      "ambiente digital",
+      "online",
+      "plataformas",
+      "direitos humanos",
+    ],
+    problem: "a falha coletiva na proteção integral de crianças e adolescentes contra violações graves de direitos",
+    group: "crianças e adolescentes expostos à vulnerabilidade social, ao silêncio institucional e a riscos presenciais ou digitais",
+    causes: [
+      "vulnerabilidade socioeconômica e territorial",
+      "subnotificação e cultura do silêncio",
+      "fragilidade da rede intersetorial de proteção",
+      "fiscalização insuficiente de redes presenciais e digitais",
+    ],
+    consequences: [
+      "revitimização institucional",
+      "impunidade de agressores e redes de exploração",
+      "agravamento de traumas e ruptura de vínculos",
+      "permanência da distância entre lei e proteção concreta",
+    ],
+    sourceIds: [
+      "lei-13431-escuta-protegida",
+      "unicef-fbsp-violencia-sexual",
+      "disque-100-protecao",
+      "eca-lei-8069",
+      "cf-1988-leitura",
+      "judith-herman-trauma",
+      "eca-digital-protecao-online",
+      "anjos-do-sol-repertorio",
+    ],
+    crossoverIds: [
+      "constituicao-eca-unicef",
+      "lei13431-disque100",
+      "judith-herman-creas",
+      "freire-18maio",
+      "eca-digital-policia-federal",
+    ],
+    agents: ["Ministério dos Direitos Humanos e da Cidadania", "Conselhos Tutelares e CREAS", "Ministério da Educação"],
+    action: "articular prevenção, denúncia, responsabilização e acolhimento humanizado",
+    means:
+      "formação obrigatória de profissionais, campanhas de denúncia, protocolos de escuta protegida e integração do Disque 100 à rede local",
+    purpose: "identificar riscos mais cedo, interromper redes de aliciamento e proteger vítimas sem revitimização",
+  },
+  {
+    id: "educacao-sem-violencia-infancia",
+    label: "educação sem violência e proteção da infância",
+    keywords: [
+      "lei menino bernardo",
+      "menino bernardo",
+      "castigo fisico",
+      "castigos fisicos",
+      "tratamento cruel",
+      "tratamentos crueis",
+      "tratamento degradante",
+      "tratamentos degradantes",
+      "palmada",
+      "disciplina positiva",
+      "educacao sem violencia",
+      "educacao parental",
+      "violencia domestica",
+      "familia",
+      "crianca",
+      "criancas",
+      "adolescente",
+      "adolescentes",
+      "conselho tutelar",
+      "henry borel",
+      "winnicott",
+      "montessori",
+    ],
+    problem: "a permanência de práticas punitivas violentas na educação de crianças e adolescentes",
+    group: "crianças e adolescentes expostos a castigos físicos, humilhações e fragilidade da rede de proteção familiar",
+    causes: [
+      "naturalização cultural da punição física como método educativo",
+      "baixa divulgação da Lei Menino Bernardo",
+      "insuficiência de orientação familiar e educação parental",
+      "fragilidade da rede local de identificação e encaminhamento",
+    ],
+    consequences: [
+      "comprometimento de vínculos afetivos e segurança emocional",
+      "reprodução intergeracional da violência",
+      "subnotificação de práticas degradantes",
+      "distância entre proteção legal e cotidiano familiar",
+    ],
+    sourceIds: [
+      "lei-menino-bernardo",
+      "eca-lei-8069",
+      "cf-1988-leitura",
+      "oms-castigo-corporal",
+      "winnicott-ambiente-seguro",
+      "montessori-educacao-autonomia",
+      "lei-henry-borel",
+      "lei-13431-escuta-protegida",
+    ],
+    crossoverIds: [
+      "lei-menino-bernardo-eca-constituicao",
+      "winnicott-oms-educacao-parental",
+      "machado-lei-menino-bernardo",
+      "henry-borel-escuta-protegida-conselho",
+      "eca-freire",
+    ],
+    agents: ["Ministério dos Direitos Humanos e da Cidadania", "Ministério da Educação", "Conselhos Tutelares e secretarias municipais"],
+    action: "promover educação parental sem violência e fortalecer a rede local de proteção",
+    means:
+      "oficinas em escolas, CRAS e UBS, materiais sobre disciplina positiva, formação de profissionais e protocolos de encaminhamento",
+    purpose: "substituir a cultura da punição física por cuidado, limite, orientação e proteção integral",
+  },
+  {
     id: "infancia",
     label: "infância e juventude",
     keywords: ["crianca", "adolescente", "infancia", "juventude", "jovem", "bullying", "protecao", "exploracao"],
@@ -4496,6 +6196,141 @@ const ESSAY_THEME_PROFILES = [
     action: "integrar identificação precoce, acolhimento e acompanhamento familiar",
     means: "protocolos escolares, canais de denúncia e equipes multiprofissionais",
     purpose: "garantir proteção integral sem violar direitos",
+  },
+  {
+    id: "inclusao-digital-cidadania",
+    label: "inclusão digital e cidadania",
+    keywords: [
+      "inclusao digital",
+      "exclusao digital",
+      "conectividade",
+      "internet",
+      "banda larga",
+      "wi-fi",
+      "wifi",
+      "gesac",
+      "computadores",
+      "dispositivo",
+      "celular",
+      "tecnologia",
+      "digitalizacao",
+      "servicos digitais",
+      "governo digital",
+      "letramento digital",
+      "alfabetizacao digital",
+      "acessibilidade digital",
+      "dados pessoais",
+      "privacidade",
+      "populacoes marginalizadas",
+      "marginalizadas",
+      "periferias",
+      "rurais",
+      "ribeirinhas",
+      "quilombolas",
+      "indigenas",
+      "idosos",
+      "pessoas com deficiencia",
+    ],
+    problem: "a exclusão digital que impede o acesso pleno a informação, serviços públicos, educação, trabalho e participação cidadã",
+    group: "populações marginalizadas por renda, território, idade, deficiência ou pertencimento comunitário",
+    causes: [
+      "desigualdade de infraestrutura tecnológica",
+      "custo de conexão e equipamentos",
+      "letramento digital insuficiente",
+      "barreiras de acessibilidade em serviços digitais",
+    ],
+    consequences: [
+      "bloqueio de acesso a serviços públicos digitais",
+      "dependência de terceiros para tarefas cidadãs básicas",
+      "exposição a golpes, desinformação e uso inseguro de dados",
+      "reprodução da desigualdade educacional e profissional",
+    ],
+    sourceIds: [
+      "marco-civil-internet",
+      "tic-domicilios-2024",
+      "milton-santos-cidadanias-mutiladas",
+      "castells-sociedade-rede",
+      "paulo-freire-leitura",
+      "lbi-acessibilidade-digital",
+      "governo-digital-lei-14129",
+      "lgpd-seguranca-digital",
+      "wifi-brasil-gesac",
+      "carolina-quarto-despejo",
+    ],
+    crossoverIds: [
+      "marco-civil-tic-milton",
+      "freire-governo-digital",
+      "carolina-tic-constituicao",
+      "lbi-governo-digital",
+      "castells-lgpd",
+    ],
+    agents: ["Ministério das Comunicações", "Ministério da Educação", "Ministério da Gestão e da Inovação em Serviços Públicos"],
+    action: "integrar conectividade significativa, acesso a dispositivos, letramento digital e acessibilidade em serviços públicos",
+    means:
+      "Wi-Fi Brasil/GESAC, laboratórios comunitários, oficinas em escolas e CRAS, materiais acessíveis, suporte humanizado e formação de agentes locais",
+    purpose: "transformar tecnologia em infraestrutura de cidadania para grupos historicamente excluídos",
+  },
+  {
+    id: "acesso-justica-equidade",
+    label: "acesso à justiça e equidade",
+    keywords: [
+      "acesso a justica",
+      "acesso à justica",
+      "justica",
+      "equidade",
+      "defensoria",
+      "judiciario",
+      "juridico",
+      "assistencia juridica",
+      "gratuidade",
+      "processo",
+      "morosidade",
+      "linguagem juridica",
+      "burocracia",
+      "direitos",
+      "desigualdade juridica",
+      "racismo institucional",
+      "justica seletiva",
+      "discriminacao social",
+      "discriminacao institucional",
+      "vieses institucionais",
+    ],
+    problem: "a distância entre garantias jurídicas formais e proteção concreta para grupos socialmente vulnerabilizados",
+    group: "pessoas pobres, população negra, mulheres, pessoas com deficiência, idosos e comunidades afastadas dos serviços de justiça",
+    causes: [
+      "barreiras socioeconômicas no acesso à assistência jurídica",
+      "distância territorial e informacional dos órgãos públicos",
+      "linguagem jurídica excessivamente técnica",
+      "vieses raciais, de gênero, classe, idade e deficiência nas instituições",
+    ],
+    consequences: [
+      "direitos violados sem resposta efetiva",
+      "desconfiança das instituições",
+      "reprodução da justiça seletiva",
+      "cidadania formal sem proteção material",
+    ],
+    sourceIds: [
+      "constituicao-acesso-justica",
+      "defensoria-publica-acesso",
+      "cappelletti-garth-acesso",
+      "boaventura-democratizacao-justica",
+      "cnj-protocolos-antidiscriminatorios",
+      "kafka-processo-burocracia",
+      "bourdieu-capital-cultural",
+      "lbi-acessibilidade-digital",
+    ],
+    crossoverIds: [
+      "constituicao-defensoria-cappelletti",
+      "bourdieu-kafka-linguagem-simples",
+      "avesso-pele-cnj-racial",
+      "lbi-governo-digital",
+      "djamila-constituicao",
+    ],
+    agents: ["Defensorias Públicas", "Conselho Nacional de Justiça", "Ministério da Educação"],
+    action: "ampliar assistência jurídica territorializada, linguagem simples e formação antidiscriminatória",
+    means:
+      "núcleos itinerantes, mutirões jurídicos, atendimento digital assistido, cartilhas acessíveis, cursos obrigatórios e educação em direitos",
+    purpose: "transformar acesso formal à justiça em proteção efetiva e equânime",
   },
   {
     id: "tecnologia",
@@ -4558,6 +6393,42 @@ const ESSAY_THEME_PROFILES = [
     purpose: "garantir autonomia, pertencimento e dignidade na velhice",
   },
   {
+    id: "economia",
+    label: "economia, renda e política pública",
+    keywords: [
+      "financeira",
+      "financeiro",
+      "crise",
+      "economia",
+      "economica",
+      "economico",
+      "inflacao",
+      "endividamento",
+      "superendividamento",
+      "desemprego",
+      "renda",
+      "juros",
+      "credito",
+      "consumo",
+      "custo",
+      "pobreza",
+      "tributaria",
+      "tributario",
+      "trabalho",
+      "mercado",
+    ],
+    problem: "a instabilidade econômica que restringe direitos básicos e aprofunda desigualdades",
+    group: "famílias de baixa renda, trabalhadores informais e jovens em inserção produtiva",
+    causes: ["desigualdade de renda", "educação financeira insuficiente", "precarização do trabalho", "acesso desigual ao crédito"],
+    consequences: ["endividamento familiar", "insegurança alimentar", "redução do acesso a moradia, educação e saúde"],
+    sourceIds: ["ibge-sis-leitura", "cf-1988-leitura", "bcb-cidadania-financeira"],
+    crossoverIds: ["ibge-constituicao", "bcb-educacao-financeira", "freire-constituicao"],
+    agents: ["Ministério do Desenvolvimento Social", "Ministério do Trabalho", "Banco Central e Procons"],
+    action: "ampliar proteção social, orientação financeira e qualificação produtiva",
+    means: "mapeamento de famílias vulneráveis, oficinas públicas, renegociação orientada e programas de renda e emprego",
+    purpose: "reduzir o impacto da crise financeira sobre direitos básicos e autonomia familiar",
+  },
+  {
     id: "cidadania",
     label: "cidadania e direitos sociais",
     keywords: [],
@@ -4580,28 +6451,28 @@ function renderEssayPlan(theme, spin = 0) {
   return `
     <div class="essay-plan-diagnosis">
       <span class="status-chip">${escapeHTML(plan.profile.label)}</span>
-      <h3>Roteiro autoral para "${escapeHTML(cleanTheme)}"</h3>
+      <h3>Prescrição autoral para "${escapeHTML(cleanTheme)}"</h3>
       <p>${escapeHTML(plan.diagnosis)}</p>
     </div>
     <div class="essay-plan-grid essay-plan-grid-rich">
-      ${renderEssayPlanBox("Leitura estratégica", [
+      ${renderEssayPlanBox("Anamnese estratégica", [
         `Problema central: ${plan.profile.problem}.`,
         `Grupo afetado: ${plan.profile.group}.`,
         `Pergunta de leitura: quem perde direitos, por qual causa e com qual consequência social?`,
       ])}
-      ${renderEssayPlanBox("Teses possíveis e defensáveis", plan.theses)}
-      ${renderEssayPlanBox("Repertórios selecionados", plan.sources.map((item) => `${item.title}: ${item.howToUse}`))}
-      ${renderEssayPlanBox("Desenvolvimento C2/C3", [
+      ${renderEssayPlanBox("Hipóteses de tese defensáveis", plan.theses)}
+      ${renderEssayPlanBox("Repertórios prescritos", plan.sources.map((item) => `${getSourceDisplayTitle(item)}: ${item.howToUse}`))}
+      ${renderEssayPlanBox("Evolução C2/C3", [
         `Abra o D1 com ${plan.causes[0]} e prove que essa causa sustenta o problema.`,
         `Use ${plan.sources[0]?.title || "um repertório legitimado"} para explicar o mecanismo, não para enfeitar a frase.`,
         `Feche com consequência: ${plan.consequences[0]}.`,
       ])}
-      ${renderEssayPlanBox("Progressão C4", [
+      ${renderEssayPlanBox("Monitorização C4", [
         `D1: causa principal. D2: causa complementar, sem repetir o mesmo argumento.`,
         `Conectores recomendados: ${plan.connectors.join(", ")}.`,
         `Retomada elegante: troque o tema por "essa conjuntura", "tal cenário" ou "esse obstáculo social".`,
       ])}
-      ${renderEssayPlanBox("Intervenção C5", [
+      ${renderEssayPlanBox("Alta C5", [
         `Agente: ${plan.agent}.`,
         `Ação: ${plan.profile.action}.`,
         `Meio: ${plan.profile.means}.`,
@@ -4611,7 +6482,7 @@ function renderEssayPlan(theme, spin = 0) {
         `Não trate apenas do assunto amplo; mantenha o recorte "${cleanTheme}" visível na introdução, nos desenvolvimentos e na conclusão.`,
         `Se o tema pedir Brasil, não fuja para exemplos internacionais como eixo principal.`,
       ])}
-      ${renderEssayPlanBox("Checklist final", [
+      ${renderEssayPlanBox("Checklist de alta", [
         "Tese clara, dois eixos, repertório produtivo, coesão variada e proposta completa.",
         "Depois de cada repertório, escreva mentalmente: isso comprova que...",
       ])}
@@ -4623,12 +6494,14 @@ function renderEssayPlan(theme, spin = 0) {
 }
 
 function renderEssayPlanBox(title, lines) {
+  const copyId = `plan-${hashString(title + lines.join("|"))}`.replace(/[^a-z0-9_-]/gi, "-");
   return `
     <article class="essay-plan-box">
-      <strong>${escapeHTML(title)}</strong>
-      <ul>
-        ${lines.map((line) => `<li>${escapeHTML(line)}</li>`).join("")}
-      </ul>
+      <div class="copy-box-head">
+        <strong>${escapeHTML(title)}</strong>
+        <button class="secondary-btn compact-btn" type="button" data-copy-target="${escapeHTML(copyId)}" data-copy-label="Copiar">Copiar</button>
+      </div>
+      <textarea id="${escapeHTML(copyId)}" class="plan-copy-text" rows="${Math.max(4, Math.min(8, lines.length + 2))}">${escapeHTML(lines.join("\n"))}</textarea>
     </article>
   `;
 }
@@ -4637,8 +6510,8 @@ function renderPlanSourceShelf(sources) {
   return `
     <div class="plan-shelf">
       <div class="plan-shelf-head">
-        <h3>Leituras formatadas para o tema</h3>
-        <span>${sources.length} links úteis</span>
+        <h3>Prontuário de leitura para o tema</h3>
+        <span>${sources.length} fontes úteis</span>
       </div>
       <div class="plan-source-grid">
         ${sources
@@ -4646,12 +6519,12 @@ function renderPlanSourceShelf(sources) {
             (item) => `
               <article class="plan-source-card">
                 <div>
-                  <small>${escapeHTML(item.type)}</small>
-                  <h4>${escapeHTML(item.title)}</h4>
+                  <small>${escapeHTML(getSourceDisplayType(item))}</small>
+                  <h4>${escapeHTML(getSourceDisplayTitle(item))}</h4>
                 </div>
                 <p>${escapeHTML(item.readingFocus)}</p>
                 <div class="source-essential-box compact">
-                  <strong>Leia procurando</strong>
+                  <strong>Procure no exame</strong>
                   <ul>
                     ${(item.essentialPoints || []).slice(0, 2).map((point) => `<li>${escapeHTML(point)}</li>`).join("")}
                   </ul>
@@ -4672,7 +6545,7 @@ function renderPlanCrossoverShelf(crossovers) {
   return `
     <div class="plan-shelf">
       <div class="plan-shelf-head">
-        <h3>Cruzamentos sugeridos para este tema</h3>
+        <h3>JUNTA MÉDICA PARA TRATAR O CASO</h3>
         <span>${crossovers.length} rotas autorais</span>
       </div>
       <div class="plan-crossover-grid">
@@ -4700,7 +6573,7 @@ function renderAuthorialTraining(plan) {
   return `
     <div class="authorial-training">
       <div class="plan-shelf-head">
-        <h3>Parágrafos autorais de treino</h3>
+        <h3>Oficina clínica de parágrafos autorais</h3>
         <span>C2, C3, C4 e C5</span>
       </div>
       <div class="authorial-paragraph-grid">
@@ -4722,7 +6595,7 @@ function renderTrainingParagraph(paragraph) {
       </div>
       <p>${markPlanText(paragraph.text, paragraph.highlight)}</p>
       <div class="grammar-note">
-        <strong>Norma culta usada</strong>
+        <strong>Conduta de norma culta</strong>
         <span>${escapeHTML(paragraph.grammarNote)}</span>
       </div>
     </article>
@@ -4745,7 +6618,7 @@ function buildEssayPlan(theme, spin = 0) {
   const agent = pickRotating(profile.agents, seed + 9, 1)[0];
   const sources = selectThemeItems(REDACTION_LIBRARY.sourcePacks || [], profile, theme, profile.sourceIds, seed, 3);
   const crossovers = selectThemeItems(REDACTION_LIBRARY.authorCrossovers || [], profile, theme, profile.crossoverIds, seed + 2, 3);
-  const diagnosis = `O tema foi aproximado de ${profile.label}. O plano prioriza ${causes[0]}, ${causes[1]} e consequência social ligada a ${consequences[0]}.`;
+  const diagnosis = `O protocolo reconheceu plantão de ${profile.label}. A prescrição prioriza ${causes[0]}, ${causes[1]} e consequência social ligada a ${consequences[0]}.`;
   const theses = [
     `Tese 1: ${causes[0]} e ${causes[1]} impedem o enfrentamento de ${profile.problem}.`,
     `Tese 2: o problema persiste porque ${profile.group} enfrenta ${causes[0]} e, ao mesmo tempo, ${consequences[0]}.`,
@@ -4807,8 +6680,8 @@ function scoreThemeItem(item, profile, theme) {
 }
 
 function buildTrainingParagraphs({ theme, profile, causes, consequences, agent, sources, crossovers }) {
-  const mainSource = sources[0]?.title || "um repertório legitimado";
-  const secondSource = sources[1]?.title || "a Constituição de 1988";
+  const mainSource = sources[0] ? getSourceDisplayTitle(sources[0]) : "um repertório legitimado";
+  const secondSource = sources[1] ? getSourceDisplayTitle(sources[1]) : "a Constituição de 1988";
   const crossover = crossovers[0];
   const introHighlight = `não decorre de escolhas individuais isoladas, mas de ${causes[0]}`;
   const c3Highlight = `Isso ocorre porque ${causes[0]} limita a ação coletiva`;
@@ -5012,6 +6885,7 @@ function bindViewEvents(user) {
     selectedDay = clamp((selectedDay || 1) + 1, 1, DAY_COUNT);
     quizState = null;
     activeView = "today";
+    persistUiState({ scrollY: 0 });
     requestScrollTop();
     render();
   });
@@ -5047,22 +6921,7 @@ function bindViewEvents(user) {
     const endpointInput = document.getElementById("dailyNewsEndpointInput");
     const status = document.getElementById("dailyNewsStatus");
     const endpoint = endpointInput?.value?.trim() || DAILY_NEWS_DEFAULT_ENDPOINT;
-    if (!endpoint) {
-      if (status) status.textContent = "Cole a URL pública do endpoint antes de buscar notícias.";
-      return;
-    }
-    if (status) status.textContent = "Buscando plantão...";
-    try {
-      const response = await fetch(endpoint, { cache: "no-store" });
-      if (!response.ok) throw new Error(`Resposta ${response.status}`);
-      const payload = normalizeDailyNewsPayload(await response.json());
-      user.dailyNewsEndpoint = endpoint;
-      user.dailyNewsPayload = payload;
-      saveCurrentUser(user);
-      render();
-    } catch (error) {
-      if (status) status.textContent = `Não consegui buscar agora. Cole o JSON do endpoint ou confira o servidor. ${error.message || error}`;
-    }
+    await fetchDailyNewsForUser(user, endpoint, status);
   });
 
   document.getElementById("loadDailyNewsJsonBtn")?.addEventListener("click", () => {
@@ -5087,6 +6946,15 @@ function bindViewEvents(user) {
     render();
   });
 
+  if (activeView === "news" && !user.dailyNewsPayload && DAILY_NEWS_DEFAULT_ENDPOINT && !dailyNewsAutoFetchStarted) {
+    dailyNewsAutoFetchStarted = true;
+    const endpointInput = document.getElementById("dailyNewsEndpointInput");
+    const status = document.getElementById("dailyNewsStatus");
+    fetchDailyNewsForUser(user, endpointInput?.value?.trim() || DAILY_NEWS_DEFAULT_ENDPOINT, status, { auto: true });
+  }
+
+  bindTriClinicEvents(user);
+
   document.getElementById("saveEssayThemeBtn")?.addEventListener("click", () => {
     const input = document.getElementById("essayThemeInput");
     user.weeklyEssayTheme = input?.value?.trim() || "";
@@ -5106,12 +6974,31 @@ function bindViewEvents(user) {
     const plan = document.getElementById("essayPlan");
     if (!plan) return;
     plan.innerHTML = renderEssayPlan(event.target.value, user.essayPlanSeed || 0);
+    bindCopyButtons();
   });
 
   document.getElementById("essaySearchInput")?.addEventListener("input", (event) => {
     const library = document.getElementById("essayLibrary");
     if (!library) return;
-    library.innerHTML = renderEssayCards(getEditableEssays(user), event.target.value);
+    library.innerHTML = renderEssayCards(getEditableEssays(user), event.target.value, user.redacaoEssayYear || "todos");
+    bindEssayLibraryEvents(user);
+    bindRedacaoEditEvents(user);
+  });
+
+  document.getElementById("c1TipSearchInput")?.addEventListener("input", (event) => {
+    const board = document.getElementById("c1TipBoard");
+    if (!board) return;
+    const term = event.target.value || "";
+    const tips = term.trim() ? getC1TipSearchResults(term) : getDailyC1Tips(user);
+    board.innerHTML = renderC1TipBoard(tips, { searchTerm: term.trim() });
+  });
+
+  document.getElementById("clearEssaySearchBtn")?.addEventListener("click", () => {
+    const input = document.getElementById("essaySearchInput");
+    const library = document.getElementById("essayLibrary");
+    if (input) input.value = "";
+    if (library) library.innerHTML = renderEssayCards(getEditableEssays(user), "", user.redacaoEssayYear || "todos");
+    bindEssayLibraryEvents(user);
     bindRedacaoEditEvents(user);
   });
 
@@ -5122,7 +7009,147 @@ function bindViewEvents(user) {
   });
 
   bindRedacaoScoreEvents(user);
+  bindEssayLibraryEvents(user);
+  bindCopyButtons();
   bindRedacaoEditEvents(user);
+}
+
+function bindTriClinicEvents(user) {
+  document.getElementById("triClinicAreaSelect")?.addEventListener("change", (event) => {
+    const area = COMPETENCIES.find((competency) => competency.id === event.target.value) || COMPETENCIES[0];
+    saveTriClinicSettings(user, { areaId: area.id, skillId: area.skills[0].id });
+    delete user.triClinicSession;
+    saveCurrentUser(user);
+    render();
+  });
+
+  document.getElementById("triClinicSkillSelect")?.addEventListener("change", (event) => {
+    saveTriClinicSettings(user, { skillId: event.target.value });
+    delete user.triClinicSession;
+    saveCurrentUser(user);
+    render();
+  });
+
+  document.getElementById("triClinicQuantitySelect")?.addEventListener("change", (event) => {
+    saveTriClinicSettings(user, { quantity: Number(event.target.value) });
+    saveCurrentUser(user);
+  });
+
+  document.getElementById("triClinicGenerateBtn")?.addEventListener("click", () => {
+    createTriClinicSession(user);
+    saveCurrentUser(user);
+    render();
+  });
+
+  document.getElementById("triClinicRegenerateBtn")?.addEventListener("click", () => {
+    createTriClinicSession(user);
+    saveCurrentUser(user);
+    render();
+  });
+
+  document.getElementById("triClinicClearBtn")?.addEventListener("click", () => {
+    delete user.triClinicSession;
+    saveCurrentUser(user);
+    render();
+  });
+
+  document.querySelectorAll("[data-clinic-answer]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const session = user.triClinicSession;
+      if (!session || session.checked) return;
+      session.answers = session.answers || {};
+      session.answers[button.dataset.clinicAnswer] = Number(button.dataset.optionIndex);
+      saveCurrentUser(user);
+      render();
+    });
+  });
+
+  document.getElementById("triClinicCheckBtn")?.addEventListener("click", () => {
+    const session = user.triClinicSession;
+    if (!session) return;
+    session.checked = true;
+    recordTriClinicAttempt(user, session);
+    saveCurrentUser(user);
+    render();
+  });
+}
+
+function bindEssayLibraryEvents(user) {
+  document.querySelectorAll("[data-essay-year-filter]").forEach((button) => {
+    button.addEventListener("click", () => {
+      user.redacaoEssayYear = button.dataset.essayYearFilter || "todos";
+      saveCurrentUser(user);
+      render();
+    });
+  });
+  document.querySelectorAll("[data-essay-open]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const essayId = button.dataset.essayOpen;
+      const essay = getEditableEssays(user).find((item) => item.id === essayId);
+      const input = document.getElementById("essaySearchInput");
+      const library = document.getElementById("essayLibrary");
+      const search = essay?.student || essay?.theme || essayId || "";
+      if (input) input.value = search;
+      if (library) library.innerHTML = renderEssayCards(getEditableEssays(user), search, user.redacaoEssayYear || "todos");
+      bindRedacaoEditEvents(user);
+    });
+  });
+}
+
+function bindCopyButtons() {
+  document.querySelectorAll("[data-copy-target]").forEach((button) => {
+    if (button.dataset.copyBound === "true") return;
+    button.dataset.copyBound = "true";
+    button.addEventListener("click", async () => {
+      const target = document.getElementById(button.dataset.copyTarget);
+      const text = target?.value || target?.textContent || "";
+      if (!text) return;
+      try {
+        await navigator.clipboard?.writeText(text);
+        button.textContent = "Copiado";
+        window.setTimeout(() => {
+          button.textContent = button.dataset.copyLabel || "Copiar";
+        }, 1200);
+      } catch {
+        target?.focus();
+        target?.select?.();
+      }
+    });
+  });
+  document.querySelectorAll("[data-copy-essay]").forEach((button) => {
+    if (button.dataset.copyBound === "true") return;
+    button.dataset.copyBound = "true";
+    button.addEventListener("click", async () => {
+      const card = button.closest(".editable-essay-card");
+      if (!card) return;
+      const fieldValue = (field) => card.querySelector(`[data-redacao-edit][data-field="${field}"]`)?.value?.trim() || "";
+      const paragraphs = Array.from(card.querySelectorAll('[data-redacao-edit][data-field="paragraph"]'))
+        .map((item) => item.value.trim())
+        .filter(Boolean);
+      const text = [
+        `Ano: ${fieldValue("year")}`,
+        `Tema: ${fieldValue("theme")}`,
+        `Modelo: ${fieldValue("student")}`,
+        fieldValue("source") ? `Fonte: ${fieldValue("source")}` : "",
+        "",
+        ...paragraphs,
+      ]
+        .filter((line, index, list) => line || list[index - 1])
+        .join("\n\n");
+      if (!text.trim()) return;
+      try {
+        await navigator.clipboard?.writeText(text);
+        button.textContent = "Copiado para Word";
+        window.setTimeout(() => {
+          button.textContent = "Copiar modelo para Word";
+        }, 1400);
+      } catch {
+        const firstParagraph = card.querySelector('[data-redacao-edit][data-field="paragraph"]');
+        firstParagraph?.focus();
+        firstParagraph?.select?.();
+      }
+    });
+  });
 }
 
 function bindRedacaoScoreEvents(user) {
@@ -5169,6 +7196,7 @@ function bindSelectDay(button) {
     selectedDay = Number(button.dataset.selectDay);
     activeView = "today";
     quizState = null;
+    persistUiState({ scrollY: 0 });
     requestScrollTop();
     render();
   });
@@ -5178,7 +7206,19 @@ function requestScrollTop() {
   shouldScrollTop = true;
 }
 
-function flushScrollTop() {
+function flushScrollPosition() {
+  if (pendingScrollRestore !== null) {
+    const targetY = Math.max(0, Number(pendingScrollRestore) || 0);
+    pendingScrollRestore = null;
+    shouldScrollTop = false;
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: targetY, left: 0, behavior: "auto" });
+      window.setTimeout(() => {
+        window.scrollTo({ top: targetY, left: 0, behavior: "auto" });
+      }, 0);
+    });
+    return;
+  }
   if (!shouldScrollTop) return;
   shouldScrollTop = false;
   window.requestAnimationFrame(() => {
@@ -5381,6 +7421,29 @@ function registerServiceWorker() {
   } else if (typeof window.addEventListener === "function") {
     window.addEventListener("load", register, { once: true });
   }
+}
+
+if (typeof document !== "undefined") {
+  document.addEventListener(
+    "click",
+    (event) => {
+      const link = event.target?.closest?.("a[href]");
+      if (!link) return;
+      persistUiState();
+    },
+    true,
+  );
+}
+
+if (typeof window !== "undefined") {
+  window.addEventListener("pagehide", () => persistUiState());
+  window.addEventListener("beforeunload", () => persistUiState());
+}
+
+if (typeof document !== "undefined") {
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") persistUiState();
+  });
 }
 
 registerServiceWorker();
