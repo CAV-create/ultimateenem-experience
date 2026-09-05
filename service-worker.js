@@ -1,4 +1,4 @@
-const CACHE_NAME = "ultimateenem-experience-v37-notas-acertos-tri";
+const CACHE_NAME = "ultimateenem-experience-v39-redacao-premium-sisu";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -9,7 +9,10 @@ const APP_SHELL = [
   "./enem-tri-acerto-data.js",
   "./enem-notas-acertos-tri-data.js",
   "./enem-intelligence-data.js",
+  "./sisu-2025-intelligence-data.js",
+  "./sisu-simulator-core.js",
   "./redacao-db.js",
+  "./redacao-premium-feed-20260905.js",
   "./redacao-microdados-data.js",
   "./redacao-inteligencia-stage9-data.js",
   "./manifest.webmanifest",

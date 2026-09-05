@@ -2699,6 +2699,7 @@ function renderPerformanceLocked(user, day) {
         <button class="primary-btn" data-view="today" type="button">Voltar ao plantão</button>
       </div>
     </section>
+    ${renderSisuChancePanel(user)}
   `;
 }
 
@@ -5617,9 +5618,14 @@ function getSourceDisplayAvailability(item = {}) {
 }
 
 function normalizeExternalURL(url = "") {
+  const raw = String(url || "").trim();
+  if (!raw) return "#";
   try {
-    const parsed = new URL(String(url));
+    const parsed = new URL(raw, window.location.href);
     if (parsed.protocol === "https:" || parsed.protocol === "http:") return parsed.href;
+    if ((raw.startsWith("./") || raw.startsWith("../") || raw.startsWith("/")) && parsed.protocol === "file:") {
+      return parsed.href;
+    }
   } catch {
     return "#";
   }
@@ -6757,6 +6763,220 @@ function normalizeForMatch(text) {
     .replace(/[\u0300-\u036f]/g, "");
 }
 
+const SISU_SCORE_AREAS = [
+  { id: "linguagens", label: "Linguagens" },
+  { id: "humanas", label: "Humanas" },
+  { id: "natureza", label: "Natureza" },
+  { id: "matematica", label: "Matemática" },
+];
+
+function getSisuProjectedHits(user) {
+  const areaIds = SISU_SCORE_AREAS.map((area) => area.id);
+  const totals = areaIds.reduce((acc, areaId) => {
+    acc[areaId] = { correct: 0, total: 0 };
+    return acc;
+  }, {});
+
+  (user.attemptLog || []).slice(-24).forEach((attempt) => {
+    const areaId = attempt.competencyId;
+    if (!areaIds.includes(areaId)) return;
+    const resultRows = Array.isArray(attempt.questionResults) ? attempt.questionResults : [];
+    if (resultRows.length) {
+      totals[areaId].correct += resultRows.filter((item) => item.correct).length;
+      totals[areaId].total += resultRows.length;
+      return;
+    }
+    totals[areaId].correct += Number(attempt.score || 0);
+    totals[areaId].total += Number(attempt.total || 0);
+  });
+
+  return areaIds.reduce((acc, areaId) => {
+    const stat = totals[areaId];
+    acc[areaId] = stat.total ? clamp(Math.round((stat.correct / stat.total) * 45), 0, 45) : null;
+    return acc;
+  }, {});
+}
+
+function getSisuDefaultState(user) {
+  const draft = user.sisuScoreDraft || {};
+  const projectedHits = getSisuProjectedHits(user);
+  const redacao = Number(draft.scores?.redacao || getRedacaoAverage(user) || 880);
+  const baseScore = Number(user.profile?.currentScore || 0) || 680;
+  const hitInput = {};
+  Object.entries(projectedHits).forEach(([areaId, hits]) => {
+    if (hits !== null && hits !== undefined && Number.isFinite(Number(hits))) hitInput[areaId] = hits;
+  });
+  const estimated =
+    window.UltimateEnemSisuSimulator?.estimateScoresFromHits?.(hitInput, redacao, "median") || {};
+  const scores = SISU_SCORE_AREAS.reduce((acc, area) => {
+    const drafted = Number(draft.scores?.[area.id]);
+    const hasProjectedHits =
+      projectedHits[area.id] !== null &&
+      projectedHits[area.id] !== undefined &&
+      Number.isFinite(Number(projectedHits[area.id]));
+    const estimatedScore = Number(estimated?.[area.id]);
+    acc[area.id] = Number.isFinite(drafted)
+      ? drafted
+      : hasProjectedHits && Number.isFinite(estimatedScore)
+        ? estimatedScore
+        : baseScore;
+    return acc;
+  }, {});
+  scores.redacao = redacao;
+
+  return {
+    curso: draft.curso || user.profile?.goalCourse || "Medicina",
+    uf: draft.uf || "",
+    modalidade: draft.modalidade || "AC",
+    scores,
+    projectedHits,
+  };
+}
+
+function renderSisuChancePanel(user) {
+  const state = getSisuDefaultState(user);
+  const summary = window.SISU_2025_INTELLIGENCE_DATA?.summary || {};
+  const totalRows = summary.rows ? formatIntegerBR(summary.rows) : "58 mil";
+  const institutions = summary.institutions ? formatIntegerBR(summary.institutions) : "124";
+  return `
+    <section class="panel redacao-wide sisu-panel">
+      <div class="panel-header">
+        <div>
+          <h2>Simulador SISU 2025</h2>
+          <p>Consulta interna com pesos, notas mínimas, vagas e cortes da chamada regular para estimar competitividade por curso.</p>
+        </div>
+        <span class="status-chip">${totalRows} registros</span>
+      </div>
+      <div class="sisu-intel-grid">
+        <label class="field">
+          <span>Curso</span>
+          <input id="sisuCourseInput" value="${escapeHTML(state.curso)}" placeholder="Ex.: Medicina" />
+        </label>
+        <label class="field">
+          <span>UF opcional</span>
+          <input id="sisuUfInput" value="${escapeHTML(state.uf)}" maxlength="2" placeholder="Ex.: MG" />
+        </label>
+        <label class="field">
+          <span>Modalidade</span>
+          <select id="sisuModalityInput">
+            ${renderSisuModalityOption("", "Todas", state.modalidade)}
+            ${renderSisuModalityOption("AC", "Ampla concorrência", state.modalidade)}
+            ${renderSisuModalityOption("LB_PPI", "LB_PPI", state.modalidade)}
+            ${renderSisuModalityOption("LI_PPI", "LI_PPI", state.modalidade)}
+            ${renderSisuModalityOption("LB_EP", "LB_EP", state.modalidade)}
+            ${renderSisuModalityOption("LI_EP", "LI_EP", state.modalidade)}
+            ${renderSisuModalityOption("LB_PCD", "LB_PCD", state.modalidade)}
+            ${renderSisuModalityOption("LI_PCD", "LI_PCD", state.modalidade)}
+          </select>
+        </label>
+      </div>
+      <div class="sisu-score-grid">
+        ${SISU_SCORE_AREAS.map((area) => renderSisuScoreField(area, state)).join("")}
+        <label class="field">
+          <span>Redação</span>
+          <input id="sisuScoreRedacao" type="number" min="0" max="1000" step="0.1" value="${escapeHTML(state.scores.redacao)}" />
+        </label>
+      </div>
+      <div class="sisu-action-row">
+        <button class="primary-btn" id="sisuSimulateBtn" type="button">Simular chance</button>
+        <small id="sisuSimulationStatus">Base 2025 do SouFederal integrada ao Ultimate: ${institutions} instituições, pesos e notas mínimas preservados.</small>
+      </div>
+      <div id="sisuSimulationResults">
+        ${renderSisuResults(user.sisuLastSimulation)}
+      </div>
+    </section>
+  `;
+}
+
+function renderSisuModalityOption(value, label, selected) {
+  return `<option value="${escapeHTML(value)}" ${String(selected || "") === value ? "selected" : ""}>${escapeHTML(label)}</option>`;
+}
+
+function renderSisuScoreField(area, state) {
+  const hits = state.projectedHits?.[area.id];
+  const helper =
+    hits !== null && hits !== undefined && Number.isFinite(Number(hits))
+      ? `projeção recente: ${hits}/45`
+      : "preencha ou ajuste";
+  return `
+    <label class="field">
+      <span>${escapeHTML(area.label)} <small>${escapeHTML(helper)}</small></span>
+      <input id="sisuScore${escapeHTML(capitalizeId(area.id))}" type="number" min="0" max="1000" step="0.1" value="${escapeHTML(state.scores[area.id])}" />
+    </label>
+  `;
+}
+
+function capitalizeId(value) {
+  return String(value || "").charAt(0).toUpperCase() + String(value || "").slice(1);
+}
+
+function renderSisuResults(record) {
+  if (!record) {
+    return `<div class="empty-state">Informe as notas e rode a simulação para enxergar onde o paciente já respira competitivo.</div>`;
+  }
+  if (record.error) {
+    return `<div class="empty-state">${escapeHTML(record.error)}</div>`;
+  }
+  const rows = Array.isArray(record.results) ? record.results : [];
+  if (!rows.length) {
+    return `<div class="empty-state">Nenhuma oferta encontrada para esse filtro. Tente retirar UF ou modalidade.</div>`;
+  }
+  return `
+    <div class="sisu-result-head">
+      <strong>${escapeHTML(record.query?.curso || "Curso")}</strong>
+      <span>${formatIntegerBR(record.total_matches || rows.length)} ofertas analisadas · chamada regular 2025</span>
+    </div>
+    <div class="sisu-result-list">
+      ${rows.map(renderSisuResultCard).join("")}
+    </div>
+  `;
+}
+
+function renderSisuResultCard(item) {
+  const delta = Number(item.delta);
+  const deltaClass = Number.isFinite(delta) && delta >= 0 ? "positive" : "negative";
+  return `
+    <article class="sisu-result-card">
+      <div>
+        <span class="sisu-chance ${escapeHTML(item.chance || "em_analise")}">${escapeHTML(getSisuChanceLabel(item.chance))}</span>
+        <h3>${escapeHTML(item.curso || "Curso")}</h3>
+        <p>${escapeHTML([item.instituicao, item.nome_instituicao].filter(Boolean).join(" - "))}</p>
+        <small>${escapeHTML([item.campus, item.municipio, item.uf, item.modalidade].filter(Boolean).join(" · "))}</small>
+      </div>
+      <dl class="sisu-score-summary">
+        <div><dt>Corte</dt><dd>${formatScoreBR(item.nota_corte_2025_cr)}</dd></div>
+        <div><dt>Sua nota</dt><dd>${formatScoreBR(item.nota_calculada)}</dd></div>
+        <div><dt>Diferença</dt><dd class="${deltaClass}">${Number.isFinite(delta) ? `${delta > 0 ? "+" : ""}${formatScoreBR(delta)}` : "--"}</dd></div>
+      </dl>
+    </article>
+  `;
+}
+
+function getSisuChanceLabel(chance) {
+  const labels = {
+    acima_com_folga: "Acima com folga",
+    competitivo_acima_do_corte: "Competitivo",
+    zona_de_batalha: "Zona de batalha",
+    precisa_ganho_controlado: "Precisa ganhar nota",
+    fora_no_momento: "Fora no momento",
+    bloqueado_por_nota_minima: "Nota mínima bloqueia",
+    sem_corte_competitivo_no_relatorio: "Sem corte competitivo",
+  };
+  return labels[chance] || "Em análise";
+}
+
+function formatScoreBR(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return "--";
+  return number.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function formatIntegerBR(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return "--";
+  return number.toLocaleString("pt-BR");
+}
+
 function renderPerformanceView(user) {
   const attempts = [...(user.attemptLog || [])].reverse().slice(0, 12);
   const level = classifyStudent(user);
@@ -6827,6 +7047,8 @@ function renderPerformanceView(user) {
         }
       </article>
     </section>
+
+    ${renderSisuChancePanel(user)}
   `;
 }
 
@@ -7012,6 +7234,78 @@ function bindViewEvents(user) {
   bindEssayLibraryEvents(user);
   bindCopyButtons();
   bindRedacaoEditEvents(user);
+  bindSisuSimulatorEvents(user);
+}
+
+function bindSisuSimulatorEvents(user) {
+  const button = document.getElementById("sisuSimulateBtn");
+  if (!button) return;
+  button.addEventListener("click", async () => {
+    const status = document.getElementById("sisuSimulationStatus");
+    const results = document.getElementById("sisuSimulationResults");
+    const simulator = window.UltimateEnemSisuSimulator;
+    const curso = document.getElementById("sisuCourseInput")?.value?.trim() || "Medicina";
+    const uf = document.getElementById("sisuUfInput")?.value?.trim().toUpperCase() || "";
+    const modalidade = document.getElementById("sisuModalityInput")?.value || "";
+    const scores = {
+      linguagens: readSisuScore("Linguagens"),
+      humanas: readSisuScore("Humanas"),
+      natureza: readSisuScore("Natureza"),
+      matematica: readSisuScore("Matematica"),
+      redacao: readSisuScore("Redacao"),
+    };
+
+    user.sisuScoreDraft = { curso, uf, modalidade, scores };
+    saveCurrentUser(user);
+
+    if (!simulator?.simulateSisu2025) {
+      const error = "Motor SISU indisponível nesta sessão. Recarregue o app e tente novamente.";
+      user.sisuLastSimulation = { error };
+      saveCurrentUser(user);
+      if (results) results.innerHTML = renderSisuResults(user.sisuLastSimulation);
+      return;
+    }
+
+    try {
+      button.disabled = true;
+      if (status) status.textContent = "Carregando base SISU 2025 e calculando pesos...";
+      const courseKey = normalizeForMatch(curso);
+      const options = {
+        scores,
+        limit: 12,
+        applyBonus: false,
+        ...(courseKey === "medicina" ? { cursoExato: "MEDICINA" } : { curso }),
+        ...(uf ? { uf } : {}),
+        ...(modalidade ? { modalidade } : {}),
+      };
+      const simulation = await simulator.simulateSisu2025(options);
+      user.sisuLastSimulation = {
+        generatedAt: new Date().toISOString(),
+        query: { curso, uf, modalidade },
+        total_matches: simulation.total_matches,
+        raw_matches: simulation.raw_matches,
+        collapsed_by_offer: simulation.collapsed_by_offer,
+        results: simulation.results,
+      };
+      saveCurrentUser(user);
+      if (status) status.textContent = "Simulação concluída com pesos e cortes da chamada regular de 2025.";
+      if (results) results.innerHTML = renderSisuResults(user.sisuLastSimulation);
+    } catch (error) {
+      user.sisuLastSimulation = {
+        error: `Não consegui carregar a base SISU agora: ${error.message || error}`,
+      };
+      saveCurrentUser(user);
+      if (status) status.textContent = "Falha ao simular.";
+      if (results) results.innerHTML = renderSisuResults(user.sisuLastSimulation);
+    } finally {
+      button.disabled = false;
+    }
+  });
+}
+
+function readSisuScore(suffix) {
+  const value = Number(document.getElementById(`sisuScore${suffix}`)?.value);
+  return Number.isFinite(value) ? clamp(value, 0, 1000) : 0;
 }
 
 function bindTriClinicEvents(user) {

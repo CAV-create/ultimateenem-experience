@@ -3133,6 +3133,156 @@ button:disabled {
   text-align: center;
 }
 
+.sisu-panel {
+  margin-top: 16px;
+}
+
+.sisu-intel-grid,
+.sisu-score-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.sisu-intel-grid {
+  grid-template-columns: 1.4fr 0.55fr 0.9fr;
+}
+
+.sisu-score-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin-top: 12px;
+}
+
+.sisu-score-grid .field span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sisu-score-grid .field small {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: none;
+}
+
+.sisu-action-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.sisu-action-row small {
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.sisu-result-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 18px 0 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.sisu-result-head strong {
+  color: var(--gold-bright);
+  font-size: 1rem;
+}
+
+.sisu-result-head span {
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.sisu-result-list {
+  display: grid;
+  gap: 10px;
+}
+
+.sisu-result-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(210px, 0.42fr);
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-strong);
+}
+
+.sisu-result-card h3 {
+  margin: 8px 0 6px;
+  font-size: 1rem;
+}
+
+.sisu-result-card p,
+.sisu-result-card small {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.sisu-chance {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 9px;
+  border-radius: 8px;
+  background: #050505;
+  color: var(--gold-bright);
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.sisu-chance.zona_de_batalha,
+.sisu-chance.precisa_ganho_controlado {
+  color: var(--science);
+}
+
+.sisu-chance.fora_no_momento,
+.sisu-chance.bloqueado_por_nota_minima {
+  color: var(--red);
+}
+
+.sisu-score-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.sisu-score-summary div {
+  padding: 10px;
+  border-radius: 8px;
+  background: #050505;
+}
+
+.sisu-score-summary dt {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.sisu-score-summary dd {
+  margin: 4px 0 0;
+  color: var(--ink);
+  font-weight: 900;
+}
+
+.sisu-score-summary dd.positive {
+  color: var(--gold-bright);
+}
+
+.sisu-score-summary dd.negative {
+  color: var(--red);
+}
+
 @media (max-width: 1120px) {
   .metrics-grid,
   .frequency-summary-grid,
@@ -3186,6 +3336,18 @@ button:disabled {
 
   .score-summary-metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sisu-intel-grid,
+  .sisu-score-grid,
+  .sisu-result-card {
+    grid-template-columns: 1fr;
+  }
+
+  .sisu-action-row,
+  .sisu-result-head {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .essay-search-toolbar {
