@@ -4727,10 +4727,8 @@ function renderRedacaoView(user) {
   const competencies = getRedacaoCompetencies(redacao);
   const essays = getEditableEssays(user, redacao);
   const theme = user.weeklyEssayTheme || "Desafios para valorizar a saúde mental dos estudantes no Brasil";
-  const repertories = REDACTION_LIBRARY.repertories;
   const sourcePacks = REDACTION_LIBRARY.sourcePacks;
   const rubricAlerts = REDACTION_LIBRARY.rubricAlerts;
-  const authorCrossovers = REDACTION_LIBRARY.authorCrossovers;
   const premiumTopicPacks = REDACTION_LIBRARY.premiumTopicPacks || [];
   const themeArchive = REDACTION_LIBRARY.themeArchive || [];
   const themePatternAnalysis = REDACTION_LIBRARY.themePatternAnalysis || {};
@@ -4746,6 +4744,8 @@ function renderRedacaoView(user) {
       ${metric("Média semanal", redacaoSummary.average ? redacaoSummary.average : "sem nota", `${redacaoSummary.filled}/3 redações lançadas`)}
       ${metric("Meta redação", redacaoSummary.target.label, redacaoSummary.target.helper)}
     </section>
+
+    ${renderRedacaoCutoutClinic(user, premiumTopicPacks, sourcePacks, themeArchive)}
 
     <section class="grid redacao-layout">
       <article class="panel">
@@ -4794,8 +4794,6 @@ function renderRedacaoView(user) {
       </article>
     </section>
 
-    ${renderPremiumTopicPacks(premiumTopicPacks)}
-
     ${renderRedacaoScoreTracker(user, redacaoWeek)}
 
     ${renderRedacaoMicrodataPanel(REDACTION_MICRODATA)}
@@ -4811,29 +4809,7 @@ function renderRedacaoView(user) {
       ${renderRubricAlerts(rubricAlerts)}
     </section>
 
-    <section class="panel redacao-wide source-library-panel">
-      <div class="panel-header">
-        <div>
-          <h2>Prontuário de Leitura ENEM</h2>
-          <p>Fontes, trechos de consulta e modo de uso para prescrever repertório sem abrir documento gigante.</p>
-        </div>
-        <span class="status-chip">${sourcePacks.length} fontes em estoque</span>
-      </div>
-      ${renderSourceReadingRoom(sourcePacks)}
-    </section>
-
     ${renderThemePatternMap(themePatternAnalysis, themeArchive)}
-
-    <section class="panel redacao-wide author-crossover-panel">
-      <div class="panel-header">
-          <div>
-          <h2>Junta médica de repertórios</h2>
-          <p>Combinações para abrir com repertório forte e fechar com intervenção coerente, sem parecer modelo decorado.</p>
-        </div>
-        <span class="status-chip">${authorCrossovers.length} rotas</span>
-      </div>
-      ${renderAuthorCrossovers(authorCrossovers)}
-    </section>
 
     <section class="panel redacao-wide">
       <div class="panel-header">
@@ -4852,17 +4828,6 @@ function renderRedacaoView(user) {
       <div id="c1TipBoard">
         ${renderC1TipBoard(dailyC1Tips)}
       </div>
-    </section>
-
-    <section class="panel redacao-wide">
-      <div class="panel-header">
-        <div>
-          <h2>Farmácia de Repertórios</h2>
-          <p>Doses de autores, leis, dados e referências culturais para montar argumentos com alta argumentativa.</p>
-        </div>
-        <span class="status-chip">${repertories.length} prescrições</span>
-      </div>
-      ${renderRepertoryBank(repertories)}
     </section>
 
     <section class="grid redacao-layout">
@@ -4913,6 +4878,316 @@ function renderRedacaoView(user) {
       </div>
     </section>
   `;
+}
+
+const REDACAO_CUTOUT_PATTERNS = [
+  {
+    label: "Invisibilidade social",
+    competency: "C2",
+    build: (profile) => `A invisibilidade de ${profile.group} no acesso a direitos no Brasil`,
+  },
+  {
+    label: "Persistência do problema",
+    competency: "C3",
+    build: (profile) => `A persistência de ${profile.problem} na sociedade brasileira`,
+  },
+  {
+    label: "Política pública",
+    competency: "C5",
+    build: (profile) => `O papel das políticas públicas no enfrentamento de ${profile.problem}`,
+  },
+  {
+    label: "Democratização",
+    competency: "C2",
+    build: (profile) => `A democratização do acesso à cidadania para ${profile.group}`,
+  },
+  {
+    label: "Entraves institucionais",
+    competency: "C3",
+    build: (profile) => `Os entraves institucionais à efetivação de direitos para ${profile.group}`,
+  },
+  {
+    label: "Prevenção",
+    competency: "C4",
+    build: (profile) => `A importância da prevenção diante de ${profile.problem}`,
+  },
+  {
+    label: "Educação cidadã",
+    competency: "C2",
+    build: (profile) => `A educação cidadã como caminho para enfrentar ${profile.problem}`,
+  },
+  {
+    label: "Responsabilidade coletiva",
+    competency: "C5",
+    build: (profile) => `A responsabilidade coletiva na promoção de ${profile.purpose}`,
+  },
+];
+
+function renderRedacaoCutoutClinic(user, packs = [], sourcePacks = [], themeArchive = []) {
+  const cutouts = buildRedacaoCutouts(packs, sourcePacks, themeArchive).slice(0, 100);
+  if (!cutouts.length) return "";
+  const activeCutout = cutouts.find((item) => item.id === user.redacaoActiveCutoutId) || cutouts[0];
+  const seed = getRedacaoCutoutSeed(user, activeCutout);
+  return `
+    <section class="panel redacao-wide redacao-cutout-panel">
+      <div class="panel-header">
+        <div>
+          <h2>Recortes de Redação</h2>
+          <p>Escolha um recorte e abra somente o projeto necessário. O acervo completo fica interno para prescrever repertório sem lotar a tela.</p>
+        </div>
+        <span class="status-chip">${cutouts.length} recortes autorais</span>
+      </div>
+      <div class="redacao-cutout-shell">
+        ${renderRedacaoCutoutIndex(cutouts, activeCutout.id)}
+        ${renderRedacaoCutoutProject(activeCutout, user, seed)}
+      </div>
+    </section>
+  `;
+}
+
+function renderRedacaoCutoutIndex(cutouts, activeId) {
+  return `
+    <aside class="redacao-cutout-index" aria-label="Índice de recortes de redação">
+      <div class="redacao-cutout-toolbar">
+        <label class="field">
+          <span>Buscar recorte</span>
+          <input id="redacaoCutoutSearchInput" placeholder="Ex.: saúde, trabalho, infância, tecnologia..." />
+        </label>
+      </div>
+      <div class="redacao-cutout-table" id="redacaoCutoutTable" role="listbox">
+        ${cutouts
+          .map((cutout, index) => {
+            const active = cutout.id === activeId;
+            const searchText = serializeCutoutForSearch(cutout);
+            return `
+              <button
+                class="redacao-cutout-row ${active ? "active" : ""}"
+                type="button"
+                data-redacao-cutout-select="${escapeHTML(cutout.id)}"
+                data-recorte-search="${escapeHTML(searchText)}"
+                aria-pressed="${active ? "true" : "false"}"
+              >
+                <span class="redacao-cutout-number">${String(index + 1).padStart(3, "0")}</span>
+                <span class="redacao-cutout-title">
+                  <strong>${escapeHTML(cutout.title)}</strong>
+                  <small>${escapeHTML(cutout.axis)} · ${escapeHTML(cutout.competencyFocus)}</small>
+                </span>
+              </button>
+            `;
+          })
+          .join("")}
+      </div>
+    </aside>
+  `;
+}
+
+function renderRedacaoCutoutProject(cutout, user, seed) {
+  const plan = buildEssayPlan(cutout.theme, seed);
+  const relatedSources = selectThemeItems(
+    REDACTION_LIBRARY.sourcePacks || [],
+    plan.profile,
+    cutout.theme,
+    cutout.sourceIds || [],
+    seed + 13,
+    4,
+  );
+  const relatedCrossovers = selectThemeItems(
+    REDACTION_LIBRARY.authorCrossovers || [],
+    plan.profile,
+    cutout.theme,
+    cutout.crossoverIds || [],
+    seed + 19,
+    3,
+  );
+  return `
+    <article class="redacao-cutout-detail" id="redacaoCutoutDetail">
+      <div class="redacao-cutout-detail-head">
+        <div>
+          <span class="status-chip">${escapeHTML(cutout.axis)}</span>
+          <h3>${escapeHTML(cutout.title)}</h3>
+          <p>${escapeHTML(cutout.theme)}</p>
+        </div>
+        <button class="secondary-btn compact-btn" type="button" data-redacao-cutout-refresh>Nova combinação</button>
+      </div>
+      <div class="redacao-cutout-summary">
+        <span><strong>Foco</strong>${escapeHTML(cutout.competencyFocus)}</span>
+        <span><strong>Problema</strong>${escapeHTML(plan.profile.problem)}</span>
+        <span><strong>Grupo afetado</strong>${escapeHTML(plan.profile.group)}</span>
+      </div>
+      ${renderCutoutPdfShelf(cutout, relatedSources)}
+      ${renderCutoutQuickProtocol(plan, relatedSources, relatedCrossovers)}
+      ${cutout.pack ? renderCutoutPremiumBoxes(cutout.pack) : ""}
+      ${renderEssayPlan(cutout.theme, seed)}
+    </article>
+  `;
+}
+
+function renderCutoutPdfShelf(cutout, sources = []) {
+  const links = [];
+  if (cutout.sourcePdf) {
+    links.push({ label: "Abrir projeto-base", url: cutout.sourcePdf });
+  }
+  sources.forEach((source) => {
+    (source.links || []).slice(0, 1).forEach((link) => links.push(link));
+  });
+  const uniqueLinks = uniqueLinksByURL(links).slice(0, 4);
+  if (!uniqueLinks.length) return "";
+  return `
+    <div class="redacao-cutout-pdf-shelf">
+      <strong>Arquivos internos do recorte</strong>
+      <div class="source-link-row">
+        ${uniqueLinks.map((link) => renderExternalLink(link)).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function renderCutoutQuickProtocol(plan, sources = [], crossovers = []) {
+  return `
+    <div class="redacao-cutout-protocol">
+      <article>
+        <strong>Diagnóstico</strong>
+        <p>${escapeHTML(plan.diagnosis)}</p>
+      </article>
+      <article>
+        <strong>Repertório rotativo</strong>
+        <p>${escapeHTML(sources.map((item) => getSourceDisplayTitle(item)).join(" · ") || "Use repertório legitimado e produtivo.")}</p>
+      </article>
+      <article>
+        <strong>Junta médica do dia</strong>
+        <p>${escapeHTML(crossovers.map((item) => `${item.start} + ${item.closeWith}`).join(" · ") || "Combine repertório legal, social e cultural.")}</p>
+      </article>
+    </div>
+  `;
+}
+
+function renderCutoutPremiumBoxes(pack) {
+  const boxes = Array.isArray(pack.competencyBoxes) ? pack.competencyBoxes : [];
+  if (!boxes.length) return "";
+  return `
+    <details class="redacao-cutout-drawer" open>
+      <summary>Projeto CAV do recorte, por competência</summary>
+      <div class="premium-competency-grid">
+        ${boxes.map((box) => renderPremiumCompetencyBox(pack.id, box)).join("")}
+      </div>
+    </details>
+  `;
+}
+
+function buildRedacaoCutouts(packs = [], sourcePacks = [], themeArchive = []) {
+  const cutouts = [];
+  const seen = new Set();
+  const add = (cutout) => {
+    const title = cleanCutoutText(cutout.title || cutout.theme);
+    const theme = cleanCutoutText(cutout.theme || title);
+    const key = slugifyRedacaoText(`${title}-${theme}`);
+    if (!title || !theme || seen.has(key)) return;
+    seen.add(key);
+    const profile = detectThemeProfile(theme);
+    cutouts.push({
+      ...cutout,
+      id: cutout.id || `recorte-${key}`,
+      title,
+      theme,
+      axis: cutout.axis || profile.label,
+      competencyFocus: cutout.competencyFocus || getCutoutCompetencyFocus(cutouts.length),
+      sourceIds: cutout.sourceIds || findRelatedSourceIds(theme, sourcePacks, profile),
+      crossoverIds: cutout.crossoverIds || profile.crossoverIds || [],
+    });
+  };
+
+  packs.forEach((pack, index) => {
+    const theme = cleanCutoutText(pack.theme || pack.title || "");
+    if (!theme) return;
+    const profile = detectThemeProfile(theme);
+    add({
+      id: `recorte-projeto-${slugifyRedacaoText(pack.id || theme)}`,
+      title: theme,
+      theme,
+      axis: profile.label,
+      competencyFocus: getCutoutCompetencyFocus(index),
+      sourcePdf: pack.sourcePdf,
+      sourceIds: findRelatedSourceIds(theme, sourcePacks, profile),
+      pack,
+    });
+  });
+
+  ESSAY_THEME_PROFILES.forEach((profile) => {
+    REDACAO_CUTOUT_PATTERNS.forEach((pattern) => {
+      const theme = cleanCutoutText(pattern.build(profile));
+      add({
+        id: `recorte-${profile.id}-${slugifyRedacaoText(pattern.label)}`,
+        title: theme,
+        theme,
+        axis: profile.label,
+        competencyFocus: `${pattern.competency}: ${pattern.label.toLowerCase()}`,
+        sourceIds: findRelatedSourceIds(theme, sourcePacks, profile),
+        crossoverIds: profile.crossoverIds || [],
+      });
+    });
+  });
+
+  themeArchive.forEach((item, index) => {
+    const theme = cleanCutoutText(item.theme || "");
+    if (!theme) return;
+    add({
+      id: `recorte-oficial-${slugifyRedacaoText(`${item.year}-${theme}`)}`,
+      title: theme,
+      theme,
+      axis: item.family || item.axis || "tema oficial ENEM",
+      competencyFocus: getCutoutCompetencyFocus(index + 3),
+      sourceIds: findRelatedSourceIds(theme, sourcePacks, detectThemeProfile(theme)),
+    });
+  });
+
+  return cutouts;
+}
+
+function findRelatedSourceIds(theme, sourcePacks = [], profile = detectThemeProfile(theme)) {
+  return selectThemeItems(sourcePacks, profile, theme, profile.sourceIds || [], getTextSeed(theme), 6).map((item) => item.id);
+}
+
+function getCutoutCompetencyFocus(index) {
+  const focuses = [
+    "C2: repertório produtivo",
+    "C3: tese e progressão",
+    "C5: intervenção completa",
+    "C4: coesão e retomadas",
+    "C1: registro formal",
+  ];
+  return focuses[index % focuses.length];
+}
+
+function getRedacaoCutoutSeed(user, cutout) {
+  const today = new Date().toISOString().slice(0, 10);
+  const userKey = user?.profile?.name || user?.id || "aluno";
+  const manual = Number(user?.redacaoCutoutRotationSeed || 0);
+  return getTextSeed(`${today}-${userKey}-${cutout.id}`) + manual * 97;
+}
+
+function serializeCutoutForSearch(cutout) {
+  return normalizeForMatch(`${cutout.id} ${cutout.title} ${cutout.theme} ${cutout.axis} ${cutout.competencyFocus}`);
+}
+
+function cleanCutoutText(text = "") {
+  return String(text).replace(/\s+/g, " ").replace(/\s+([,.;:!?])/g, "$1").trim();
+}
+
+function slugifyRedacaoText(text = "") {
+  return normalizeForMatch(text)
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 90);
+}
+
+function uniqueLinksByURL(links = []) {
+  const seen = new Set();
+  return links.filter((link) => {
+    const url = link?.url || "";
+    if (!url || seen.has(url)) return false;
+    seen.add(url);
+    return true;
+  });
 }
 
 function renderPremiumTopicPacks(packs = []) {
@@ -7215,6 +7490,8 @@ function bindViewEvents(user) {
     board.innerHTML = renderC1TipBoard(tips, { searchTerm: term.trim() });
   });
 
+  bindRedacaoCutoutEvents(user);
+
   document.getElementById("clearEssaySearchBtn")?.addEventListener("click", () => {
     const input = document.getElementById("essaySearchInput");
     const library = document.getElementById("essayLibrary");
@@ -7235,6 +7512,31 @@ function bindViewEvents(user) {
   bindCopyButtons();
   bindRedacaoEditEvents(user);
   bindSisuSimulatorEvents(user);
+}
+
+function bindRedacaoCutoutEvents(user) {
+  document.querySelectorAll("[data-redacao-cutout-select]").forEach((button) => {
+    if (button.dataset.cutoutBound === "true") return;
+    button.dataset.cutoutBound = "true";
+    button.addEventListener("click", () => {
+      user.redacaoActiveCutoutId = button.dataset.redacaoCutoutSelect;
+      saveCurrentUser(user);
+      render();
+    });
+  });
+
+  document.querySelector("[data-redacao-cutout-refresh]")?.addEventListener("click", () => {
+    user.redacaoCutoutRotationSeed = Number(user.redacaoCutoutRotationSeed || 0) + 1;
+    saveCurrentUser(user);
+    render();
+  });
+
+  document.getElementById("redacaoCutoutSearchInput")?.addEventListener("input", (event) => {
+    const term = normalizeForMatch(event.target.value || "");
+    document.querySelectorAll("[data-recorte-search]").forEach((row) => {
+      row.hidden = term ? !row.dataset.recorteSearch.includes(term) : false;
+    });
+  });
 }
 
 function bindSisuSimulatorEvents(user) {

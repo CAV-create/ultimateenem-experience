@@ -1,4 +1,4 @@
-const CACHE_NAME = "ultimateenem-experience-v39-redacao-premium-sisu";
+const CACHE_NAME = "ultimateenem-experience-v40-redacao-recortes";
 const APP_SHELL = [
   "./",
   "./index.html",
