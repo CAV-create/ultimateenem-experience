@@ -28,11 +28,13 @@ Regras pedagógicas:
 
 Retorne APENAS JSON válido, sem markdown, no formato:
 {
-  "speech": "resposta oral natural e curta",
-  "notebook": ["linha 1", "linha 2", "linha 3"],
+  "speech": "resposta oral natural, clara e curta",
+  "notebook": ["ponto essencial 1", "ponto essencial 2", "ponto essencial 3"],
   "challenge": "pergunta curta para o aluno tentar sozinho",
   "needs_clarification": false
-}`;
+}
+
+Mantenha a resposta completa dentro desse JSON. Não acrescente nenhum texto antes ou depois.`;
 
   const messages = [
     { role: 'system', content: system },
@@ -40,7 +42,6 @@ Retorne APENAS JSON válido, sem markdown, no formato:
     { role: 'user', content: question.trim() }
   ];
 
-  // Modelos explicitamente gratuitos no AI Gateway para validar o protótipo sem gasto.
   const models = [
     'minimax/minimax-m3-free',
     'inclusionai/ling-3.0-flash-vl-free',
@@ -48,6 +49,53 @@ Retorne APENAS JSON válido, sem markdown, no formato:
   ];
 
   const failures = [];
+
+  function unescapeJsonString(s='') {
+    try { return JSON.parse('"' + s.replace(/\\?"/g, '\\"') + '"'); }
+    catch { return s.replace(/\\n/g, ' ').replace(/\\"/g, '"').replace(/\\\\/g, '\\'); }
+  }
+
+  function parseTutorText(text='') {
+    const cleaned = String(text).replace(/^```json\s*/i, '').replace(/```$/i, '').trim();
+    try {
+      const obj = JSON.parse(cleaned);
+      return {
+        speech: String(obj.speech || '').trim(),
+        notebook: Array.isArray(obj.notebook) ? obj.notebook.map(String).filter(Boolean).slice(0, 8) : [],
+        challenge: String(obj.challenge || '').trim(),
+        needs_clarification: Boolean(obj.needs_clarification)
+      };
+    } catch {}
+
+    // Recuperação robusta para modelos gratuitos que às vezes truncam JSON perto do final.
+    const speechMatch = cleaned.match(/"speech"\s*:\s*"([\s\S]*?)"\s*,\s*"notebook"/i)
+      || cleaned.match(/"speech"\s*:\s*"([\s\S]*?)(?:"\s*,|$)/i);
+    const speech = speechMatch ? unescapeJsonString(speechMatch[1]).trim() : '';
+
+    let notebook = [];
+    const notebookBlock = cleaned.match(/"notebook"\s*:\s*\[([\s\S]*?)(?:\]\s*,\s*"challenge"|\]\s*[,}]|$)/i);
+    if (notebookBlock) {
+      notebook = [...notebookBlock[1].matchAll(/"((?:\\.|[^"\\])*)"/g)]
+        .map(m => unescapeJsonString(m[1]).trim())
+        .filter(Boolean)
+        .slice(0, 8);
+    }
+
+    const challengeMatch = cleaned.match(/"challenge"\s*:\s*"([\s\S]*?)(?:"\s*,|"\s*}|$)/i);
+    const challenge = challengeMatch ? unescapeJsonString(challengeMatch[1]).trim() : '';
+
+    // Nunca devolve o JSON bruto para a interface.
+    return {
+      speech: speech || 'Vamos trabalhar esse ponto juntos. Vou registrar os pontos essenciais no caderno.',
+      notebook: notebook.length ? notebook : [
+        'Dúvida do aluno: ' + question.trim(),
+        'Retome o conceito central explicado oralmente e identifique a diferença principal.',
+        'Em seguida, aplique o conceito em um exemplo curto para verificar a compreensão.'
+      ],
+      challenge,
+      needs_clarification: false
+    };
+  }
 
   try {
     for (const model of models) {
@@ -60,8 +108,8 @@ Retorne APENAS JSON válido, sem markdown, no formato:
         body: JSON.stringify({
           model,
           messages,
-          temperature: 0.35,
-          max_tokens: 700
+          temperature: 0.3,
+          max_tokens: 1200
         })
       });
 
@@ -74,26 +122,15 @@ Retorne APENAS JSON válido, sem markdown, no formato:
 
       const data = JSON.parse(raw);
       const text = data?.choices?.[0]?.message?.content || '';
-      let parsed;
-      try {
-        const cleaned = text.replace(/^```json\s*/i, '').replace(/```$/i, '').trim();
-        parsed = JSON.parse(cleaned);
-      } catch {
-        parsed = {
-          speech: text || 'Vamos trabalhar esse ponto juntos.',
-          notebook: [],
-          challenge: '',
-          needs_clarification: false
-        };
-      }
+      const parsed = parseTutorText(text);
 
       return res.status(200).json({
         selftest: isSelfTest || undefined,
         model_used: model,
-        speech: String(parsed.speech || '').trim(),
-        notebook: Array.isArray(parsed.notebook) ? parsed.notebook.map(String).slice(0, 12) : [],
-        challenge: String(parsed.challenge || '').trim(),
-        needs_clarification: Boolean(parsed.needs_clarification)
+        speech: parsed.speech,
+        notebook: parsed.notebook,
+        challenge: parsed.challenge,
+        needs_clarification: parsed.needs_clarification
       });
     }
 
