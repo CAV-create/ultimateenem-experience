@@ -40,10 +40,11 @@ Retorne APENAS JSON válido, sem markdown, no formato:
     { role: 'user', content: question.trim() }
   ];
 
+  // Modelos explicitamente gratuitos no AI Gateway para validar o protótipo sem gasto.
   const models = [
-    'google/gemini-3.6-flash',
-    'openai/gpt-5.6-sol',
-    'anthropic/claude-opus-5'
+    'minimax/minimax-m3-free',
+    'inclusionai/ling-3.0-flash-vl-free',
+    'inclusionai/ling-3.0-flash-sante-free'
   ];
 
   const failures = [];
@@ -59,7 +60,8 @@ Retorne APENAS JSON válido, sem markdown, no formato:
         body: JSON.stringify({
           model,
           messages,
-          temperature: 0.35
+          temperature: 0.35,
+          max_tokens: 700
         })
       });
 
