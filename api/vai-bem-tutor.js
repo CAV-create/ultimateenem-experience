@@ -1,8 +1,13 @@
-// Redeploy de preview para carregar AI_GATEWAY_API_KEY
+// Preview do VAI BEM: POST para uso normal; GET com ?selftest=1 para autoteste seguro.
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'method_not_allowed' });
+  const isSelfTest = req.method === 'GET' && req.query?.selftest === '1';
+  if (req.method !== 'POST' && !isSelfTest) return res.status(405).json({ error: 'method_not_allowed' });
 
-  const { question = '', subject = 'Matemática', grade = '6º ano', teacher = 'Profa. Lia', history = [] } = req.body || {};
+  const payload = isSelfTest
+    ? { question: 'Qual é a diferença entre álcool e fenol?', subject: 'Química Orgânica', grade: '2º ano do Ensino Médio', teacher: 'Prof. Rafael', history: [] }
+    : (req.body || {});
+
+  const { question = '', subject = 'Matemática', grade = '6º ano', teacher = 'Profa. Lia', history = [] } = payload;
   if (!question.trim()) return res.status(400).json({ error: 'question_required' });
 
   const token = process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN;
@@ -43,7 +48,7 @@ Retorne APENAS JSON válido, sem markdown, no formato:
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'openai/gpt-5.6-luna',
+        model: 'openai/gpt-5.6-sol',
         messages,
         temperature: 0.45,
         response_format: { type: 'json_object' }
@@ -59,6 +64,7 @@ Retorne APENAS JSON válido, sem markdown, no formato:
     catch { parsed = { speech: text, notebook: [], challenge: '', needs_clarification: false }; }
 
     return res.status(200).json({
+      selftest: isSelfTest || undefined,
       speech: String(parsed.speech || '').trim(),
       notebook: Array.isArray(parsed.notebook) ? parsed.notebook.map(String).slice(0, 12) : [],
       challenge: String(parsed.challenge || '').trim(),
