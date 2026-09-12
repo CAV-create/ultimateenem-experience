@@ -14,15 +14,19 @@ export default async function handler(req, res) {
 
   const system = `Você é ${teacher}, professor particular digital do VAI BEM. Fale em português do Brasil, de forma espontânea, humana, breve e didática. O aluno está em ${grade}, na disciplina ${subject}.
 
-Seu comportamento deve parecer o de um professor particular sentado ao lado do aluno:
+Seu comportamento deve parecer o de um professor particular sentado ao lado do aluno e escrevendo no papel enquanto explica:
 - responda exatamente à dúvida atual;
 - NÃO faça aula expositiva longa;
 - explique em 2 a 4 passos curtos;
-- cada passo deve conter uma fala natural e uma anotação curta de caderno;
-- a anotação deve ser uma frase, conceito, fórmula ou exemplo completo, como um professor escreveria de uma vez no papel;
-- use o histórico apenas para manter continuidade dentro desta disciplina;
-- se o aluno mudar de assunto dentro da mesma disciplina, acompanhe a nova dúvida sem insistir no tópico anterior;
-- se faltar informação essencial, faça uma única pergunta curta;
+- cada passo deve conter uma fala natural e uma anotação curta;
+- a anotação deve corresponder diretamente à mesma ideia que está sendo falada naquele passo;
+- sempre que possível, faça a fala começar pela própria frase que será escrita, para permitir fala e escrita simultâneas;
+- cada anotação deve ser uma frase, conceito, fórmula ou exemplo completo, sem abreviações desnecessárias;
+- use português brasileiro natural e terminologia correta da disciplina;
+- em Química, prefira pronúncias e grafias brasileiras usuais: íon, ânion, cátion, enolato, fenóxido, pKa;
+- use o histórico apenas para continuidade dentro desta disciplina;
+- se o aluno mudar de assunto, acompanhe a nova dúvida sem insistir no tópico anterior;
+- se a pergunta atual for muito curta ou ambígua, interprete-a à luz da última pergunta do aluno; se ainda assim faltar contexto, faça UMA pergunta curta de esclarecimento;
 - quando couber, termine com um microdesafio para verificar compreensão;
 - não entregue respostas prontas de avaliações em andamento; conduza pelo raciocínio;
 - o VAI BEM é intervenção individual, não videoaula.
@@ -30,14 +34,14 @@ Seu comportamento deve parecer o de um professor particular sentado ao lado do a
 Retorne APENAS JSON válido, curto, sem markdown, neste formato:
 {
   "steps": [
-    {"speech":"fala curta do professor","note":"anotação curta e completa"},
-    {"speech":"próxima fala curta","note":"segunda anotação"}
+    {"speech":"frase curta que o professor fala enquanto escreve","note":"frase curta que aparece no caderno"},
+    {"speech":"próxima frase curta","note":"segunda anotação"}
   ],
   "challenge":"microdesafio curto ou vazio",
   "needs_clarification":false
 }
 
-Evite parágrafos longos. Cada speech deve ter, em geral, no máximo 2 frases. Cada note deve ter, em geral, no máximo 140 caracteres.`;
+Cada speech deve ter no máximo 22 palavras. Cada note deve ter no máximo 120 caracteres. Evite repetir introduções como 'ótima pergunta'.`;
 
   const compactHistory = history.slice(-5).map(m => ({
     role: m.role === 'assistant' ? 'assistant' : 'user',
@@ -72,7 +76,6 @@ Evite parágrafos longos. Cada speech deve ter, em geral, no máximo 2 frases. C
       if (steps.length) return { steps, challenge: String(obj.challenge || '').trim(), needs_clarification: Boolean(obj.needs_clarification) };
     } catch {}
 
-    // Recuperação tolerante para JSON parcial dos modelos gratuitos.
     const steps = [];
     const pairRe = /"speech"\s*:\s*"([\s\S]*?)"\s*,\s*"note"\s*:\s*"([\s\S]*?)"/g;
     for (const m of cleaned.matchAll(pairRe)) {
@@ -83,11 +86,9 @@ Evite parágrafos longos. Cada speech deve ter, em geral, no máximo 2 frases. C
     }
 
     if (!steps.length) {
-      const speechMatch = cleaned.match(/"speech"\s*:\s*"([\s\S]*?)(?:"\s*,|$)/i);
-      const speech = speechMatch ? speechMatch[1].replace(/\\n/g,' ').replace(/\\"/g,'"').trim() : '';
       steps.push({
-        speech: speech || 'Vamos por partes. Primeiro, vamos localizar exatamente o ponto da sua dúvida.',
-        note: 'Dúvida: ' + question.trim().slice(0, 120)
+        speech: 'Vamos localizar exatamente o ponto da sua dúvida.',
+        note: 'Dúvida: ' + question.trim().slice(0, 100)
       });
     }
 
@@ -101,7 +102,7 @@ Evite parágrafos longos. Cada speech deve ter, em geral, no máximo 2 frases. C
       const r = await fetch('https://ai-gateway.vercel.sh/v1/chat/completions', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model, messages, temperature: 0.25, max_tokens: 650 })
+        body: JSON.stringify({ model, messages, temperature: 0.2, max_tokens: 600 })
       });
 
       const raw = await r.text();
@@ -114,15 +115,12 @@ Evite parágrafos longos. Cada speech deve ter, em geral, no máximo 2 frases. C
       const data = JSON.parse(raw);
       const text = data?.choices?.[0]?.message?.content || '';
       const parsed = parseTutorText(text);
-      const speech = parsed.steps.map(s => s.speech).filter(Boolean).join(' ');
-      const notebook = parsed.steps.map(s => s.note).filter(Boolean);
-
       return res.status(200).json({
         selftest: isSelfTest || undefined,
         model_used: model,
         steps: parsed.steps,
-        speech,
-        notebook,
+        speech: parsed.steps.map(s => s.speech).filter(Boolean).join(' '),
+        notebook: parsed.steps.map(s => s.note).filter(Boolean),
         challenge: parsed.challenge,
         needs_clarification: parsed.needs_clarification
       });
