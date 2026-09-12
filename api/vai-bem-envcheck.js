@@ -1,3 +1,4 @@
+// Redeploy solicitado após confirmação da variável Preview
 export default function handler(req, res) {
   return res.status(200).json({
     ai_gateway_key_present: Boolean(process.env.AI_GATEWAY_API_KEY),
