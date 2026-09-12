@@ -40,37 +40,67 @@ Retorne APENAS JSON válido, sem markdown, no formato:
     { role: 'user', content: question.trim() }
   ];
 
+  const models = [
+    'google/gemini-3.6-flash',
+    'openai/gpt-5.6-sol',
+    'anthropic/claude-opus-5'
+  ];
+
+  const failures = [];
+
   try {
-    const r = await fetch('https://ai-gateway.vercel.sh/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'openai/gpt-5.6-sol',
-        messages,
-        temperature: 0.45,
-        response_format: { type: 'json_object' }
-      })
-    });
+    for (const model of models) {
+      const r = await fetch('https://ai-gateway.vercel.sh/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model,
+          messages,
+          temperature: 0.35
+        })
+      });
 
-    const raw = await r.text();
-    if (!r.ok) return res.status(r.status).json({ error: 'gateway_error', detail: raw.slice(0, 500) });
-    const data = JSON.parse(raw);
-    const text = data?.choices?.[0]?.message?.content || '{}';
-    let parsed;
-    try { parsed = JSON.parse(text); }
-    catch { parsed = { speech: text, notebook: [], challenge: '', needs_clarification: false }; }
+      const raw = await r.text();
+      if (!r.ok) {
+        failures.push({ model, status: r.status, detail: raw.slice(0, 400) });
+        console.error('VAI_BEM_GATEWAY_MODEL_FAILURE', { model, status: r.status, detail: raw.slice(0, 400) });
+        continue;
+      }
 
-    return res.status(200).json({
-      selftest: isSelfTest || undefined,
-      speech: String(parsed.speech || '').trim(),
-      notebook: Array.isArray(parsed.notebook) ? parsed.notebook.map(String).slice(0, 12) : [],
-      challenge: String(parsed.challenge || '').trim(),
-      needs_clarification: Boolean(parsed.needs_clarification)
+      const data = JSON.parse(raw);
+      const text = data?.choices?.[0]?.message?.content || '';
+      let parsed;
+      try {
+        const cleaned = text.replace(/^```json\s*/i, '').replace(/```$/i, '').trim();
+        parsed = JSON.parse(cleaned);
+      } catch {
+        parsed = {
+          speech: text || 'Vamos trabalhar esse ponto juntos.',
+          notebook: [],
+          challenge: '',
+          needs_clarification: false
+        };
+      }
+
+      return res.status(200).json({
+        selftest: isSelfTest || undefined,
+        model_used: model,
+        speech: String(parsed.speech || '').trim(),
+        notebook: Array.isArray(parsed.notebook) ? parsed.notebook.map(String).slice(0, 12) : [],
+        challenge: String(parsed.challenge || '').trim(),
+        needs_clarification: Boolean(parsed.needs_clarification)
+      });
+    }
+
+    return res.status(502).json({
+      error: 'all_gateway_models_failed',
+      attempts: failures.map(f => ({ model: f.model, status: f.status, detail: f.detail }))
     });
   } catch (e) {
+    console.error('VAI_BEM_TUTOR_FAILED', e);
     return res.status(500).json({ error: 'tutor_failed', detail: String(e?.message || e) });
   }
 }
