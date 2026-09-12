@@ -6,9 +6,9 @@ export default async function handler(req, res) {
   const token = process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN;
   if (!token) return res.status(503).json({ error: 'ai_auth_unavailable' });
 
-  const lia = teacher !== 'rafael';
-  const instructions = lia
-    ? 'Fale em português brasileiro. Voz feminina adulta, espontânea, acolhedora e segura, como uma professora particular conversando ao lado do aluno. Sotaque carioca leve e natural, sem caricatura, sem gírias excessivas, sem tom de locução. Ritmo conversacional, pequenas pausas e entonação calorosa. Priorize clareza didática.'
+  const isFemale = teacher === 'lia';
+  const instructions = isFemale
+    ? 'Fale em português brasileiro. Voz feminina adulta, espontânea, acolhedora e segura, como uma professora particular conversando ao lado do aluno. Sotaque carioca leve e natural, sem caricatura, sem gírias excessivas, sem tom de locução. Ritmo conversacional e clareza didática.'
     : 'Fale em português brasileiro. Voz masculina adulta, espontânea, acolhedora e segura, como um professor particular conversando ao lado do aluno. Sotaque carioca leve e natural, sem caricatura, sem gírias excessivas, sem tom de locução. Ritmo conversacional, pequenas pausas e entonação didática.';
 
   try {
@@ -20,11 +20,11 @@ export default async function handler(req, res) {
         'ai-model-id': 'openai/gpt-4o-mini-tts'
       },
       body: JSON.stringify({
-        text: text.slice(0, 3500),
-        voice: lia ? 'coral' : 'cedar',
+        text: text.slice(0, 1800),
+        voice: isFemale ? 'coral' : 'cedar',
         outputFormat: 'mp3',
         instructions,
-        speed: 1,
+        speed: 1.02,
         language: 'pt-BR'
       })
     });
