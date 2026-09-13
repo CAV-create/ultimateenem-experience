@@ -1,19 +1,7 @@
 // VAI BEM V2 — emissor de token efêmero para Gemini Live
 export default async function handler(req, res) {
   const apiKey = process.env.GEMINI_API_KEY;
-
-  if (req.method === 'GET') {
-    res.setHeader('Cache-Control', 'no-store, max-age=0');
-    return res.status(apiKey ? 200 : 503).json({
-      ok: Boolean(apiKey),
-      geminiApiKeyConfigured: Boolean(apiKey)
-    });
-  }
-
-  if (req.method !== 'POST') {
-    res.setHeader('Allow', 'GET, POST');
-    return res.status(405).json({ error: 'method_not_allowed' });
-  }
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
 
   if (!apiKey) {
     return res.status(503).json({
@@ -22,16 +10,20 @@ export default async function handler(req, res) {
     });
   }
 
+  const isProbe = req.method === 'GET' && req.query?.probe === 'token';
+  if (req.method === 'GET' && !isProbe) {
+    return res.status(200).json({ ok: true, geminiApiKeyConfigured: true });
+  }
+
+  if (req.method !== 'POST' && !isProbe) {
+    res.setHeader('Allow', 'GET, POST');
+    return res.status(405).json({ error: 'method_not_allowed' });
+  }
+
   const model = 'models/gemini-3.1-flash-live-preview';
   const expireTime = new Date(Date.now() + 20 * 60 * 1000).toISOString();
   const newSessionExpireTime = new Date(Date.now() + 5 * 60 * 1000).toISOString();
-
-  // REST /v1beta/auth_tokens recebe os campos do AuthToken diretamente no corpo.
-  const body = {
-    uses: 1,
-    expireTime,
-    newSessionExpireTime
-  };
+  const body = { uses: 1, expireTime, newSessionExpireTime };
 
   try {
     const response = await fetch('https://generativelanguage.googleapis.com/v1beta/auth_tokens', {
@@ -53,21 +45,22 @@ export default async function handler(req, res) {
         detail: raw.slice(0, 900)
       });
       return res.status(502).json({
+        ok: false,
         error: 'gemini_token_failed',
         status: response.status,
         detail: data?.error?.message || raw.slice(0, 400)
       });
     }
 
-    res.setHeader('Cache-Control', 'no-store, max-age=0');
-    return res.status(200).json({
-      token: data.name,
-      model,
-      expiresAt: expireTime
-    });
+    if (isProbe) {
+      return res.status(200).json({ ok: true, tokenIssuance: true, model });
+    }
+
+    return res.status(200).json({ token: data.name, model, expiresAt: expireTime });
   } catch (error) {
     console.error('GEMINI_LIVE_TOKEN_EXCEPTION', error);
     return res.status(500).json({
+      ok: false,
       error: 'gemini_token_exception',
       detail: String(error?.message || error)
     });
