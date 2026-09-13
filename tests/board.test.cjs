@@ -47,3 +47,13 @@ test('stoichiometry preparation is invisible, stages are repeatable, updates rep
  assert.equal(board.command({...args,amount:200},'p2').calculation.answer,88);assert.equal(board.items.length,0);assert.equal(board.container.children.length,0);
  board.command({action:'estequiometria',id:'calc',stage:'resultado'},'result');advance(1000);assert.ok(board.items[0].shown>0);board.clear();assert.equal(board.exercises.size,0);assert.equal(board.items.length,0);
 });
+test('rule of three follows photo, paces fraction and arrows, replaces corrections and cancels',()=>{
+ global.VaiBemChem=require('../vai-bem-chem.js');const {board,advance}=fixture();
+ const args={action:'regra_de_tres',id:'photo',a:40,b:300,c:400,leftUnit:'g',rightUnit:'mol'};
+ const result=board.command(args,'photo-call');assert.equal(result.calculation.answer,3000);
+ const item=board.blocks.get('photo');assert.equal(item.steps.length,9);assert.ok(item.steps.every(x=>x.style.opacity==='0'));
+ advance(1000);assert.equal(item.shown,1);assert.equal(item.steps[2].style.opacity,'0');
+ board.command(args,'repeat');assert.equal(board.container.children.length,1);
+ board.command({...args,c:200},'correction');assert.equal(board.container.children.length,1);
+ board.cancelCalls(['correction']);assert.equal(board.items.length,0);
+});

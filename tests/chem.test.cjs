@@ -31,3 +31,16 @@ test('real RDKit renders skeletal and explicit-hydrogen SVGs, rejects invalid va
  const expanded=await chem.molecule('CCO','expandida');const implicit=await chem.molecule('CCO','bastao');assert.ok(expanded.svg.length>implicit.svg.length);assert.ok(expanded.groups.hidroxila);
  await assert.rejects(chem.molecule('C(C)(C)(C)(C)C'));await assert.rejects(chem.molecule('C'.repeat(161)));
 });
+test('general proportions calculate photo and inverse case and reject invalid values',()=>{
+ const {ruleOfThree}=require('../vai-bem-chem.js');
+ const p=ruleOfThree({a:40,b:300,c:400});assert.equal(p.answer,3000);assert.deepEqual(p.numerator,[400,300]);assert.equal(p.denominator,40);assert.equal(p.factor,10);
+ assert.equal(ruleOfThree({a:4,b:12,c:8,relation:'inversa'}).answer,6);
+ for(const n of [0,-1,NaN,Infinity,'40'])assert.throws(()=>ruleOfThree({a:n,b:300,c:400}));
+});
+
+test('horizontal shortcut matches the supplied photo and division works',()=>{
+ const {ruleOfThree}=require('../vai-bem-chem.js');
+ const p=ruleOfThree({a:30,b:90,c:80});assert.equal(p.direction,'horizontal');assert.equal(p.horizontalFactor,3);assert.equal(p.answer,240);
+ assert.equal(ruleOfThree({a:90,b:30,c:60,direction:'horizontal'}).answer,20);
+ assert.throws(()=>ruleOfThree({a:4,b:12,c:8,relation:'inversa',direction:'horizontal'}));
+});

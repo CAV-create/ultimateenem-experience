@@ -22,8 +22,16 @@
   check(document.querySelectorAll('.board-stoich').length===0,'Preparar não despeja a resolução');
   for(const stage of data.stages){board.command({action:'estequiometria',id:'calc',stage:stage.key},stage.key);advance(1500)}
   check(document.querySelectorAll('.board-stoich').length===6&&[...document.querySelectorAll('.board-stoich')].every(el=>!el.hidden)&&board.items.length===0,'Seis etapas separadas e visíveis registradas');
-  check(document.querySelector('.board-stoich table').textContent.includes('60 g176 g30 gx g'),'Regra de três com unidades: 60 g : 176 g = 30 g : x');
+  check(document.querySelector('.board-proportion').textContent.includes('60 g176 g30 gx g'),'Regra de três com unidades: 60 g : 176 g = 30 g : x');
   const blocks=document.querySelectorAll('.board-stoich').length;board.command({action:'estequiometria',id:'calc',stage:'resultado'},'repeat-result');check(document.querySelectorAll('.board-stoich').length===blocks,'Repetir uma etapa não duplica o caderno');
+  board.command({action:'regra_de_tres',id:'photo',a:40,b:300,c:400,leftUnit:'g',rightUnit:'mol'},'photo');advance(1000);
+  check(document.querySelectorAll('.proportion-fraction')[1].textContent==='400 × 30040','Fração vertical igual ao exemplo');
+  check(document.querySelectorAll('.proportion-answer')[1].textContent.includes('3.000 mol'),'Resultado do exemplo: 3.000 mol');
+  check(document.querySelectorAll('.proportion-factor')[3].textContent==='× 10','Seta de multiplicação por 10');
+  board.command({action:'regra_de_tres',id:'horizontal',a:30,b:90,c:80,leftUnit:'g',rightUnit:'L'},'horizontal');advance(1000);
+  check(document.querySelector('.proportion-horizontal').textContent.includes('× 3'),'Fator horizontal por 3');
+  check(document.querySelectorAll('.proportion-answer')[2].textContent.includes('240 L'),'Exemplo horizontal: 240 L');
+  document.querySelectorAll('.board-proportion')[2].scrollIntoView({block:'center'});
   check(document.documentElement.scrollWidth<=innerWidth,'Sem transbordamento horizontal');
   report.textContent='PASSOU · '+results.length+' verificações\n'+results.join('\n');
  }catch(e){report.style.background='#711';report.textContent='FALHOU: '+e.message+'\n'+results.join('\n');console.error(e)}

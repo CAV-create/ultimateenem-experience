@@ -47,6 +47,16 @@ function balance(reactants,products){
  if(audit.some(x=>x.left!==x.right))throw Error('Falha na conservação dos átomos');return {species,counts,coefficients,audit,reactants,products};
 }
 function molarMass(f,overrides={}){const counts=formula(f);const terms=Object.entries(counts).map(([element,count])=>{const mass=Object.hasOwn(overrides,element)?overrides[element]:MASSES[element];if(!Number.isFinite(mass)||mass<=0||mass>300)throw Error('Informe a massa atômica de '+element);return {element,count,mass,total:count*mass}});return {formula:f,terms,total:terms.reduce((s,t)=>s+t.total,0)}}
+function ruleOfThree(args){
+ const {a,b,c}=args;for(const n of [a,b,c])if(typeof n!=='number'||!Number.isFinite(n)||n<=0||n>1e12)throw Error('Informe três valores positivos de até 10¹²');
+ const relation=args.relation||'direta';if(!['direta','inversa'].includes(relation))throw Error('Relação inválida');
+ const labels={};for(const key of ['leftUnit','rightUnit','leftLabel','rightLabel']){const value=args[key]||'';if(typeof value!=='string'||value.length>60)throw Error('Unidade ou grandeza inválida');labels[key]=value.trim()}
+ const numerator=relation==='direta'?[c,b]:[a,b],denominator=relation==='direta'?a:c,answer=numerator[0]*numerator[1]/denominator,factor=c/a;
+ if(!Number.isFinite(answer)||!Number.isFinite(factor)||answer<=0||factor<=0)throw Error('Valores fora do intervalo calculável');
+ const horizontalFactor=b/a;const direction=args.direction|| (relation==='direta'&&!Number.isInteger(factor)&&Number.isInteger(horizontalFactor)?'horizontal':'vertical');
+ if(!['horizontal','vertical'].includes(direction)||relation==='inversa'&&direction==='horizontal')throw Error('Use setas verticais para a relação inversa');
+ return {a,b,c,relation,...labels,numerator,denominator,answer,factor,horizontalFactor,direction};
+}
 function exercise(args){
  const r=balance(args.reactants,args.products),overrides={};
  if(args.atomicMasses!==undefined){if(!Array.isArray(args.atomicMasses)||args.atomicMasses.length>40)throw Error('Massas atômicas inválidas');for(const a of args.atomicMasses){if(!a||typeof a.element!=='string'||! /^[A-Z][a-z]?$/.test(a.element)||typeof a.mass!=='number'||a.mass<=0||a.mass>300||!Number.isFinite(a.mass))throw Error('Massa atômica inválida');overrides[a.element]=a.mass}}
@@ -88,5 +98,5 @@ async function molecule(smiles,format='bastao'){
   return {svg,canonical,groups,atomCount:data.atoms.length,format};
  }finally{expanded?.delete();mol?.delete()}
 }
-const api={formula,balance,molarMass,exercise,MASSES,fmt,sub,ready,molecule};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.VaiBemChem=api;
+const api={ruleOfThree,formula,balance,molarMass,exercise,MASSES,fmt,sub,ready,molecule};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.VaiBemChem=api;
 })(typeof window!=='undefined'?window:globalThis);

@@ -12,7 +12,10 @@ const MOLECULES={
 };
 const KINDS={titulo:'Conceito',definicao:'Definição',formula:'Fórmula',etapa:'Passo',exemplo:'Exemplo'};
 const declaration={name:'atualizar_lousa',description:'Escreve uma anotação curta, desenha uma estrutura química disponível ou destaca parte de um desenho. Retorna imediatamente quando a ação é aceita na fila; a apresentação acontece aos poucos junto ao áudio. Use antes de explicar cada conceito, sem transcrever toda a fala. Reutilize id para corrigir uma anotação.',parameters:{type:'OBJECT',properties:{
- action:{type:'STRING',enum:['anotar','molecula','destacar','estrutura','estequiometria']},
+ action:{type:'STRING',enum:['anotar','molecula','destacar','estrutura','estequiometria','regra_de_tres']},
+ a:{type:'NUMBER',description:'Regra de três: valor superior esquerdo.'},b:{type:'NUMBER',description:'Valor superior direito.'},c:{type:'NUMBER',description:'Valor inferior esquerdo; x fica à direita.'},
+ direction:{type:'STRING',enum:['horizontal','vertical'],description:'Direção das setas; omita para escolher o fator mais simples. Horizontal apenas para proporção direta.'},
+ relation:{type:'STRING',enum:['direta','inversa']},leftUnit:{type:'STRING'},rightUnit:{type:'STRING'},leftLabel:{type:'STRING'},rightLabel:{type:'STRING'},
  id:{type:'STRING',description:'Identificador curto único do bloco. Reutilize para corrigir; ex. cetona-1.'},
  text:{type:'STRING',description:'Anotação em português revisado, até 240 caracteres; use símbolos Unicode em fórmulas, sem Markdown.'},
  kind:{type:'STRING',enum:Object.keys(KINDS)},
@@ -31,8 +34,9 @@ const declaration={name:'atualizar_lousa',description:'Escreve uma anotação cu
   group:{type:'STRING',enum:['carbonila','carboxila','hidroxila','laterais','dupla','aromatico','estrutura']}
 },required:['action','id']}};
 function validate(args){
- if(!args||typeof args!=='object'||!['anotar','molecula','destacar','estrutura','estequiometria'].includes(args.action))throw Error('Ação inválida');
+ if(!args||typeof args!=='object'||!['anotar','molecula','destacar','estrutura','estequiometria','regra_de_tres'].includes(args.action))throw Error('Ação inválida');
  if(typeof args.id!=='string'||! /^[a-zA-Z0-9_-]{1,64}$/.test(args.id))throw Error('id inválido');
+ if(args.action==='regra_de_tres')return {...args,...root.VaiBemChem.ruleOfThree(args)};
  if(args.action==='estrutura'){
   if(typeof args.smiles!=='string'||!args.smiles||args.smiles.length>1500)throw Error('Informe o SMILES da estrutura');
   if(!['bastao','expandida'].includes(args.format||'bastao'))throw Error('Formato inválido');
@@ -112,6 +116,35 @@ class Board{
   const response={ok:true,status:'enfileirado',id:args.id,format:args.format,atoms:result.atomCount,canonicalSmiles:result.canonical,groups:['estrutura',...Object.keys(result.groups)]};
   if(callId)this.calls.set(callId,response);return response;
  }
+ proportion(args,callId,exerciseId){
+  const data=root.VaiBemChem.ruleOfThree(args),old=this.blocks.get(args.id),signature=JSON.stringify(data);
+  if(old?.signature===signature)return data;
+  if(old){old.element.remove();this.items=this.items.filter(x=>x!==old)}
+  this.toolTurns.add(this.turn);this.removeFallback(this.turn);
+  const element=document.createElement('section');element.className='board-stoich board-proportion';element.hidden=true;
+  const make=(tag,cls,text,parent=element)=>{const el=document.createElement(tag);el.className=cls;if(text!==undefined)el.textContent=text;parent.appendChild(el);return el};
+  make('h3','','Regra de três · '+data.relation);
+  const steps=[],step=el=>{el.style.opacity='0';steps.push(el);return el},f=root.VaiBemChem.fmt;
+  const diagram=parent=>{
+   const grid=make('div','proportion-grid',undefined,parent);
+   if(data.leftLabel||data.rightLabel){const labels=make('div','proportion-row proportion-labels',undefined,grid);make('span','',data.leftLabel,labels);make('span','','',labels);make('span','',data.rightLabel,labels)}
+   for(const [left,right]of [[f(data.a)+' '+data.leftUnit,f(data.b)+' '+data.rightUnit],[f(data.c)+' '+data.leftUnit,'x '+data.rightUnit]]){const row=step(make('div','proportion-row',undefined,grid));make('span','',left.trim(),row);make('span','proportion-stroke','',row);make('span','',right.trim(),row)}
+   return grid;
+  };
+  diagram(element);
+  const cross=step(make('div','proportion-cross',data.relation==='direta'?f(data.a)+'x = '+f(data.c)+' × '+f(data.b):f(data.c)+'x = '+f(data.a)+' × '+f(data.b)));
+  const equation=make('div','proportion-equation');const fraction=step(make('span','proportion-expression',undefined,equation));make('span','','x =',fraction);
+  const stacked=make('span','proportion-fraction',undefined,fraction);make('span','proportion-numerator',data.numerator.map(f).join(' × '),stacked);make('span','proportion-denominator',f(data.denominator),stacked);
+  make('span','proportion-answer','⇒ x = '+f(data.answer)+' '+data.rightUnit,step(make('span','',undefined,equation)));
+  const horizontal=data.direction==='horizontal';const factors=make('div','proportion-factors'+(horizontal?' proportion-horizontal':''));diagram(factors);
+  for(const [side,operation]of [['left','×'],['right',data.relation==='direta'?'×':'÷']]){
+   const arrow=step(make('div','proportion-factor proportion-factor-'+side,undefined,factors));
+   make('span','',(horizontal&&data.horizontalFactor<1?'÷':operation)+' '+f(horizontal?(data.horizontalFactor<1?1/data.horizontalFactor:data.horizontalFactor):data.factor),arrow);
+   const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox',horizontal?'0 0 300 55':'0 0 40 90');svg.setAttribute('aria-hidden','true');
+   const path=document.createElementNS('http://www.w3.org/2000/svg','path');path.setAttribute('d',horizontal?(side==='left'?'M10 48 Q145 -30 290 48 M275 34 L290 48 L271 49':'M10 7 Q145 85 290 7 M274 7 L290 7 L281 23'):side==='left'?'M32 5 C4 20 4 62 32 80 M20 79 L32 80 L29 67':'M8 5 C36 20 36 62 8 80 M20 79 L8 80 L11 67');svg.appendChild(path);arrow.appendChild(svg);
+  }
+  this.container.appendChild(element);const item={id:args.id,exerciseId,element,steps,shown:0,callId,signature,pace:1.2};this.blocks.set(args.id,item);this.enqueue(item);return data;
+ }
  stoichiometry(args,callId){
   let data=this.exercises.get(args.id);
   if(args.reactants!==undefined||args.products!==undefined){
@@ -122,7 +155,8 @@ class Board{
   if(args.stage==='preparar')return {ok:true,status:'calculado',id:args.id,...data};
   const stage=data.stages.find(s=>s.key===args.stage);if(!stage)throw Error('Essa etapa requer quantidade conhecida e espécie procurada');
   const id=args.id+'-'+stage.key;
-  if(!this.blocks.has(id)){
+  if(stage.key==='regra_de_tres'){const c=data.calculation;this.proportion({id,a:c.baseGiven,b:c.baseTarget,c:c.amount,leftUnit:c.givenUnit,rightUnit:c.targetUnit,leftLabel:root.VaiBemChem.sub(c.given),rightLabel:root.VaiBemChem.sub(c.target)},callId,args.id)}
+  else if(!this.blocks.has(id)){
    this.toolTurns.add(this.turn);this.removeFallback(this.turn);
    const element=document.createElement('section');element.className='board-stoich';element.hidden=true;
    const heading=document.createElement('h3');heading.textContent=stage.title;element.appendChild(heading);
@@ -135,6 +169,7 @@ class Board{
  command(raw,callId){
   if(callId&&this.calls.has(callId))return this.calls.get(callId);
   const args=validate(raw);
+  if(args.action==='regra_de_tres'){const result={ok:true,status:'enfileirado',id:args.id,calculation:this.proportion(args,callId)};if(callId)this.calls.set(callId,result);return result}
   if(args.action==='estequiometria'){const result=this.stoichiometry(args,callId);if(callId)this.calls.set(callId,result);return result}
   if(args.action==='estrutura')throw Error('Use o carregamento assíncrono de estruturas');
   if(this.items.length>=50)throw Error('Lousa ocupada; aguarde antes de adicionar anotações');
@@ -183,7 +218,7 @@ class Board{
   if(!playing&&!tail){this.credit=0;this.status.textContent='Aguardando a explicação';return}
   const units=item.words?item.words.length-item.shown:item.steps?item.steps.length-item.shown:1;
   const remaining=Math.max(1,audio.end-audio.time);
-  const rate=item.words?Math.max(3,Math.min(6,units/remaining)):item.action==='estrutura'?Math.max(5,Math.min(24,units/remaining)):3;
+  const rate=item.pace|| (item.words?Math.max(3,Math.min(6,units/remaining)):item.action==='estrutura'?Math.max(5,Math.min(24,units/remaining)):3);
   this.credit+=dt/1000*rate;
   if(this.credit<1)return;
   // At most two words per animation tick, including after tab suspension.
