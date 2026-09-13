@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VAI BEM V2 — Gemini Live</title>
+<style>
+:root{--bg:#070707;--panel:#111318;--gold:#f4c430;--text:#f7f7f4;--muted:#aeb2b9;--green:#6ee58d;--red:#ff7777}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 50% 0,#2c2300,#070707 34%);color:var(--text);font-family:Inter,Arial,sans-serif}.app{max-width:1460px;margin:auto;padding:16px}.top{display:flex;justify-content:space-between;gap:14px;align-items:center;padding:14px 18px;border:1px solid #675317;border-radius:18px;background:#090909}.brand{font-size:30px;font-weight:950}.brand b{color:var(--gold)}.sub{font-size:12px;color:var(--muted)}.modes,.controls{display:flex;gap:8px;flex-wrap:wrap}.btn,.modes button{border:1px solid #484b52;background:#17191d;color:#fff;border-radius:11px;padding:11px 13px;cursor:pointer}.btn:disabled{opacity:.45;cursor:not-allowed}.on,.gold{background:var(--gold)!important;color:#111!important;border-color:var(--gold)!important;font-weight:850}.grid{display:grid;grid-template-columns:.85fr 1.15fr;gap:16px;margin-top:16px}.card{background:linear-gradient(#121418,#0b0c0f);border:1px solid #51461d;border-radius:19px;overflow:hidden}.head{padding:14px 16px;border-bottom:1px solid #37311a;display:flex;justify-content:space-between;gap:12px}.teacher{padding:22px;background:radial-gradient(circle at 72% 15%,#4b3a0d55,transparent 42%)}.who{display:flex;gap:14px;align-items:center}.avatar{width:74px;height:74px;border:3px solid var(--gold);border-radius:50%;display:grid;place-items:center;font-size:29px;font-weight:900;color:var(--gold)}h1{margin:0}.meta{color:var(--muted);margin-top:4px}.bubble{margin-top:22px;padding:15px;border-left:4px solid var(--gold);border-radius:11px;background:#090a0ccc;line-height:1.5;font-size:17px}.status{margin-top:12px;padding:11px;border:1px solid #343841;border-radius:10px;color:#cfd2d7;font-size:13px}.status.good{border-color:#236d39;color:#8df0a8}.status.bad{border-color:#7b2f2f;color:#ffaaaa}.phases{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.phase{font-size:11px;padding:5px 8px;border-radius:999px;background:#202329;color:#aaa;border:1px solid #333}.phase.ok{background:#12351d;color:#8df0a8;border-color:#236d39}.phase.fail{background:#381616;color:#ffaaaa;border-color:#7b2f2f}.talk{padding:16px}.msgs{height:300px;overflow:auto;border:1px solid #2e3138;border-radius:11px;padding:9px;background:#08090a}.msg{padding:9px 10px;border-radius:10px;margin:7px 0;line-height:1.4;font-size:14px}.student{background:#1b1d22;margin-left:10%}.prof{background:#19160d;border:1px solid #5b4b15;margin-right:10%}.paper{margin:14px;min-height:650px;padding:30px 32px 38px 58px;color:#1a1a1a;border-radius:12px;background-color:#fffdf6;background-image:linear-gradient(#dbe7f5 1px,transparent 1px),linear-gradient(90deg,#dbe7f5 1px,transparent 1px);background-size:24px 24px;position:relative}.paper:before{content:'';position:absolute;left:39px;top:0;bottom:0;border-left:2px solid #efaaaa}.ptitle,.line{font-family:'Comic Sans MS','Segoe Print',cursive}.ptitle{font-size:26px;color:#174ac7;margin-bottom:20px}.line{font-size:21px;line-height:1.55;color:#174ac7;margin-bottom:12px;min-height:33px}.questionline{color:#5c3d00;font-weight:700;border-bottom:1px dashed #d6bd79;padding-bottom:10px;margin-bottom:20px}.tools{padding:12px 14px;border-top:1px solid #34312b;display:flex;gap:8px;align-items:center}.tools small{margin-left:auto;color:#999}.live{color:var(--green)}.off{color:#aaa}.meter{height:8px;border-radius:999px;background:#25272b;overflow:hidden;margin-top:10px}.meter>i{display:block;width:0;height:100%;background:var(--gold);transition:width .08s linear}.transcript{font-size:13px;color:#d8d8d8;margin-top:9px;min-height:20px}.tag{font-size:11px;padding:4px 7px;border-radius:999px;background:#202329;color:#cfd2d7}@media(max-width:960px){.grid{grid-template-columns:1fr}.top{align-items:flex-start;flex-direction:column}.paper{min-height:500px}}
+
+.board-note{margin:18px 0;padding:0 0 12px;border-bottom:1px solid #d8e1ea;overflow-wrap:anywhere}
+.board-label{display:block;font:700 10px/1.6 Arial,sans-serif;letter-spacing:1.4px;text-transform:uppercase;color:#687991;margin-bottom:5px}
+.board-content{font:21px/1.65 'Segoe Print','Comic Sans MS',cursive;color:#174ac7;white-space:pre-wrap}
+.board-titulo .board-content{font-size:26px;font-weight:700}.board-formula .board-content{font-family:'Cambria Math',Georgia,serif;font-size:26px;color:#162b52}
+.board-figure{margin:20px 0;padding:14px 8px;background:#fffef9;border:1px solid #cbd8e7;border-radius:12px}
+.board-figure figcaption{font:600 14px Arial,sans-serif;color:#425875;margin:0 8px}.board-figure svg{width:100%;height:auto;display:block}
+.board-figure text{font:27px 'Cambria Math',Georgia,serif;fill:#163975;transition:opacity .3s,fill .3s}
+.board-figure line{stroke:#163975;stroke-width:3;stroke-linecap:round;transition:opacity .3s,stroke .3s}
+.board-figure text.board-highlight{fill:#bf5700;font-weight:700}.board-figure line.board-highlight{stroke:#dc7900;stroke-width:5}
+.board-partial{border-left:2px solid #bba16b;padding-left:10px}
+@media(max-width:600px){.paper{padding:22px 16px 28px 38px;margin:8px}.paper:before{left:25px}.board-content{font-size:18px}.board-formula .board-content{font-size:23px}.ptitle{font-size:23px}}
+
+.molecule-formats{display:flex;gap:6px;flex-wrap:wrap;margin:12px 8px}
+.molecule-formats button{font:12px Arial,sans-serif;background:#f6f8fc;color:#22446a;border:1px solid #c8d5e5;padding:7px 10px;border-radius:7px;cursor:pointer}
+.molecule-formats button[aria-pressed="true"]{background:#183f71;color:#fff}
+.board-rdkit [data-kind="bond"].board-highlight{stroke:#d96b00!important}
+.board-rdkit [data-kind="atom"].board-highlight{fill:#bf5700!important}
+.board-stoich{margin:18px 0;padding:16px;background:#fffef9;border:1px solid #cbd8e7;border-radius:12px;color:#19365e;overflow-wrap:anywhere}
+.board-stoich h3{margin:0 0 12px;font:700 16px Arial,sans-serif;color:#204e89}
+.stoich-lines{white-space:pre-wrap;font:18px/1.7 'Cambria Math',Georgia,serif}
+.board-stoich table{width:100%;border-collapse:collapse;margin:12px 0;font:18px 'Cambria Math',Georgia,serif}
+.board-stoich th,.board-stoich td{text-align:center;padding:10px 6px;border:1px solid #b7c9df}
+.board-stoich th{background:#edf3fc}.board-stoich tr:last-child td{background:#fff6d6}
+@media(max-width:600px){.board-stoich{padding:12px}.stoich-lines,.board-stoich table{font-size:16px}.board-rdkit svg{min-height:160px}}
+.molecule-dialog{width:min(95vw,950px);max-height:90vh;background:#fff;color:#163975;border:1px solid #9aaec7;border-radius:14px;padding:18px}
+.molecule-dialog::backdrop{background:#000b}.molecule-dialog h2{margin:0 0 12px;font:700 20px Arial,sans-serif}.molecule-dialog button{float:right;padding:8px 14px;cursor:pointer}.molecule-dialog label{display:flex;gap:10px;align-items:center;padding:8px 0}.molecule-zoom-view{overflow:auto;max-height:65vh}.molecule-zoom-view svg{display:block}
+
+.board-proportion{font-family:'Segoe Print','Comic Sans MS',cursive;color:#243b73}
+.proportion-grid{width:100%;max-width:550px;margin:8px auto 20px}
+.proportion-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(30px,1fr) minmax(0,1fr);align-items:center;gap:14px;min-height:64px;text-align:center;font-size:25px}
+.proportion-labels{min-height:24px;font:14px Arial,sans-serif;color:#526785}
+.proportion-stroke{height:2px;background:currentColor;transform:rotate(-2deg)}
+.proportion-equation{display:flex;align-items:center;justify-content:center;gap:18px;flex-wrap:wrap;margin:20px 0 32px;font-size:25px}
+.proportion-expression{display:inline-flex;align-items:center;gap:14px}.proportion-fraction{display:inline-flex;flex-direction:column;text-align:center;line-height:1.5}.proportion-numerator{border-bottom:2px solid;padding:0 12px 5px}.proportion-denominator{padding-top:5px}.proportion-answer{white-space:normal}
+.proportion-factors{position:relative;padding:0 65px}.proportion-factor{position:absolute;top:35px;display:flex;flex-direction:column;align-items:center;font-size:17px}.proportion-factor-left{left:0}.proportion-factor-right{right:0}.proportion-factor svg{width:35px;height:85px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+@media(max-width:600px){.proportion-row,.proportion-equation{font-size:19px}.proportion-row{gap:8px;min-height:58px}.proportion-factors{padding:0 43px}.proportion-factor{font-size:13px}.proportion-factors .proportion-row{grid-template-columns:minmax(0,1fr) 25px minmax(0,1fr)}}
+.proportion-cross{text-align:center;font-size:23px;margin-top:24px}
+.proportion-horizontal{padding:55px 0 65px}.proportion-horizontal .proportion-factor{left:8%;right:8%;top:0;font-size:17px}.proportion-horizontal .proportion-factor svg{width:100%;height:55px}.proportion-horizontal .proportion-factor-right{top:auto;bottom:0;flex-direction:column-reverse}
+@media(max-width:600px){.proportion-cross{font-size:19px}.proportion-horizontal{padding:55px 0 65px}.proportion-horizontal .proportion-row{grid-template-columns:minmax(0,1fr) minmax(30px,1fr) minmax(0,1fr)}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="top"><div><div class="brand">VAI <b>BEM</b> <span class="tag">V2 • Lousa ao vivo</span></div><div class="sub">Conversa contínua • áudio nativo • caderno sincronizado</div></div><div class="modes"><button id="chem" class="on">Química • 2º ano</button><button id="port">Português • 1º EM</button><button id="math">Matemática • 6º ano</button></div></header>
+<main class="grid">
+<section class="card"><div class="head"><strong id="session">Sessão • Química • Orgânica e Estequiometria</strong><span id="liveState" class="off">● DESCONECTADO</span></div><div class="teacher"><div class="who"><div class="avatar" id="avatar">R</div><div><h1 id="name">Prof. Rafael</h1><div class="meta" id="meta">Química • Orgânica e Estequiometria • 2º ano do Ensino Médio</div></div></div><div class="bubble" id="bubble">Conecte a sessão. Depois, converse normalmente; não é preciso abrir um novo microfone a cada pergunta.</div><div class="controls"><button class="btn gold" id="connect">Conectar professor</button><button class="btn" id="mute" disabled>Silenciar microfone</button><button class="btn" id="interrupt" disabled>Interromper professor</button><button class="btn" id="disconnect" disabled>Encerrar sessão</button></div><div class="phases"><span id="pToken" class="phase">TOKEN</span><span id="pWs" class="phase">WEBSOCKET</span><span id="pSetup" class="phase">SETUP</span><span id="pMic" class="phase">MICROFONE</span></div><div class="meter"><i id="meterBar"></i></div><div class="transcript" id="heard">Transcrição do aluno aparecerá aqui.</div><div class="status" id="status">Aguardando conexão com Gemini Live.</div></div><div class="talk"><div class="msgs" id="msgs"><div class="msg prof">Prof. Rafael: Quando você conectar, pode falar livremente. Eu vou manter a conversa na mesma sessão.</div></div></div></section>
+<section class="card"><div class="head"><strong>Caderno da sessão</strong><span id="writeStatus" class="sub">Aguardando conversa</span></div><div class="paper"><div class="ptitle">Explicação construída com o aluno</div><div id="lines"></div></div><div class="tools"><button class="btn gold" id="save">Salvar sessão</button><button class="btn" id="clear">Limpar folha</button><small>Anotações e desenhos durante a explicação</small></div></section>
+</main></div>
+<script src="/vendor/rdkit/RDKit_minimal.js"></script>
+<script src="/vai-bem-chem.js"></script>
+<script src="/vai-bem-board.js"></script>
+<script>
+const teachers={chem:{teacher:'Prof. Rafael',avatar:'R',subject:'Química • Orgânica e Estequiometria',grade:'2º ano do Ensino Médio',voice:'Charon'},port:{teacher:'Prof. André',avatar:'A',subject:'Língua Portuguesa',grade:'1º ano do Ensino Médio',voice:'Iapetus'},math:{teacher:'Profa. Lia',avatar:'L',subject:'Matemática',grade:'6º ano',voice:'Aoede'}};
+let mode='chem',ws=null,stream=null,inputCtx=null,processor=null,sourceNode=null,zeroGain=null,outputCtx=null,audioNextTime=0,muted=false,connected=false,setupReady=false,micStarted=false;
+let activeAudioSources=[],inputTranscript='',outputTranscript='',currentOutputLine=null,lastCommittedOutput='';
+const $=s=>document.querySelector(s),c=()=>teachers[mode];
+VaiBemChem.ready().catch(()=>{});
+let audioFirstTime=Infinity,audioGeneration=0,suppressOutput=false;
+const board=new VaiBemBoard.Board({container:$('#lines'),status:$('#writeStatus'),audio:()=>({exists:!!outputCtx,running:outputCtx?.state==='running',time:outputCtx?.currentTime||0,start:audioFirstTime,end:audioNextTime})});
+function phase(id,state){const el=$(id);el.className='phase'+(state?' '+state:'')}
+function resetPhases(){['#pToken','#pWs','#pSetup','#pMic'].forEach(x=>phase(x,''))}
+function setStatus(text,type=''){const el=$('#status');el.textContent=text;el.className='status'+(type?' '+type:'')}
+function addMsg(cls,text){if(!text)return;const d=document.createElement('div');d.className='msg '+cls;d.textContent=(cls==='student'?'Aluno: ':c().teacher+': ')+text;$('#msgs').appendChild(d);$('#msgs').scrollTop=99999}
+function addQuestion(text){const d=document.createElement('div');d.className='line questionline';d.textContent='Aluno: '+text;$('#lines').appendChild(d)}
+function commitOutput(){const clean=outputTranscript.trim();if(clean){addMsg('prof',clean)}outputTranscript='';currentOutputLine=null}
+function stopPlayback(){audioGeneration++;for(const s of activeAudioSources){try{s.stop()}catch{}}activeAudioSources=[];if(outputCtx)audioNextTime=outputCtx.currentTime;audioFirstTime=Infinity}
+function b64ToInt16(b64){const bin=atob(b64),buf=new ArrayBuffer(bin.length),u8=new Uint8Array(buf);for(let i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);return new Int16Array(buf)}
+async function playPcm(b64,rate=24000){
+ const generation=audioGeneration;
+ if(!outputCtx)outputCtx=new (window.AudioContext||window.webkitAudioContext)();
+ const ctx=outputCtx;if(ctx.state==='suspended')await ctx.resume();
+ if(generation!==audioGeneration||ctx!==outputCtx||suppressOutput)return;
+ const pcm=b64ToInt16(b64),ab=ctx.createBuffer(1,pcm.length,rate),ch=ab.getChannelData(0);
+ for(let i=0;i<pcm.length;i++)ch[i]=pcm[i]/32768;
+ const src=ctx.createBufferSource();src.buffer=ab;src.connect(ctx.destination);
+ const start=Math.max(ctx.currentTime+.02,audioNextTime);
+ if(!activeAudioSources.length)audioFirstTime=start;
+ src.start(start);audioNextTime=start+ab.duration;activeAudioSources.push(src);
+ src.onended=()=>{activeAudioSources=activeAudioSources.filter(x=>x!==src);src.disconnect()};
+}
+function downsample(input,inputRate,targetRate=16000){if(inputRate===targetRate)return input;if(targetRate>inputRate)return input;const ratio=inputRate/targetRate,outLen=Math.round(input.length/ratio),out=new Float32Array(outLen);let pos=0;for(let i=0;i<outLen;i++){const next=Math.round((i+1)*ratio);let sum=0,count=0;for(let j=pos;j<next&&j<input.length;j++){sum+=input[j];count++}out[i]=count?sum/count:0;pos=next}return out}
+function floatTo16Base64(float32){const out=new Int16Array(float32.length);for(let i=0;i<float32.length;i++){const x=Math.max(-1,Math.min(1,float32[i]));out[i]=x<0?x*32768:x*32767}const u8=new Uint8Array(out.buffer);let bin='';for(let i=0;i<u8.length;i+=0x8000)bin+=String.fromCharCode(...u8.subarray(i,i+0x8000));return btoa(bin)}
+function rms(data){let s=0;for(let i=0;i<data.length;i++)s+=data[i]*data[i];return Math.sqrt(s/data.length)}
+function systemInstruction(){const t=c();return `Você é ${t.teacher}, professor particular digital do VAI BEM. Fale sempre em português do Brasil, com naturalidade, calor humano, objetividade e vocabulário adequado a ${t.grade}. Disciplina: ${t.subject}. Converse como um professor particular sentado ao lado do aluno. Escute a dúvida até o fim, identifique onde ele travou e responda só o necessário. Use condução socrática quando útil, mas explique diretamente quando isso for melhor. Permita mudança de assunto. Se o aluno interromper, pare e escute. Pronuncie corretamente termos técnicos em português brasileiro. Fale em frases curtas, com pausas naturais. Verbalize frases-chave que merecem ficar no caderno. Ao perceber compreensão, faça uma pergunta curta de verificação.
+Você tem uma lousa real pela ferramenta atualizar_lousa. Use-a proativamente: antes de explicar um conceito, registre 1 a 3 anotações curtas (título, definição, fórmula, etapa ou exemplo). Não copie toda a fala. Revise a ortografia, os símbolos e o conteúdo antes de chamar a ferramenta. Cada anotação deve ter até 240 caracteres; prefira até 20 palavras. Para corrigir um bloco use o mesmo id com o texto correto. Não use Markdown ou LaTeX: use texto e símbolos Unicode (CH₃, H₂O, x², →).
+Para moléculas reais, incluindo moléculas maiores, ramificadas e com anéis, use action=estrutura com smiles correto, title e format=bastao por padrão. Bastão é a representação de linhas e vértices: C e H ligados a C ficam implícitos. Use format=expandida para mostrar os hidrogênios explicitamente; o aluno também pode trocar pelo botão no desenho. Você não está restrito às sete estruturas antigas. Exemplos: hexano CCCCCC; ciclo-hexano C1CCCCC1; benzeno c1ccccc1; acetona CC(=O)C; aspirina CC(=O)Oc1ccccc1C(=O)O. O motor valida o SMILES, mas isso não prova que o nome corresponde à estrutura: confira a identidade e não invente estereoquímica. Limite de 160 átomos explícitos no SMILES, não é um visualizador de proteínas. As estruturas genéricas com R continuam em action=molecula, molecule=cetona ou aldeido. Para destacar, use apenas os grupos efetivamente retornados pela ferramenta.
+REGRA DE TRÊS — padrão obrigatório para todos os professores de exatas: sempre use action=regra_de_tres para problemas gerais (matemática, física ou química). Envie a (superior esquerdo), b (superior direito), c (inferior esquerdo), relation=direta ou inversa, leftLabel/rightLabel (grandezas), leftUnit/rightUnit. Converta previamente para a mesma unidade dentro de cada coluna. A lousa monta duas correspondências com traços horizontais, a fração vertical, o resultado e as setas do fator. Explique nessa sequência e use os valores calculados pela ferramenta. Para direta: a—b, c—x, x=c×b/a; para inversa: x=a×b/c, explique por que uma grandeza aumenta enquanto a outra diminui. Não use anotar para substituir esse desenho por texto, tabela ou divisão com barra. Nas proporções diretas, ensine a reconhecer fatores na horizontal OU vertical, multiplicando ou dividindo. Use direction=horizontal quando for mais simples: 30 g—90 L; 80 g—x → fator numérico ×3 nas duas linhas, x=240 L. Esse fator entre unidades diferentes corresponde aqui a 3 L/g; não é uma conversão universal entre massa e volume. Use direction=vertical para o mesmo fator dentro das duas colunas. Nunca aplique o mesmo fator horizontal à proporção inversa. A ferramenta também mostra a multiplicação cruzada antes de isolar x. Dê tempo para acompanhar as duas linhas, a fração e as setas; não dispare vários exercícios ao mesmo tempo.
+Você também dá aulas de estequiometria. Use action=estequiometria, stage=preparar, id do exercício, reactants e products (fórmulas neutras sem coeficientes), e, quando houver cálculo, given, target, amount, givenUnit e targetUnit (g ou mol). Inclua atomicMasses quando o enunciado fornecer valores. O aplicativo balanceia por conservação dos átomos e calcula a proporção, massas molares e regra de três; use os resultados da ferramenta, não substitua por contas inventadas.
+Depois de preparar, chame a mesma ferramenta com SOMENTE action=estequiometria, id e stage para cada etapa, nesta ordem: reacao, balanceamento, proporcao, massa_molar, regra_de_tres, resultado. Mostre e explique UMA etapa de cada vez, dando tempo ao aluno de acompanhar. Não chame todas as etapas juntas. No balanceamento explique as equações de conservação, a escolha dos menores coeficientes inteiros e a conferência dos átomos. Na massa molar explique cada multiplicação (índice × massa atômica). Na regra de três explicite substâncias, unidades, correspondências da reação, multiplicação cruzada e isolamento de x.
+Os cálculos usam massas escolares arredondadas ou as fornecidas no enunciado. Conversões g↔mol estão disponíveis. O modo atual pressupõe reagentes puros, demais reagentes em excesso e rendimento teórico. Se houver múltiplas quantidades de reagentes, pureza, rendimento, volume de gás ou reação iônica/redox, esclareça os dados e explique o tratamento adicional; não apresente o cálculo básico como solução completa desses casos. Nunca invente reagentes ou produtos só para obter uma reação balanceável.
+A ferramenta confirma apenas que enfileirou a ação. O aplicativo revela o desenho/anotação durante sua fala; não espere a animação terminar nem leia os comandos. Se houver erro na ferramenta, corrija os argumentos ou explique a limitação. Fale em blocos curtos de 2 a 4 frases, uma ideia por vez, com pausas naturais. Mantenha a resposta proporcional à pergunta. Não desacelere artificialmente a voz para ditar o caderno.`}
+function setupMessage(model){return {setup:{model,tools:[{functionDeclarations:[VaiBemBoard.declaration]}],generationConfig:{responseModalities:['AUDIO'],speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:c().voice}}}},systemInstruction:{parts:[{text:systemInstruction()}]},inputAudioTranscription:{},outputAudioTranscription:{}}}}
+async function getToken(){const r=await fetch('/api/gemini-live-token',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});const j=await r.json();if(!r.ok)throw new Error(j.message||j.detail||j.error||'Falha ao criar token Gemini');return j}
+async function startMic(){if(micStarted)return;setStatus('Solicitando acesso ao microfone…');const micSocket=ws;const acquired=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false});if(ws!==micSocket||!connected||!setupReady){acquired.getTracks().forEach(t=>t.stop());return}stream=acquired;inputCtx=new (window.AudioContext||window.webkitAudioContext)();if(inputCtx.state==='suspended')await inputCtx.resume();sourceNode=inputCtx.createMediaStreamSource(stream);processor=inputCtx.createScriptProcessor(2048,1,1);zeroGain=inputCtx.createGain();zeroGain.gain.value=0;processor.onaudioprocess=e=>{const raw=e.inputBuffer.getChannelData(0),level=Math.min(1,rms(raw)*7);$('#meterBar').style.width=(level*100).toFixed(0)+'%';if(!muted&&connected&&setupReady&&ws?.readyState===WebSocket.OPEN){const pcm16=downsample(raw,inputCtx.sampleRate,16000),chunk=floatTo16Base64(pcm16);ws.send(JSON.stringify({realtimeInput:{audio:{data:chunk,mimeType:'audio/pcm;rate=16000'}}}))}};sourceNode.connect(processor);processor.connect(zeroGain);zeroGain.connect(inputCtx.destination);micStarted=true;phase('#pMic','ok');$('#mute').disabled=false;$('#interrupt').disabled=false;$('#disconnect').disabled=false;$('#liveState').textContent='● AO VIVO';$('#liveState').className='live';setStatus('Microfone ativo. Pode falar normalmente.','good');$('#bubble').textContent='Estou ouvindo. Faça sua pergunta normalmente.'}
+function extractAudioParts(msg){const parts=msg?.serverContent?.modelTurn?.parts||[];return parts.filter(p=>p?.inlineData?.data&&String(p.inlineData.mimeType||'').startsWith('audio/')).map(p=>p.inlineData)}
+function transcriptText(obj){return String(obj?.text||'')}
+async function handleToolCalls(toolCall){
+ const socket=ws,epoch=board.epoch;const responses=[];
+ for(const call of toolCall.functionCalls||[]){
+  if(socket!==ws||epoch!==board.epoch)return;
+  let response;
+  try{if(call.name!=='atualizar_lousa')throw Error('Ferramenta desconhecida');if(suppressOutput)throw Error('Explicação interrompida');response=await board.commandAsync(call.args,call.id)}
+  catch(error){response={ok:false,error:error.message};setStatus('Lousa: '+error.message,'bad')}
+  responses.push({id:call.id,name:call.name,response});
+ }
+ if(responses.length&&socket===ws&&epoch===board.epoch&&ws?.readyState===WebSocket.OPEN)ws.send(JSON.stringify({toolResponse:{functionResponses:responses}}));
+}
+function flushInput(){if(inputTranscript.trim()){const q=inputTranscript.trim();addQuestion(q);addMsg('student',q);inputTranscript=''}}
+async function handleServer(msg){
+ if(msg.setupComplete){setupReady=true;phase('#pSetup','ok');setStatus('Setup confirmado. Ativando microfone…','good');startMic().catch(err=>{phase('#pMic','fail');setStatus('Falha ao abrir microfone: '+err.message,'bad')});return}
+ if(msg.toolCallCancellation)board.cancelCalls(msg.toolCallCancellation.ids||[]);
+ if(msg.toolCall){flushInput();handleToolCalls(msg.toolCall).catch(()=>setStatus('Falha ao atualizar a lousa. Tente novamente.','bad'))}
+ const sc=msg.serverContent;if(!sc)return;
+ if(sc.interrupted){stopPlayback();board.interrupt();outputTranscript='';suppressOutput=false;$('#bubble').textContent='Pode falar. Eu parei para ouvir você.'}
+ const inText=transcriptText(sc.inputTranscription);if(inText){inputTranscript+=inText;$('#heard').textContent='Você: '+inputTranscript}
+ const outText=transcriptText(sc.outputTranscription),parts=extractAudioParts(msg);
+ if(!suppressOutput&&!sc.interrupted){
+  if(outText||parts.length)flushInput();
+  for(const part of parts){const rate=Number(/rate=(\d+)/.exec(part.mimeType||'')?.[1]||24000);try{await playPcm(part.data,rate)}catch{setStatus('Não foi possível reproduzir o áudio do professor.','bad')}}
+  if(outText){outputTranscript+=outText;board.transcript(outputTranscript);$('#bubble').textContent='Estou explicando. Acompanhe as anotações no caderno; você pode me interromper.'}
+ }
+ if(sc.turnComplete){flushInput();if(!suppressOutput&&!sc.interrupted){commitOutput();board.finish()}else outputTranscript='';suppressOutput=false;$('#heard').textContent='Pode fazer a próxima pergunta.'}
+}
+// WebSocket binary frames contain UTF-8 JSON, not raw PCM.
+async function decodeLiveMessage(data){
+  let text;
+  if(typeof data==='string')text=data;
+  else if(data instanceof Blob)text=await data.text();
+  else if(data instanceof ArrayBuffer||ArrayBuffer.isView(data))text=new TextDecoder().decode(data);
+  else throw new TypeError('Formato de mensagem WebSocket não suportado');
+  return JSON.parse(text);
+}
+function attachLiveMessages(socket){
+  // Blob.text() is asynchronous: queue frames to preserve server order.
+  let pending=Promise.resolve();
+  socket.onmessage=e=>{
+    pending=pending.then(async()=>{
+      if(ws!==socket||!connected)return;
+      const msg=await decodeLiveMessage(e.data);
+      if(ws!==socket||!connected)return;
+      await handleServer(msg);
+    }).catch(()=>{
+      if(ws!==socket||!connected)return;
+      console.error('[VAI BEM] Falha ao decodificar/processar mensagem Live');
+      setStatus('Erro ao processar uma mensagem do professor. Encerre e reconecte a sessão.','bad');
+    });
+    return pending;
+  };
+}
+async function connect(){if(connected)return;resetPhases();$('#connect').disabled=true;setStatus('Solicitando token efêmero…');try{const tok=await getToken();phase('#pToken','ok');setStatus('Token OK. Abrindo WebSocket…','good');const url='wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContentConstrained?access_token='+encodeURIComponent(tok.token);ws=new WebSocket(url);const socket=ws;ws.onopen=()=>{connected=true;setupReady=false;phase('#pWs','ok');$('#liveState').textContent='● CONECTANDO';$('#liveState').className='live';setStatus('WebSocket OK. Enviando setup…','good');ws.send(JSON.stringify(setupMessage(tok.model)))};attachLiveMessages(ws);ws.onerror=()=>{phase('#pWs','fail');setStatus('Falha na conexão em tempo real com Gemini.','bad')};ws.onclose=e=>{if(ws!==socket)return;const wasLive=setupReady||micStarted;ws=null;releaseSessionResources();$('#liveState').textContent='● DESCONECTADO';$('#liveState').className='off';$('#connect').disabled=false;$('#mute').disabled=true;$('#interrupt').disabled=true;$('#disconnect').disabled=true;setStatus(`Sessão encerrada — código ${e.code}${e.reason?' • '+e.reason:''}${wasLive?'':' antes do microfone ficar ativo'}.`,'bad')}}catch(err){$('#connect').disabled=false;phase('#pToken','fail');setStatus(err.message,'bad')}}
+function releaseSessionResources(){
+  connected=false;setupReady=false;micStarted=false;muted=false;
+  stopPlayback();board.interrupt();suppressOutput=false;
+  if(processor)processor.onaudioprocess=null;
+  for(const node of [processor,sourceNode,zeroGain])if(node)try{node.disconnect()}catch{}
+  if(stream)stream.getTracks().forEach(t=>t.stop());
+  const contexts=[inputCtx,outputCtx];
+  processor=sourceNode=zeroGain=stream=inputCtx=outputCtx=null;audioNextTime=0;
+  inputTranscript='';outputTranscript='';currentOutputLine=null;lastCommittedOutput='';
+  $('#meterBar').style.width='0%';$('#mute').textContent='Silenciar microfone';
+  $('#bubble').textContent='Sessão encerrada. Conecte o professor para conversar.';
+  resetPhases();
+  return Promise.allSettled(contexts.filter(Boolean).map(ctx=>ctx.state==='closed'?Promise.resolve():ctx.close()));
+}
+async function disconnect(){
+  const socket=ws;ws=null;
+  const cleanup=releaseSessionResources();
+  if(socket)try{socket.close(1000,'Encerrada pelo usuário')}catch{}
+  $('#liveState').textContent='● DESCONECTADO';$('#liveState').className='off';
+  $('#connect').disabled=false;$('#mute').disabled=true;$('#interrupt').disabled=true;$('#disconnect').disabled=true;
+  setStatus('Sessão encerrada.');
+  await cleanup;
+}
+function switchMode(next){if(next===mode)return;(async()=>{await disconnect();mode=next;const t=c();$('#name').textContent=t.teacher;$('#avatar').textContent=t.avatar;$('#meta').textContent=t.subject+' • '+t.grade;$('#session').textContent='Sessão • '+t.subject;for(const k of Object.keys(teachers))$('#'+k).className=k===mode?'on':'';$('#msgs').innerHTML='<div class="msg prof">'+t.teacher+': Conecte a sessão e pode falar livremente.</div>';$('#bubble').textContent='Conecte a sessão. Depois, converse normalmente.';$('#heard').textContent='Transcrição do aluno aparecerá aqui.';resetPhases();setStatus('Professor alterado. Conecte uma nova sessão.')})()}
+$('#connect').onclick=connect;$('#disconnect').onclick=disconnect;$('#mute').onclick=()=>{muted=!muted;$('#mute').textContent=muted?'Ativar microfone':'Silenciar microfone';setStatus(muted?'Microfone silenciado.':'Microfone ativo.','good')};$('#interrupt').onclick=()=>{suppressOutput=true;stopPlayback();board.interrupt();outputTranscript='';$('#bubble').textContent='Interrompido. Pode falar.'};$('#clear').onclick=()=>{board.clear();outputTranscript=''};$('#save').onclick=()=>{const content='<!doctype html><html lang="pt-BR"><meta charset="utf-8"><title>Caderno VAI BEM</title><style>'+document.querySelector('style').textContent+'</style><body><main class="paper">'+$('#lines').innerHTML+'</main></body></html>';const url=URL.createObjectURL(new Blob([content],{type:'text/html'}));const a=document.createElement('a');a.href=url;a.download='vai-bem-caderno.html';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);setStatus('Caderno salvo neste dispositivo.','good')};for(const k of Object.keys(teachers))$('#'+k).onclick=()=>switchMode(k);window.addEventListener('beforeunload',()=>{try{ws?.close()}catch{}});
+</script>
+</body>
+</html>
