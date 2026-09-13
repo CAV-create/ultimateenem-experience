@@ -1,11 +1,20 @@
 // Redeploy marker: Gemini env reconfigured for VAI BEM V2
 export default async function handler(req, res) {
+  const apiKey = process.env.GEMINI_API_KEY;
+
+  if (req.method === 'GET') {
+    res.setHeader('Cache-Control', 'no-store, max-age=0');
+    return res.status(apiKey ? 200 : 503).json({
+      ok: Boolean(apiKey),
+      geminiApiKeyConfigured: Boolean(apiKey)
+    });
+  }
+
   if (req.method !== 'POST') {
-    res.setHeader('Allow', 'POST');
+    res.setHeader('Allow', 'GET, POST');
     return res.status(405).json({ error: 'method_not_allowed' });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return res.status(503).json({
       error: 'gemini_api_key_missing',
@@ -17,9 +26,6 @@ export default async function handler(req, res) {
   const expireTime = new Date(Date.now() + 20 * 60 * 1000).toISOString();
   const newSessionExpireTime = new Date(Date.now() + 5 * 60 * 1000).toISOString();
 
-  // No piloto, o token é de uso único e vida curta. As restrições finas de
-  // BidiGenerateContent serão adicionadas depois de validarmos a sessão real
-  // com o modelo Live, evitando incompatibilidades de configuração no primeiro teste.
   const body = {
     uses: 1,
     expireTime,
