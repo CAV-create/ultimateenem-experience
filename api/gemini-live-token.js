@@ -1,4 +1,4 @@
-// Redeploy marker: Gemini env reconfigured for VAI BEM V2
+// Redeploy marker: Gemini preview env confirmed for VAI BEM V2
 export default async function handler(req, res) {
   const apiKey = process.env.GEMINI_API_KEY;
 
