@@ -28,6 +28,7 @@ export default async function handler(req, res) {
   try {
     const response = await fetch('https://generativelanguage.googleapis.com/v1beta/auth_tokens', {
       method: 'POST',
+      signal: AbortSignal.timeout(12000),
       headers: {
         'x-goog-api-key': apiKey,
         'Content-Type': 'application/json'
@@ -42,13 +43,13 @@ export default async function handler(req, res) {
     if (!response.ok || !data?.name) {
       console.error('GEMINI_LIVE_TOKEN_FAILED', {
         status: response.status,
-        detail: raw.slice(0, 900)
+        errorCode: data?.error?.status || 'invalid_response'
       });
       return res.status(502).json({
         ok: false,
         error: 'gemini_token_failed',
         status: response.status,
-        detail: data?.error?.message || raw.slice(0, 400)
+        message: 'Não foi possível emitir a credencial temporária. Tente novamente.'
       });
     }
 
@@ -58,11 +59,11 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ token: data.name, model, expiresAt: expireTime });
   } catch (error) {
-    console.error('GEMINI_LIVE_TOKEN_EXCEPTION', error);
+    console.error('GEMINI_LIVE_TOKEN_EXCEPTION', { name: error?.name || 'Error' });
     return res.status(500).json({
       ok: false,
       error: 'gemini_token_exception',
-      detail: String(error?.message || error)
+      message: 'O serviço de voz não respondeu a tempo. Tente conectar novamente.'
     });
   }
 }

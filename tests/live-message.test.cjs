@@ -6,7 +6,7 @@ const html=fs.readFileSync(require('node:path').join(__dirname,'../vai-bem-v2.ht
 const script=html.match(/<script>([\s\S]*?)<\/script>/)[1];
 function app(){
   const elements=new Map();
-  const ctx=vm.createContext({Blob,ArrayBuffer,TextDecoder,console:{error(){}},document:{querySelector(s){if(!elements.has(s))elements.set(s,{});return elements.get(s)}},window:{addEventListener(){}}});
+  const ctx=vm.createContext({VaiBemBoard:require('../vai-bem-board.js'),performance:{now:()=>0},requestAnimationFrame:()=>1,cancelAnimationFrame(){},Blob,ArrayBuffer,TextDecoder,console:{error(){}},document:{querySelector(s){if(!elements.has(s))elements.set(s,{});return elements.get(s)}},window:{addEventListener(){}}});
   vm.runInContext(script,ctx);
   return ctx;
 }
