@@ -26,13 +26,11 @@ export default async function handler(req, res) {
   const expireTime = new Date(Date.now() + 20 * 60 * 1000).toISOString();
   const newSessionExpireTime = new Date(Date.now() + 5 * 60 * 1000).toISOString();
 
-  // A API atual espera CreateAuthTokenRequest = { authToken: {...} }.
+  // REST /v1beta/auth_tokens recebe os campos do AuthToken diretamente no corpo.
   const body = {
-    authToken: {
-      uses: 1,
-      expireTime,
-      newSessionExpireTime
-    }
+    uses: 1,
+    expireTime,
+    newSessionExpireTime
   };
 
   try {
