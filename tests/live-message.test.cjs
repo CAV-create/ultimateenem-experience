@@ -39,3 +39,34 @@ test('slow Blob preserves order, invalid JSON does not poison queue, stale socke
  await vm.runInContext('oldSocket.onmessage({data:\'{"id":4}\'})',ctx);
  assert.equal(vm.runInContext('JSON.stringify(seen)',ctx),'[1,2,3]');
 });
+test('microphone sends realtimeInput.audio PCM and can restart after cleanup',async()=>{
+ const ctx=app();let stopped=0,closed=0;const sent=[];
+ const node=()=>({connect(){},disconnect(){}});
+ class AudioContext{
+  constructor(){this.state='running';this.sampleRate=48000;this.destination={}}
+  createMediaStreamSource(){return node()}
+  createScriptProcessor(){return node()}
+  createGain(){return {...node(),gain:{value:1}}}
+  async close(){closed++;this.state='closed'}
+ }
+ ctx.window.AudioContext=AudioContext;
+ ctx.navigator={mediaDevices:{getUserMedia:async()=>({getTracks:()=>[{stop(){stopped++}}]})}};
+ ctx.WebSocket={OPEN:1};ctx.btoa=s=>Buffer.from(s,'binary').toString('base64');
+ ctx.socket={readyState:1,send:s=>sent.push(JSON.parse(s))};
+ vm.runInContext("$('#meterBar').style={};ws=socket;connected=true;setupReady=true",ctx);
+ await vm.runInContext('startMic()',ctx);
+ ctx.event={inputBuffer:{getChannelData:()=>new Float32Array(2048).fill(0.1)}};
+ vm.runInContext('processor.onaudioprocess(event)',ctx);
+ assert.equal(sent.length,1);
+ assert.deepEqual(Object.keys(sent[0].realtimeInput),['audio']);
+ assert.equal(sent[0].realtimeInput.audio.mimeType,'audio/pcm;rate=16000');
+ assert.ok(Buffer.from(sent[0].realtimeInput.audio.data,'base64').length>0);
+ await vm.runInContext('releaseSessionResources()',ctx);
+ assert.equal(stopped,1);assert.equal(closed,1);
+ assert.equal(vm.runInContext('micStarted===false && stream===null && inputCtx===null',ctx),true);
+ vm.runInContext('connected=true;setupReady=true',ctx);
+ await vm.runInContext('startMic()',ctx);
+ assert.equal(vm.runInContext('micStarted',ctx),true);
+ await vm.runInContext('releaseSessionResources()',ctx);
+ assert.equal(stopped,2);assert.equal(closed,2);
+});
