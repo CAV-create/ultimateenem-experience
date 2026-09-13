@@ -1,4 +1,4 @@
-// Redeploy marker: Gemini preview env confirmed for VAI BEM V2
+// VAI BEM V2 — emissor de token efêmero para Gemini Live
 export default async function handler(req, res) {
   const apiKey = process.env.GEMINI_API_KEY;
 
@@ -18,7 +18,7 @@ export default async function handler(req, res) {
   if (!apiKey) {
     return res.status(503).json({
       error: 'gemini_api_key_missing',
-      message: 'Configure GEMINI_API_KEY no ambiente da Vercel para habilitar o VAI BEM V2.'
+      message: 'GEMINI_API_KEY não está disponível neste deployment.'
     });
   }
 
@@ -26,10 +26,13 @@ export default async function handler(req, res) {
   const expireTime = new Date(Date.now() + 20 * 60 * 1000).toISOString();
   const newSessionExpireTime = new Date(Date.now() + 5 * 60 * 1000).toISOString();
 
+  // A API atual espera CreateAuthTokenRequest = { authToken: {...} }.
   const body = {
-    uses: 1,
-    expireTime,
-    newSessionExpireTime
+    authToken: {
+      uses: 1,
+      expireTime,
+      newSessionExpireTime
+    }
   };
 
   try {
@@ -49,12 +52,12 @@ export default async function handler(req, res) {
     if (!response.ok || !data?.name) {
       console.error('GEMINI_LIVE_TOKEN_FAILED', {
         status: response.status,
-        detail: raw.slice(0, 600)
+        detail: raw.slice(0, 900)
       });
       return res.status(502).json({
         error: 'gemini_token_failed',
         status: response.status,
-        detail: data?.error?.message || raw.slice(0, 240)
+        detail: data?.error?.message || raw.slice(0, 400)
       });
     }
 
