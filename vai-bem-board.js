@@ -12,17 +12,37 @@ const MOLECULES={
 };
 const KINDS={titulo:'Conceito',definicao:'Definição',formula:'Fórmula',etapa:'Passo',exemplo:'Exemplo'};
 const declaration={name:'atualizar_lousa',description:'Escreve uma anotação curta, desenha uma estrutura química disponível ou destaca parte de um desenho. Retorna imediatamente quando a ação é aceita na fila; a apresentação acontece aos poucos junto ao áudio. Use antes de explicar cada conceito, sem transcrever toda a fala. Reutilize id para corrigir uma anotação.',parameters:{type:'OBJECT',properties:{
- action:{type:'STRING',enum:['anotar','molecula','destacar']},
+ action:{type:'STRING',enum:['anotar','molecula','destacar','estrutura','estequiometria']},
  id:{type:'STRING',description:'Identificador curto único do bloco. Reutilize para corrigir; ex. cetona-1.'},
  text:{type:'STRING',description:'Anotação em português revisado, até 240 caracteres; use símbolos Unicode em fórmulas, sem Markdown.'},
  kind:{type:'STRING',enum:Object.keys(KINDS)},
  molecule:{type:'STRING',enum:Object.keys(MOLECULES)},
- target:{type:'STRING',description:'id do desenho a destacar'},
- group:{type:'STRING',enum:['carbonila','carboxila','hidroxila','laterais','dupla','estrutura']}
+ smiles:{type:'STRING',description:'SMILES da molécula real, até 1500 caracteres. Necessário em estrutura. Não use nomes como SMILES.'},
+ title:{type:'STRING',description:'Nome da molécula ou título do exercício, até 100 caracteres.'},
+ format:{type:'STRING',enum:['bastao','expandida'],description:'Bastão omite C e H ligados a C; expandida mostra hidrogênios explícitos.'},
+ reactants:{type:'ARRAY',items:{type:'STRING'},description:'Fórmulas dos reagentes, sem coeficientes ou estados físicos. Ex.: [C2H6,O2]'},
+ products:{type:'ARRAY',items:{type:'STRING'},description:'Fórmulas dos produtos. Ex.: [CO2,H2O]'},
+ given:{type:'STRING',description:'Fórmula da espécie cuja quantidade é conhecida.'},
+ target:{type:'STRING',description:'Para destacar: id do desenho. Para estequiometria: fórmula da espécie procurada.'},
+ amount:{type:'NUMBER',description:'Quantidade conhecida, positiva.'},
+ givenUnit:{type:'STRING',enum:['g','mol']},targetUnit:{type:'STRING',enum:['g','mol']},
+ atomicMasses:{type:'ARRAY',items:{type:'OBJECT',properties:{element:{type:'STRING'},mass:{type:'NUMBER'}},required:['element','mass']},description:'Massas atômicas fornecidas no exercício; prevalecem sobre os valores escolares arredondados.'},
+ stage:{type:'STRING',enum:['preparar','reacao','balanceamento','proporcao','massa_molar','regra_de_tres','resultado'],description:'Em estequiometria: preparar calcula e devolve tudo sem exibir; depois use mesmo id e uma etapa de cada vez. Reenvie os dados completos para modificar o exercício.'},
+  group:{type:'STRING',enum:['carbonila','carboxila','hidroxila','laterais','dupla','aromatico','estrutura']}
 },required:['action','id']}};
 function validate(args){
- if(!args||typeof args!=='object'||!['anotar','molecula','destacar'].includes(args.action))throw Error('Ação inválida');
+ if(!args||typeof args!=='object'||!['anotar','molecula','destacar','estrutura','estequiometria'].includes(args.action))throw Error('Ação inválida');
  if(typeof args.id!=='string'||! /^[a-zA-Z0-9_-]{1,64}$/.test(args.id))throw Error('id inválido');
+ if(args.action==='estrutura'){
+  if(typeof args.smiles!=='string'||!args.smiles||args.smiles.length>1500)throw Error('Informe o SMILES da estrutura');
+  if(!['bastao','expandida'].includes(args.format||'bastao'))throw Error('Formato inválido');
+  if(typeof args.title!=='string'||!args.title.trim()||args.title.length>100)throw Error('Informe um nome de até 100 caracteres');
+  return {action:args.action,id:args.id,smiles:args.smiles,title:args.title,format:args.format||'bastao'};
+ }
+ if(args.action==='estequiometria'){
+  if(!['preparar','reacao','balanceamento','proporcao','massa_molar','regra_de_tres','resultado'].includes(args.stage))throw Error('Informe a etapa do exercício');
+  return {...args};
+ }
  if(args.action==='anotar'){
   if(typeof args.text!=='string'||!args.text.trim()||args.text.length>240)throw Error('Use uma anotação de 1 a 240 caracteres');
   if(!Object.hasOwn(KINDS,args.kind))throw Error('Tipo de anotação inválido');
@@ -32,12 +52,12 @@ function validate(args){
   if(!Object.hasOwn(MOLECULES,args.molecule))throw Error('Estrutura não disponível; use uma fórmula em anotar');
   return {action:args.action,id:args.id,molecule:args.molecule};
  }
- if(typeof args.target!=='string'||! /^[a-zA-Z0-9_-]{1,64}$/.test(args.target)||!['carbonila','carboxila','hidroxila','laterais','dupla','estrutura'].includes(args.group))throw Error('Destaque inválido');
+ if(typeof args.target!=='string'||! /^[a-zA-Z0-9_-]{1,64}$/.test(args.target)||!['carbonila','carboxila','hidroxila','laterais','dupla','aromatico','estrutura'].includes(args.group))throw Error('Destaque inválido');
  return {action:args.action,id:args.id,target:args.target,group:args.group};
 }
 class Board{
  constructor({container,status,audio,now=()=>performance.now(),schedule=fn=>requestAnimationFrame(fn),cancel=id=>cancelAnimationFrame(id)}){
-  Object.assign(this,{container,status,audio,now,schedule,cancel});this.items=[];this.blocks=new Map();this.calls=new Map();this.turn=1;this.toolTurns=new Set();this.closedTurns=new Set();this.lastTick=now();this.credit=0;this.frame=null;
+  Object.assign(this,{container,status,audio,now,schedule,cancel});this.epoch=0;this.exercises=new Map();this.items=[];this.blocks=new Map();this.calls=new Map();this.turn=1;this.toolTurns=new Set();this.closedTurns=new Set();this.lastTick=now();this.credit=0;this.frame=null;
  }
  wake(){if(this.frame===null)this.frame=this.schedule(()=>{this.frame=null;this.tick();if(this.items.length)this.wake()})}
  enqueue(item){item.turn=this.turn;item.created=this.now();this.items.push(item);this.wake();return item}
@@ -51,14 +71,77 @@ class Board{
   const item={...args,element,content,words:args.text.match(/\S+\s*/g)||[],shown:0,callId};
   this.blocks.set(args.id,item);this.enqueue(item);
  }
+ async commandAsync(raw,callId){
+  const args=validate(raw);
+  if(callId&&this.calls.has(callId))return this.calls.get(callId);
+  if(args.action!=='estrutura')return this.command(args,callId);
+  const epoch=this.epoch;
+  const result=await root.VaiBemChem.molecule(args.smiles,args.format);
+  if(epoch!==this.epoch)return {ok:false,status:'cancelado'};
+  if(callId&&this.calls.has(callId))return this.calls.get(callId);
+  if(this.items.length>=50)throw Error('Lousa ocupada; aguarde');
+  this.toolTurns.add(this.turn);this.removeFallback(this.turn);
+  const old=this.blocks.get(args.id);if(old){old.element.remove();this.items=this.items.filter(x=>x.id!==args.id)}
+  const element=document.createElement('figure');element.className='board-figure board-rdkit';element.hidden=true;
+  const caption=document.createElement('figcaption');caption.textContent=args.title+' · '+(args.format==='bastao'?'fórmula em bastão':'hidrogênios explícitos');
+  const toolbar=document.createElement('div');toolbar.className='molecule-formats';
+  const {svg,steps}=moleculeSvg(result,args.title);element.append(caption,toolbar,svg);
+  const item={...args,element,steps,shown:0,groups:result.groups,callId};
+  for(const [format,label]of [['bastao','Bastão'],['expandida','Com hidrogênios']]){
+   const button=document.createElement('button');button.type='button';button.textContent=label;button.setAttribute('aria-pressed',String(args.format===format));
+   button.onclick=async()=>{if(format===item.format)return;button.disabled=true;const epoch=this.epoch;
+    try{const updated=await root.VaiBemChem.molecule(args.smiles,format);if(epoch!==this.epoch||this.blocks.get(args.id)!==item)return;
+     const drawing=moleculeSvg(updated,args.title);const previous=item.shown;item.element.querySelector('svg')?.replaceWith(drawing.svg);
+     item.steps=drawing.steps;item.groups=updated.groups;item.format=format;item.shown=Math.min(previous,item.steps.length);
+     if(!this.items.includes(item))item.shown=item.steps.length;
+     for(let i=0;i<item.shown;i++)item.steps[i].style.opacity='1';
+     caption.textContent=args.title+' · '+(format==='bastao'?'fórmula em bastão':'hidrogênios explícitos');
+     for(const b of toolbar.children)if(b!==zoom)b.setAttribute('aria-pressed',String(b.textContent===label));
+    }catch(e){this.status.textContent=e.message}finally{button.disabled=false}
+   };toolbar.appendChild(button);
+  }
+  const zoom=document.createElement('button');zoom.type='button';zoom.textContent='Ampliar';zoom.onclick=()=>{
+   const dialog=document.createElement('dialog');dialog.className='molecule-dialog';
+   const heading=document.createElement('h2');heading.textContent=args.title;
+   const close=document.createElement('button');close.type='button';close.textContent='Fechar';close.onclick=()=>dialog.close();
+   const label=document.createElement('label');label.textContent='Zoom ';const range=document.createElement('input');range.type='range';range.min='50';range.max='180';range.value='100';range.setAttribute('aria-label','Zoom da molécula');label.appendChild(range);
+   const viewport=document.createElement('div');viewport.className='molecule-zoom-view';const large=item.element.querySelector('svg').cloneNode(true);for(const el of large.querySelectorAll('[data-group]'))el.style.opacity='1';large.style.width='700px';large.style.maxWidth='none';large.style.height='auto';viewport.appendChild(large);range.oninput=()=>large.style.width=(700*Number(range.value)/100)+'px';
+   dialog.append(heading,close,label,viewport);dialog.addEventListener('close',()=>dialog.remove(),{once:true});document.body.appendChild(dialog);dialog.showModal();
+  };toolbar.appendChild(zoom);
+  this.container.appendChild(element);this.blocks.set(args.id,item);this.enqueue(item);
+  const response={ok:true,status:'enfileirado',id:args.id,format:args.format,atoms:result.atomCount,canonicalSmiles:result.canonical,groups:['estrutura',...Object.keys(result.groups)]};
+  if(callId)this.calls.set(callId,response);return response;
+ }
+ stoichiometry(args,callId){
+  let data=this.exercises.get(args.id);
+  if(args.reactants!==undefined||args.products!==undefined){
+   const updated=root.VaiBemChem.exercise(args),changed=JSON.stringify(data)!==JSON.stringify(updated);data=updated;this.exercises.set(args.id,data);
+   if(changed)for(const [id,item]of this.blocks)if(item.exerciseId===args.id){item.element.remove();this.blocks.delete(id);this.items=this.items.filter(x=>x!==item)}
+  }
+  if(!data)throw Error('Prepare primeiro a reação com reagentes e produtos');
+  if(args.stage==='preparar')return {ok:true,status:'calculado',id:args.id,...data};
+  const stage=data.stages.find(s=>s.key===args.stage);if(!stage)throw Error('Essa etapa requer quantidade conhecida e espécie procurada');
+  const id=args.id+'-'+stage.key;
+  if(!this.blocks.has(id)){
+   this.toolTurns.add(this.turn);this.removeFallback(this.turn);
+   const element=document.createElement('section');element.className='board-stoich';element.hidden=true;
+   const heading=document.createElement('h3');heading.textContent=stage.title;element.appendChild(heading);
+   if(stage.table){const table=document.createElement('table');const tr=document.createElement('tr');for(const t of stage.table.headers){const th=document.createElement('th');th.scope='col';th.textContent=t;tr.appendChild(th)}table.appendChild(tr);for(const row of stage.table.rows){const tr=document.createElement('tr');for(const t of row){const td=document.createElement('td');td.textContent=t;tr.appendChild(td)}table.appendChild(tr)}element.appendChild(table)}
+   const content=document.createElement('div');content.className='stoich-lines';element.appendChild(content);this.container.appendChild(element);
+   const text=stage.lines.join('\n');const item={id,exerciseId:args.id,element,content,text,words:text.match(/\S+\s*/g)||[],shown:0,callId};this.blocks.set(id,item);this.enqueue(item);
+  }
+  return {ok:true,status:'enfileirado',id:args.id,stage:stage.key,explanation:stage,calculation:data.calculation,atomicMasses:data.atomicMasses};
+ }
  command(raw,callId){
   if(callId&&this.calls.has(callId))return this.calls.get(callId);
   const args=validate(raw);
+  if(args.action==='estequiometria'){const result=this.stoichiometry(args,callId);if(callId)this.calls.set(callId,result);return result}
+  if(args.action==='estrutura')throw Error('Use o carregamento assíncrono de estruturas');
   if(this.items.length>=50)throw Error('Lousa ocupada; aguarde antes de adicionar anotações');
   if(args.action==='destacar'){
    const block=this.blocks.get(args.target),spec=MOLECULES[block?.molecule];
-   if(!spec)throw Error('Desenho não encontrado');
-   const valid=['estrutura','laterais',spec.group];if(spec.oxygen)valid.push('carbonila');
+   if(!spec&&!block?.groups)throw Error('Desenho não encontrado');
+   const valid=block.groups?['estrutura',...Object.keys(block.groups)]:['estrutura','laterais',spec.group];if(spec?.oxygen)valid.push('carbonila');
    if(!valid.includes(args.group))throw Error('Grupo ausente nessa estrutura');
   }
   this.toolTurns.add(this.turn);this.removeFallback(this.turn);
@@ -85,10 +168,11 @@ class Board{
  finish(){this.closedTurns.add(this.turn);this.turn++;this.wake()}
  cancelCalls(ids){for(const id of ids){this.calls.set(id,{ok:false,status:'cancelado'});this.items=this.items.filter(item=>{if(item.callId!==id)return true;if(item.element)item.element.remove();this.blocks.delete(item.id);return false})}}
  interrupt(){
+  this.epoch++;
   for(const item of this.items){if(item.element){if(!item.shown){item.element.remove();this.blocks.delete(item.id)}else item.element.classList.add('board-partial')}}
   this.items=[];this.turn++;this.credit=0;if(this.frame!==null)this.cancel(this.frame);this.frame=null;this.status.textContent='Anotação pausada para ouvir você';
  }
- clear(){this.interrupt();this.container.replaceChildren();this.blocks.clear();this.calls.clear();this.toolTurns.clear();this.closedTurns.clear();this.status.textContent='Folha limpa'}
+ clear(){this.interrupt();this.container.replaceChildren();this.blocks.clear();this.exercises.clear();this.calls.clear();this.toolTurns.clear();this.closedTurns.clear();this.status.textContent='Folha limpa'}
  tick(){
   const now=this.now(),dt=Math.min(100,Math.max(0,now-this.lastTick));this.lastTick=now;
   const item=this.items[0];if(!item){this.credit=0;return}
@@ -99,7 +183,7 @@ class Board{
   if(!playing&&!tail){this.credit=0;this.status.textContent='Aguardando a explicação';return}
   const units=item.words?item.words.length-item.shown:item.steps?item.steps.length-item.shown:1;
   const remaining=Math.max(1,audio.end-audio.time);
-  const rate=item.words?Math.max(3,Math.min(6,units/remaining)):3;
+  const rate=item.words?Math.max(3,Math.min(6,units/remaining)):item.action==='estrutura'?Math.max(5,Math.min(24,units/remaining)):3;
   this.credit+=dt/1000*rate;
   if(this.credit<1)return;
   // At most two words per animation tick, including after tab suspension.
@@ -112,6 +196,26 @@ class Board{
   const total=item.words?item.words.length:item.steps?item.steps.length:1;
   if(item.shown>=total){this.items.shift();this.credit=0;if(!this.items.length)this.status.textContent='Explicação registrada'}
  }
+}
+function moleculeSvg(result,title){
+ const parsed=new DOMParser().parseFromString(result.svg,'image/svg+xml');
+ if(parsed.querySelector('parsererror'))throw Error('Falha ao desenhar a molécula');
+ const svg=document.importNode(parsed.documentElement,true);svg.setAttribute('role','img');svg.setAttribute('aria-label',title+' · '+result.format);
+ // Only accept geometry from the bundled renderer; never accept executable SVG.
+ const allowed=new Set(['svg','g','path','line','polygon','polyline','circle','ellipse','rect','text','tspan','defs','clipPath']);
+ for(const el of [...svg.querySelectorAll('*')]){
+  if(!allowed.has(el.localName)){el.remove();continue}
+  for(const attr of [...el.attributes])if(/^on/i.test(attr.name)||/href/i.test(attr.name)||/url\((?!#)/i.test(attr.value))el.removeAttribute(attr.name);
+ }
+ const geometry=[...svg.querySelectorAll('path,line,polygon,polyline,circle,ellipse,text')];
+ for(const el of geometry){const cls=el.getAttribute('class')||'';const atoms=[...cls.matchAll(/atom-(\d+)/g)].map(m=>Number(m[1])),bonds=[...cls.matchAll(/bond-(\d+)/g)].map(m=>Number(m[1]));const groups=['estrutura'];
+  for(const [name,match]of Object.entries(result.groups))if((bonds.length?bonds.some(b=>match.bonds.includes(b)):atoms.some(a=>match.atoms.includes(a))))groups.push(name);
+  el.setAttribute('data-group',groups.join(' '));el.setAttribute('data-kind',bonds.length?'bond':'atom');
+ }
+ // Reveal each bond/atom as a group; all paths of a letter appear together.
+ const chunks=new Map();for(const el of geometry){const cls=el.getAttribute('class')||'';const key=/bond-\d+/.exec(cls)?.[0]||/atom-\d+/.exec(cls)?.[0]||'other';if(!chunks.has(key))chunks.set(key,[]);chunks.get(key).push(el);el.style.opacity='0'}
+ const steps=[...chunks.values()].map(els=>({style:{set opacity(value){for(const el of els)el.style.opacity=value}}}));
+ return {svg,steps};
 }
 function drawMolecule(name){
  const m=MOLECULES[name],ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');

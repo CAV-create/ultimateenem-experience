@@ -38,3 +38,12 @@ test('unsupported structures and prototype keys are rejected',()=>{
 test('late transcription is still progressive after audio ends, even after a long tab suspension',()=>{
  const {board,audio,advance}=fixture();audio.time=15;board.transcript('A anotação chegou depois da fala mas ainda deve ser apresentada progressivamente.');board.finish();const item=board.items[0];advance(200);assert.ok(item.shown<item.words.length);advance(6000);assert.equal(item.content.textContent,item.text);
 });
+test('stoichiometry preparation is invisible, stages are repeatable, updates replace stale calculations',()=>{
+ global.VaiBemChem=require('../vai-bem-chem.js');const {board,advance}=fixture();
+ const args={action:'estequiometria',id:'calc',stage:'preparar',reactants:['CaCO3'],products:['CaO','CO2'],given:'CaCO3',target:'CO2',amount:100,givenUnit:'g',targetUnit:'g'};
+ assert.equal(board.command(args,'p').calculation.answer,44);assert.equal(board.items.length,0);
+ board.command({action:'estequiometria',id:'calc',stage:'regra_de_tres'},'r');assert.equal(board.items.length,1);board.command({action:'estequiometria',id:'calc',stage:'regra_de_tres'},'r2');assert.equal(board.items.length,1);
+ board.command({...args,stage:'resultado'},'same-inputs');assert.equal(board.container.children.length,2);
+ assert.equal(board.command({...args,amount:200},'p2').calculation.answer,88);assert.equal(board.items.length,0);assert.equal(board.container.children.length,0);
+ board.command({action:'estequiometria',id:'calc',stage:'resultado'},'result');advance(1000);assert.ok(board.items[0].shown>0);board.clear();assert.equal(board.exercises.size,0);assert.equal(board.items.length,0);
+});
