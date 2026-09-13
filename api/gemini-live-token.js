@@ -16,18 +16,13 @@ export default async function handler(req, res) {
   const expireTime = new Date(Date.now() + 20 * 60 * 1000).toISOString();
   const newSessionExpireTime = new Date(Date.now() + 5 * 60 * 1000).toISOString();
 
+  // No piloto, o token é de uso único e vida curta. As restrições finas de
+  // BidiGenerateContent serão adicionadas depois de validarmos a sessão real
+  // com o modelo Live, evitando incompatibilidades de configuração no primeiro teste.
   const body = {
     uses: 1,
     expireTime,
-    newSessionExpireTime,
-    liveConnectConstraints: {
-      model,
-      config: {
-        responseModalities: ['AUDIO'],
-        inputAudioTranscription: {},
-        outputAudioTranscription: {}
-      }
-    }
+    newSessionExpireTime
   };
 
   try {
