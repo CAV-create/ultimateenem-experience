@@ -2,35 +2,87 @@
 <html lang="pt-BR">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>ultimateENEM experience</title>
-    <meta name="description" content="Experiência premium de produtividade, questões e redação para estudantes que miram Medicina pelo ENEM." />
-    <meta name="theme-color" content="#050505" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-title" content="ultimateENEM" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
-    <meta name="msapplication-TileColor" content="#050505" />
-    <meta name="format-detection" content="telephone=no" />
-    <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="icon" type="image/png" sizes="192x192" href="./assets/icons/icon-192.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="./assets/icons/apple-touch-icon.png" />
-    <link rel="stylesheet" href="./styles.css?v=20260905-redacao-sisu-v4-recortes" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#111714" />
+    <title>CAVPRIME</title>
+    <link
+      rel="icon"
+      type="image/png"
+      href="./assets/cavprime/five-logos-20260926/portal-official-png-v2/ultimate_enem.png"
+    />
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: Arial, Helvetica, sans-serif;
+        background: #111714;
+        color: #f7f7f2;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        display: grid;
+        place-items: center;
+        background: #111714;
+      }
+
+      main {
+        width: min(360px, calc(100% - 40px));
+        text-align: center;
+      }
+
+      img {
+        display: block;
+        width: min(230px, 74vw);
+        height: auto;
+        margin: 0 auto 24px;
+      }
+
+      p {
+        margin: 0;
+        color: #d2b275;
+        font-size: 0.82rem;
+        font-weight: 800;
+        letter-spacing: 0;
+      }
+
+      a {
+        color: inherit;
+      }
+    </style>
   </head>
   <body>
-    <div id="app" class="app-root"></div>
-    <script src="./enem-data.js" defer></script>
-    <script src="./habilidades-frequencia-data.js" defer></script>
-    <script src="./enem-tri-acerto-data.js" defer></script>
-    <script src="./enem-notas-acertos-tri-data.js" defer></script>
-    <script src="./enem-intelligence-data.js" defer></script>
-    <script src="./sisu-2025-intelligence-data.js?v=20260905-redacao-sisu-v4-recortes" defer></script>
-    <script src="./sisu-simulator-core.js?v=20260905-redacao-sisu-v4-recortes" defer></script>
-    <script src="./redacao-db.js" defer></script>
-    <script src="./redacao-premium-feed-20260905.js?v=20260905-redacao-sisu-v4-recortes" defer></script>
-    <script src="./redacao-microdados-data.js" defer></script>
-    <script src="./redacao-inteligencia-stage9-data.js" defer></script>
-    <script src="./app.js?v=20260905-redacao-sisu-v4-recortes" defer></script>
-    <script src="./daily-news-bootstrap.js" defer></script>
+    <main>
+      <img
+        src="./assets/cavprime/final-20260925/07_USER_APPROVED/corrected_v8_png/cavprime_signature_hero_match.png"
+        alt="CAVPRIME"
+      />
+      <p>Preparando sua experiência.</p>
+      <noscript>
+        <p>
+          <a href="./experiments/front-gpt-hard-test/?auditReview=0#/portal">Entrar no CAVPRIME</a>
+        </p>
+      </noscript>
+    </main>
+    <script>
+      (async () => {
+        try {
+          if ("serviceWorker" in navigator) {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(registrations.map((registration) => registration.unregister()));
+          }
+          if ("caches" in window) {
+            const keys = await caches.keys();
+            await Promise.all(keys.map((key) => caches.delete(key)));
+          }
+        } finally {
+          window.location.replace("./experiments/front-gpt-hard-test/?auditReview=0#/portal");
+        }
+      })();
+    </script>
   </body>
 </html>

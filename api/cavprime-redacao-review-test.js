@@ -1,0 +1,355 @@
+import {
+  ENEM_REDACTION_PROTOCOL_VERSION,
+  buildBoardInstructions,
+  buildEvaluatorInstructions,
+  buildFinalFromPair,
+  chooseClosestPair,
+  compareEvaluations,
+  sanitizeEvaluation,
+} from "./_lib/enem-redaction-2026.mjs";
+
+export const config = { maxDuration: 60 };
+
+const MAX_ESSAY_LENGTH = 16000;
+const MAX_FILE_BYTES = 4 * 1024 * 1024;
+const ALLOWED_FILE_TYPES = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp"]);
+const EVALUATION_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["resultStatus", "humanRightsViolation", "band", "summary", "overallDiagnosis", "paragraphFeedback", "projectAlignment", "rewritePlan", "competencies"],
+  properties: {
+    resultStatus: {
+      type: "string",
+      enum: ["valid", "blank", "insufficient_text", "theme_escape", "wrong_text_type", "annulled", "unreadable", "foreign_language"],
+    },
+    humanRightsViolation: { type: "boolean" },
+    band: { type: "string" },
+    summary: { type: "string" },
+    overallDiagnosis: {
+      type: "object",
+      additionalProperties: false,
+      required: ["strongestPoint", "priority", "projectReading", "progressionPotential"],
+      properties: {
+        strongestPoint: { type: "string" },
+        priority: { type: "string" },
+        projectReading: { type: "string" },
+        progressionPotential: { type: "string" },
+      },
+    },
+    paragraphFeedback: {
+      type: "array",
+      minItems: 4,
+      maxItems: 4,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["section", "status", "diagnosis", "rewriteFocus"],
+        properties: {
+          section: { type: "string" },
+          status: { type: "string" },
+          diagnosis: { type: "string" },
+          rewriteFocus: { type: "string" },
+        },
+      },
+    },
+    projectAlignment: {
+      type: "array",
+      minItems: 5,
+      maxItems: 5,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["element", "status", "evidence"],
+        properties: {
+          element: { type: "string" },
+          status: { type: "string" },
+          evidence: { type: "string" },
+        },
+      },
+    },
+    rewritePlan: {
+      type: "array",
+      minItems: 3,
+      maxItems: 4,
+      items: { type: "string" },
+    },
+    competencies: {
+      type: "array",
+      minItems: 5,
+      maxItems: 5,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["score", "analysis", "evidence", "nextStep", "strength", "limitation", "descriptorMatch", "whyNotHigher", "rewriteExample"],
+        properties: {
+          score: { type: "integer", enum: [0, 40, 80, 120, 160, 200] },
+          analysis: { type: "string" },
+          evidence: { type: "string" },
+          nextStep: { type: "string" },
+          strength: { type: "string" },
+          limitation: { type: "string" },
+          descriptorMatch: { type: "string" },
+          whyNotHigher: { type: "string" },
+          rewriteExample: { type: "string" },
+        },
+      },
+    },
+  },
+};
+
+function readOutputText(payload) {
+  if (typeof payload?.output_text === "string" && payload.output_text.trim()) return payload.output_text.trim();
+  return (payload?.output || [])
+    .flatMap((item) => item?.content || [])
+    .filter((item) => item?.type === "output_text" && typeof item?.text === "string")
+    .map((item) => item.text.trim())
+    .filter(Boolean)
+    .join("\n")
+    .trim();
+}
+
+function parseJson(text) {
+  return JSON.parse(String(text || "")
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/, "")
+    .trim());
+}
+
+function safeText(value, max = 1000) {
+  return String(value || "").trim().slice(0, max);
+}
+
+function normalizeManuscript(value) {
+  if (!value || typeof value !== "object") return null;
+  const fileName = safeText(value.fileName || "redacao", 180);
+  const mimeType = safeText(value.mimeType, 80).toLowerCase();
+  const dataUrl = String(value.dataUrl || "");
+  if (!ALLOWED_FILE_TYPES.has(mimeType)) throw new Error("unsupported_manuscript");
+  const match = dataUrl.match(/^data:([^;,]+);base64,([A-Za-z0-9+/=]+)$/);
+  if (!match || match[1].toLowerCase() !== mimeType) throw new Error("invalid_manuscript");
+  const size = Buffer.byteLength(Buffer.from(match[2], "base64"));
+  if (!size || size > MAX_FILE_BYTES) throw new Error("manuscript_too_large");
+  return { fileName, mimeType, dataUrl };
+}
+
+function buildEssayInput(theme, essay, project, previousEvaluations = null) {
+  const input = {
+    theme,
+    project: {
+      problem: safeText(project.problem, 1200),
+      affected: safeText(project.affected, 800),
+      causes: safeText(project.causes, 1200),
+      thesis: safeText(project.thesis, 1200),
+      axis1: safeText(project.axis1, 1200),
+      axis2: safeText(project.axis2, 1200),
+      repertory: safeText(project.repertory, 1200),
+    },
+    essay: essay || "Redação manuscrita anexada ao pedido de correção.",
+  };
+  if (previousEvaluations) input.previousEvaluations = previousEvaluations;
+  return input;
+}
+
+function buildContent(input, manuscript) {
+  const content = [{ type: "input_text", text: JSON.stringify(input) }];
+  if (!manuscript) return content;
+  if (manuscript.mimeType === "application/pdf") {
+    content.push({ type: "input_file", filename: manuscript.fileName, file_data: manuscript.dataUrl });
+  } else {
+    content.push({ type: "input_image", image_url: manuscript.dataUrl, detail: "high" });
+  }
+  return content;
+}
+
+async function requestEvaluation({ apiKey, model, instructions, input, manuscript, timeout = 60000 }) {
+  const response = await fetch("https://api.openai.com/v1/responses", {
+    method: "POST",
+    signal: AbortSignal.timeout(timeout),
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
+      instructions,
+      input: [{ role: "user", content: buildContent(input, manuscript) }],
+      max_output_tokens: 6500,
+      store: false,
+      text: {
+        format: {
+          type: "json_schema",
+          name: "cavprime_enem_redaction_evaluation",
+          strict: true,
+          schema: EVALUATION_SCHEMA,
+        },
+      },
+    }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  const outputText = readOutputText(payload);
+  if (!response.ok || !outputText) {
+    const error = new Error("review_response_failed");
+    error.upstream = {
+      status: response.status,
+      code: payload?.error?.code || "",
+      type: payload?.error?.type || "",
+    };
+    throw error;
+  }
+  return parseJson(outputText);
+}
+
+function publicEvaluator(evaluation) {
+  return {
+    id: evaluation.evaluatorId,
+    total: evaluation.total,
+    resultStatus: evaluation.resultStatus,
+    competencies: evaluation.competencies.map((item) => ({ code: item.code, score: item.score })),
+  };
+}
+
+function publicDiscrepancy(comparison) {
+  return {
+    detected: comparison.detected,
+    totalDifference: comparison.totalDifference,
+    competencyDifferences: comparison.competencyDifferences,
+    situationDivergence: comparison.situationDivergence,
+    reasons: comparison.reasons,
+  };
+}
+
+export default async function handler(req, res) {
+  res.setHeader("Cache-Control", "no-store, max-age=0");
+  const apiKey = process.env.OPENAI_API_KEY;
+  const model = process.env.OPENAI_REDACTION_MODEL || process.env.OPENAI_MODEL;
+  if (req.method === "GET") {
+    const missing = [];
+    if (!apiKey) missing.push("OPENAI_API_KEY");
+    if (!model) missing.push("OPENAI_REDACTION_MODEL_OR_OPENAI_MODEL");
+    return res.status(200).json({
+      configured: missing.length === 0,
+      missing,
+      protocolVersion: ENEM_REDACTION_PROTOCOL_VERSION,
+    });
+  }
+  if (req.method !== "POST") {
+    res.setHeader("Allow", "GET, POST");
+    return res.status(405).json({ error: "method_not_allowed" });
+  }
+
+  if (!apiKey || !model) {
+    return res.status(503).json({
+      error: "review_not_configured",
+      message: "A banca inteligente ainda não está configurada neste ambiente.",
+    });
+  }
+
+  const theme = safeText(req.body?.theme, 500);
+  const essay = safeText(req.body?.essay, MAX_ESSAY_LENGTH);
+  const project = req.body?.project && typeof req.body.project === "object" ? req.body.project : {};
+  let manuscript = null;
+  try {
+    manuscript = normalizeManuscript(req.body?.manuscript);
+  } catch (error) {
+    return res.status(400).json({ error: error?.message || "invalid_manuscript" });
+  }
+  if (!theme || (!manuscript && essay.split(/\s+/).filter(Boolean).length < 80)) {
+    return res.status(400).json({ error: "essay_too_short" });
+  }
+
+  const baseInput = buildEssayInput(theme, essay, project);
+
+  try {
+    const [rawA, rawB] = await Promise.all([
+      requestEvaluation({ apiKey, model, instructions: buildEvaluatorInstructions("1"), input: baseInput, manuscript }),
+      requestEvaluation({ apiKey, model, instructions: buildEvaluatorInstructions("2"), input: baseInput, manuscript }),
+    ]);
+    const evaluatorA = sanitizeEvaluation(rawA, "1");
+    const evaluatorB = sanitizeEvaluation(rawB, "2");
+    const initialComparison = compareEvaluations(evaluatorA, evaluatorB);
+    const evaluators = [evaluatorA, evaluatorB];
+    let finalReview;
+    let resolution = "mean_two";
+    let selectedEvaluators = ["1", "2"];
+    let boardUsed = false;
+
+    if (!initialComparison.detected) {
+      finalReview = buildFinalFromPair(evaluatorA, evaluatorB);
+    } else {
+      const rawC = await requestEvaluation({
+        apiKey,
+        model,
+        instructions: buildEvaluatorInstructions("3"),
+        input: baseInput,
+        manuscript,
+      });
+      const evaluatorC = sanitizeEvaluation(rawC, "3");
+      evaluators.push(evaluatorC);
+      const closestPair = chooseClosestPair(evaluators);
+      if (closestPair) {
+        finalReview = buildFinalFromPair(...closestPair.evaluations);
+        selectedEvaluators = closestPair.evaluations.map((item) => item.evaluatorId);
+        resolution = "third_evaluator_closest_pair";
+      } else {
+        const boardInput = buildEssayInput(theme, essay, project, evaluators.map((evaluation) => ({
+          evaluator: evaluation.evaluatorId,
+          resultStatus: evaluation.resultStatus,
+          total: evaluation.total,
+          summary: evaluation.summary,
+          competencies: evaluation.competencies,
+        })));
+        const rawBoard = await requestEvaluation({
+          apiKey,
+          model,
+          instructions: buildBoardInstructions(),
+          input: boardInput,
+          manuscript,
+          timeout: 75000,
+        });
+        const board = sanitizeEvaluation(rawBoard, "Banca");
+        evaluators.push(board);
+        finalReview = {
+          total: board.total,
+          band: board.band,
+          summary: board.summary,
+          overallDiagnosis: board.overallDiagnosis,
+          paragraphFeedback: board.paragraphFeedback,
+          projectAlignment: board.projectAlignment,
+          rewritePlan: board.rewritePlan,
+          competencies: board.competencies,
+          selectedEvaluators: ["Banca"],
+        };
+        selectedEvaluators = ["Banca"];
+        resolution = "review_board";
+        boardUsed = true;
+      }
+    }
+
+    return res.status(200).json({
+      review: {
+        ...finalReview,
+        protocolVersion: ENEM_REDACTION_PROTOCOL_VERSION,
+        correctionProcess: {
+          initialReaders: 2,
+          evaluators: evaluators.map(publicEvaluator),
+          discrepancy: publicDiscrepancy(initialComparison),
+          resolution,
+          selectedEvaluators,
+          thirdEvaluatorUsed: evaluators.some((item) => item.evaluatorId === "3"),
+          boardUsed,
+        },
+      },
+      mode: "online",
+    });
+  } catch (error) {
+    console.error("CAVPRIME_REDACTION_REVIEW_TEST_FAILED", {
+      name: error?.name || "Error",
+      message: error?.message || "",
+      upstream: error?.upstream || null,
+    });
+    return res.status(error?.message === "review_response_failed" ? 502 : 504).json({
+      error: error?.message === "review_response_failed" ? "review_response_failed" : "review_timeout",
+      message: "A banca não concluiu todas as leituras necessárias. Nenhuma nota foi registrada.",
+    });
+  }
+}

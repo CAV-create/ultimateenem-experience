@@ -1,0 +1,30 @@
+{
+  "package": "ULTIMATE E PISM CORRIGIDA",
+  "source_reference": "00_REFERENCIA/prancha_aprovada_ultimate_medpism.png",
+  "assets": {
+    "ultimate_enem": {
+      "master_png": "01_ULTIMATE_ENEM/ultimate_enem_master.png",
+      "desktop_webp": "01_ULTIMATE_ENEM/ultimate_enem_desktop.webp",
+      "desktop_jpg": "01_ULTIMATE_ENEM/ultimate_enem_desktop.jpg",
+      "mobile_webp": "01_ULTIMATE_ENEM/ultimate_enem_mobile.webp",
+      "card_webp": "01_ULTIMATE_ENEM/ultimate_enem_card_4x5.webp",
+      "card_png": "01_ULTIMATE_ENEM/ultimate_enem_card_4x5.png",
+      "slogan": "KNOWLEDGE TRANSFORMS. GREATER FUTURES."
+    },
+    "medpism": {
+      "master_png": "02_MEDPISM/medpism_master.png",
+      "desktop_webp": "02_MEDPISM/medpism_desktop.webp",
+      "desktop_jpg": "02_MEDPISM/medpism_desktop.jpg",
+      "mobile_webp": "02_MEDPISM/medpism_mobile.webp",
+      "card_webp": "02_MEDPISM/medpism_card_4x5.webp",
+      "card_png": "02_MEDPISM/medpism_card_4x5.png",
+      "slogan": "DISCIPLINE TODAY. EXCELLENT DOCTORS TOMORROW.",
+      "critical_rule": "UF left of central staff; JF right of central staff; snake must not obscure letters."
+    }
+  },
+  "rendering": {
+    "object_fit": "contain",
+    "object_position": "center",
+    "overflow": "visible"
+  }
+}

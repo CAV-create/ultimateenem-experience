@@ -1,0 +1,29 @@
+# Development and internal audit material
+.git/
+.github/
+.env*
+docs/
+tools/
+tmp/
+outputs/
+_ingest/
+**/__pycache__/
+**/*.pyc
+
+# Source-only references; runtime uses the approved app assets
+assets/question-crops/
+assets/cavprime/**/source/
+assets/cavprime/**/README*.md
+assets/cavprime/docs/
+experiments/**/README*.md
+experiments/**/DESIGN_QA.md
+experiments/front-gpt-auditoria/
+experiments/front-gpt-hard-test/reference-original.html
+
+# Local review surfaces and build notes
+auditoria-textuais-*
+teste-*
+design-qa.md
+COMO_INSTALAR_IOS_WINDOWS.md
+REGRA_FIXA_*.md
+README.md

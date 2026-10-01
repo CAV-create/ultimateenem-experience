@@ -1,19 +1,11 @@
 (() => {
   const feed = {
   "meta": {
-    "version": "20260905-redacao-premium-feed",
+    "version": "20260906-redacao-premium-feed-v2",
     "generatedAt": "2026-09-05",
     "project": "Ultimate ENEM CAV",
-    "sourceFolders": [
-      {
-        "label": "Bonus_Redacao_Plano_Estudo_Enem",
-        "url": "https://www.dropbox.com/scl/fo/ioz2sx5ctiz8vz5ppa5nf/AB9i5bHYSoDYXnMt1g1qb5Y?rlkey=vsycqjrar6ex70lwchdsoq881&dl=0"
-      },
-      {
-        "label": "REFEITOS ULTIMATEENEM",
-        "url": "https://www.dropbox.com/scl/fo/yavh4d2al9qiui2j4d3g2/AEh8UYztJZRfQIrBwlDGHLw?rlkey=1ebl6lmsnp6d1hcce4xzj0akz&dl=0"
-      }
-    ],
+    "sourceFolders": [],
+    "sourcePolicy": "Referências processadas internamente; nenhuma origem externa é exposta ao aluno.",
     "souFederalMigratedLayer": [
       "triagem de nota zero",
       "pontuação independente C1-C5",
@@ -5362,6 +5354,66 @@
       "howToUse": "Use como consulta orientada: escolha um repertório, explique o mecanismo social e conecte à tese.",
       "examinerCare": "Evite decorar trechos. O ENEM premia repertório legitimado, pertinente e produtivo.",
       "closingPair": "Feche com política pública executável, agente claro e finalidade ligada ao problema."
+    },
+    {
+      "id": "cav-20260906-trilha-oito-pecas-projeto-de-texto",
+      "title": "Trilha estratégica: oito peças antes da primeira linha",
+      "type": "Roteiro de planejamento CAV",
+      "sourceLabel": "Trilha Estratégica de Redação CAV",
+      "availability": "PDF completo no app (16 páginas)",
+      "links": [
+        {
+          "label": "Abrir PDF",
+          "url": "./assets/redacao/pdfs/20260905/bonus/trilha-estrategica-10-projetos-redacao-enem.pdf"
+        }
+      ],
+      "themes": [
+        "educação",
+        "saúde pública",
+        "saúde mental",
+        "tecnologia e cidadania",
+        "desigualdade territorial",
+        "direitos humanos"
+      ],
+      "readingFocus": "Antes de escrever, transformar a proposta em problema social específico, grupo afetado, direito em jogo, duas causas, consequência, repertório funcional e intervenção.",
+      "essentialPoints": [
+        "O planejamento deve nascer antes da frase bonita: problema, causa, repertório, consequência e intervenção precisam se encaixar.",
+        "A saída mínima é tese com duas causas, D1 com repertório funcional, D2 sem repetir o D1 e intervenção ligada ao eixo escolhido.",
+        "Perguntas curtas reduzem tangenciamento e impedem que o aluno use repertório apenas decorativo."
+      ],
+      "howToUse": "Use como estudo do caso clínico: responda às oito perguntas em palavras-chave antes de escrever a introdução.",
+      "examinerCare": "Se uma resposta não aponta tema, tese, causa ou intervenção, ela ainda não está pronta para virar parágrafo.",
+      "closingPair": "Feche o planejamento com agente, ação, meio, finalidade e detalhamento conectados ao problema."
+    },
+    {
+      "id": "cav-20260906-apostila-teste-repertorio-produtivo",
+      "title": "Teste rápido de repertório produtivo",
+      "type": "Critério de curadoria CAV",
+      "sourceLabel": "Apostila de Repertórios Produtivos CAV",
+      "availability": "PDF completo no app (33 páginas)",
+      "links": [
+        {
+          "label": "Abrir PDF",
+          "url": "./assets/redacao/pdfs/20260905/bonus/bonus-extra-apostila-redacao-enem-repertorios-produtivos.pdf"
+        }
+      ],
+      "themes": [
+        "cidadania",
+        "direitos humanos",
+        "educação",
+        "meio ambiente",
+        "cultura e identidade",
+        "tecnologia e cidadania"
+      ],
+      "readingFocus": "O repertório só permanece se acrescentar critério, causa, mecanismo social, exemplo verificável ou contraste histórico ao argumento.",
+      "essentialPoints": [
+        "Retire o repertório do parágrafo: se a defesa da tese continuar igual, ele estava decorativo.",
+        "Estude dois ou três repertórios por eixo e treine conexões causais, em vez de memorizar a apostila inteira.",
+        "Organize repertórios por direito violado, grupo afetado, mecanismo do problema e política pública possível."
+      ],
+      "howToUse": "Use como filtro interno: selecione apenas repertórios que provem uma causa ou iluminem a intervenção.",
+      "examinerCare": "Repertório legitimado precisa ser pertinente e produtivo; citação decorativa não sustenta nota alta.",
+      "closingPair": "Transforme lei, dado, autor ou obra em prova do argumento e não em enfeite de introdução."
     }
   ],
   "rubricAlerts": [
@@ -5456,7 +5508,6 @@
     {
       "title": "Projeto de Redação Barreiras Autonomia Pessoas Deficiência Física",
       "kind": "Projeto de redação CAV",
-      "source_path": "_ingest/dropbox-redacao-20260905/bonus_ditto/01_Projetos_de_Redacao/01_Projeto_Redacao_Barreiras_Autonomia_Pessoas_Deficiencia_Fisica.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/projetos/projeto-de-redacao-barreiras-autonomia-pessoas-deficiencia-fisica.pdf",
       "pages": 48,
       "themes": [
@@ -5470,7 +5521,6 @@
     {
       "title": "Projeto de Redação Invisibilidade Mães Solo Vulnerabilidade",
       "kind": "Projeto de redação CAV",
-      "source_path": "_ingest/dropbox-redacao-20260905/bonus_ditto/01_Projetos_de_Redacao/02_Projeto_Redacao_Invisibilidade_Maes_Solo_Vulnerabilidade.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/projetos/projeto-de-redacao-invisibilidade-maes-solo-vulnerabilidade.pdf",
       "pages": 49,
       "themes": [
@@ -5484,7 +5534,6 @@
     {
       "title": "Projeto de Redação Entraves Reinserção Profissional Egressos Sistema Prisional",
       "kind": "Projeto de redação CAV",
-      "source_path": "_ingest/dropbox-redacao-20260905/bonus_ditto/01_Projetos_de_Redacao/03_Projeto_Redacao_Entraves_Reinsercao_Profissional_Egressos_Sistema_Prisional.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/projetos/projeto-de-redacao-entraves-reinsercao-profissional-egressos-sistema-prisional.pdf",
       "pages": 49,
       "themes": [
@@ -5498,7 +5547,6 @@
     {
       "title": "Projeto de Redação Perspectivas Inclusão Pessoas Autistas Mercado Trabalho Brasileiro",
       "kind": "Projeto de redação CAV",
-      "source_path": "_ingest/dropbox-redacao-20260905/bonus_ditto/01_Projetos_de_Redacao/04_Projeto_Redacao_Perspectivas_Inclusao_Pessoas_Autistas_Mercado_Trabalho_Brasileiro.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/projetos/projeto-de-redacao-perspectivas-inclusao-pessoas-autistas-mercado-trabalho-brasileiro.pdf",
       "pages": 49,
       "themes": [
@@ -5512,7 +5560,6 @@
     {
       "title": "Projeto de Redação Obstáculos Mobilidade Autônoma Deficiência Visual Cidades Brasileiras",
       "kind": "Projeto de redação CAV",
-      "source_path": "_ingest/dropbox-redacao-20260905/bonus_ditto/01_Projetos_de_Redacao/05_Projeto_Redacao_Obstaculos_Mobilidade_Autonoma_Deficiencia_Visual_Cidades_Brasileiras.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/projetos/projeto-de-redacao-obstaculos-mobilidade-autonoma-deficiencia-visual-cidades-brasileiras.pdf",
       "pages": 49,
       "themes": [
@@ -5526,7 +5573,6 @@
     {
       "title": "Projeto de Redação Valorização Trabalho Doméstico Remunerado",
       "kind": "Projeto de redação CAV",
-      "source_path": "_ingest/dropbox-redacao-20260905/bonus_ditto/01_Projetos_de_Redacao/06_Projeto_Redacao_Valorizacao_Trabalho_Domestico_Remunerado.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/projetos/projeto-de-redacao-valorizacao-trabalho-domestico-remunerado.pdf",
       "pages": 49,
       "themes": [
@@ -5540,7 +5586,6 @@
     {
       "title": "Projeto de Redação Proteção População LGBTQIA Espaços Públicos 2026",
       "kind": "Projeto de redação CAV",
-      "source_path": "_ingest/dropbox-redacao-20260905/bonus_ditto/01_Projetos_de_Redacao/07_Projeto_Redacao_Protecao_Populacao_LGBTQIA_Espacos_Publicos_2026.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/projetos/projeto-de-redacao-protecao-populacao-lgbtqia-espacos-publicos-2026.pdf",
       "pages": 43,
       "themes": [
@@ -5554,7 +5599,6 @@
     {
       "title": "Projeto de Redação Entraves Moradia Digna Ocupações Urbanas 2026",
       "kind": "Projeto de redação CAV",
-      "source_path": "_ingest/dropbox-redacao-20260905/bonus_ditto/01_Projetos_de_Redacao/08_Projeto_Redacao_Entraves_Moradia_Digna_Ocupacoes_Urbanas_2026.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/projetos/projeto-de-redacao-entraves-moradia-digna-ocupacoes-urbanas-2026.pdf",
       "pages": 38,
       "themes": [
@@ -5568,7 +5612,6 @@
     {
       "title": "Projeto de Redação Proteção Direitos Entregadores Aplicativo 2026",
       "kind": "Projeto de redação CAV",
-      "source_path": "_ingest/dropbox-redacao-20260905/bonus_ditto/01_Projetos_de_Redacao/09_Projeto_Redacao_Protecao_Direitos_Entregadores_Aplicativo_2026.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/projetos/projeto-de-redacao-protecao-direitos-entregadores-aplicativo-2026.pdf",
       "pages": 43,
       "themes": [
@@ -5582,7 +5625,6 @@
     {
       "title": "Projeto de Redação Barreiras Acesso Educação Ribeirinha",
       "kind": "Projeto de redação CAV",
-      "source_path": "_ingest/dropbox-redacao-20260905/bonus_ditto/01_Projetos_de_Redacao/10_Projeto_Redacao_Barreiras_Acesso_Educacao_Ribeirinha.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/projetos/projeto-de-redacao-barreiras-acesso-educacao-ribeirinha.pdf",
       "pages": 24,
       "themes": [
@@ -5596,7 +5638,6 @@
     {
       "title": "Infográfico Barreiras Autonomia Pessoas Deficiência Física",
       "kind": "Infográfico de repertório",
-      "source_path": "_ingest/dropbox-redacao-20260905/bonus_ditto/02_Infograficos/01_Infografico_Barreiras_Autonomia_Pessoas_Deficiencia_Fisica.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/infograficos/infografico-barreiras-autonomia-pessoas-deficiencia-fisica.pdf",
       "pages": 10,
       "themes": [
@@ -5609,7 +5650,6 @@
     {
       "title": "Infográfico Invisibilidade Mães Solo Vulnerabilidade",
       "kind": "Infográfico de repertório",
-      "source_path": "_ingest/dropbox-redacao-20260905/bonus_ditto/02_Infograficos/02_Infografico_Invisibilidade_Maes_Solo_Vulnerabilidade.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/infograficos/infografico-invisibilidade-maes-solo-vulnerabilidade.pdf",
       "pages": 10,
       "themes": [
@@ -5620,7 +5660,6 @@
     {
       "title": "Infográfico Entraves Reinserção Profissional Egressos Sistema Prisional",
       "kind": "Infográfico de repertório",
-      "source_path": "_ingest/dropbox-redacao-20260905/bonus_ditto/02_Infograficos/03_Infografico_Entraves_Reinsercao_Profissional_Egressos_Sistema_Prisional.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/infograficos/infografico-entraves-reinsercao-profissional-egressos-sistema-prisional.pdf",
       "pages": 10,
       "themes": [
@@ -5631,7 +5670,6 @@
     {
       "title": "Infográfico Perspectivas Inclusão Pessoas Autistas Mercado Trabalho Brasileiro",
       "kind": "Infográfico de repertório",
-      "source_path": "_ingest/dropbox-redacao-20260905/bonus_ditto/02_Infograficos/04_Infografico_Perspectivas_Inclusao_Pessoas_Autistas_Mercado_Trabalho_Brasileiro.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/infograficos/infografico-perspectivas-inclusao-pessoas-autistas-mercado-trabalho-brasileiro.pdf",
       "pages": 10,
       "themes": [
@@ -5643,7 +5681,6 @@
     {
       "title": "Infográfico Obstáculos Mobilidade Autônoma Deficiência Visual Cidades Brasileiras",
       "kind": "Infográfico de repertório",
-      "source_path": "_ingest/dropbox-redacao-20260905/bonus_ditto/02_Infograficos/05_Infografico_Obstaculos_Mobilidade_Autonoma_Deficiencia_Visual_Cidades_Brasileiras.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/infograficos/infografico-obstaculos-mobilidade-autonoma-deficiencia-visual-cidades-brasileiras.pdf",
       "pages": 10,
       "themes": [
@@ -5655,7 +5692,6 @@
     {
       "title": "Infográfico Valorização Trabalho Doméstico Remunerado",
       "kind": "Infográfico de repertório",
-      "source_path": "_ingest/dropbox-redacao-20260905/bonus_ditto/02_Infograficos/06_Infografico_Valorizacao_Trabalho_Domestico_Remunerado.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/infograficos/infografico-valorizacao-trabalho-domestico-remunerado.pdf",
       "pages": 10,
       "themes": [
@@ -5667,7 +5703,6 @@
     {
       "title": "Infográfico Proteção População LGBTQIA Espaços Públicos 2026",
       "kind": "Infográfico de repertório",
-      "source_path": "_ingest/dropbox-redacao-20260905/bonus_ditto/02_Infograficos/07_Infografico_Protecao_Populacao_LGBTQIA_Espacos_Publicos_2026.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/infograficos/infografico-protecao-populacao-lgbtqia-espacos-publicos-2026.pdf",
       "pages": 10,
       "themes": [
@@ -5679,7 +5714,6 @@
     {
       "title": "Infográfico Entraves Moradia Digna Ocupações Urbanas 2026",
       "kind": "Infográfico de repertório",
-      "source_path": "_ingest/dropbox-redacao-20260905/bonus_ditto/02_Infograficos/08_Infografico_Entraves_Moradia_Digna_Ocupacoes_Urbanas_2026.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/infograficos/infografico-entraves-moradia-digna-ocupacoes-urbanas-2026.pdf",
       "pages": 10,
       "themes": [
@@ -5690,7 +5724,6 @@
     {
       "title": "Infográfico Proteção Direitos Entregadores Aplicativo 2026",
       "kind": "Infográfico de repertório",
-      "source_path": "_ingest/dropbox-redacao-20260905/bonus_ditto/02_Infograficos/09_Infografico_Protecao_Direitos_Entregadores_Aplicativo_2026.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/infograficos/infografico-protecao-direitos-entregadores-aplicativo-2026.pdf",
       "pages": 10,
       "themes": [
@@ -5702,7 +5735,6 @@
     {
       "title": "Infográfico Barreiras Acesso Educação Ribeirinha",
       "kind": "Infográfico de repertório",
-      "source_path": "_ingest/dropbox-redacao-20260905/bonus_ditto/02_Infograficos/10_Infografico_Barreiras_Acesso_Educacao_Ribeirinha.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/infograficos/infografico-barreiras-acesso-educacao-ribeirinha.pdf",
       "pages": 10,
       "themes": [
@@ -5714,7 +5746,6 @@
     {
       "title": "#Reta final enem 2027",
       "kind": "Bônus estratégico de redação",
-      "source_path": "_ingest/dropbox-redacao-20260905/bonus_ditto/03_Bonus_Extras/#Reta_final_enem_2027_.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/bonus/reta-final-enem-2027.pdf",
       "pages": 24,
       "themes": [
@@ -5728,7 +5759,6 @@
     {
       "title": "Texto Motivador Simulado 01 05 09",
       "kind": "Bônus estratégico de redação",
-      "source_path": "_ingest/dropbox-redacao-20260905/bonus_ditto/03_Bonus_Extras/01_ Texto_Motivador_Simulado_01_05-09.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/bonus/texto-motivador-simulado-01-05-09.pdf",
       "pages": 2,
       "themes": [
@@ -5742,7 +5772,6 @@
     {
       "title": "Bônus Extra Apostila Redação ENEM Repertorios Produtivos",
       "kind": "Bônus estratégico de redação",
-      "source_path": "_ingest/dropbox-redacao-20260905/bonus_ditto/03_Bonus_Extras/01_Bonus_Extra_Apostila_Redacao_ENEM_Repertorios_Produtivos.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/bonus/bonus-extra-apostila-redacao-enem-repertorios-produtivos.pdf",
       "pages": 33,
       "themes": [
@@ -5756,7 +5785,6 @@
     {
       "title": "Trilha estrategica 10 projetos redacao enem",
       "kind": "Bônus estratégico de redação",
-      "source_path": "_ingest/dropbox-redacao-20260905/bonus_ditto/03_Bonus_Extras/02_Trilha_estrategica_10_projetos_redacao_enem.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/bonus/trilha-estrategica-10-projetos-redacao-enem.pdf",
       "pages": 16,
       "themes": [
@@ -5770,7 +5798,6 @@
     {
       "title": "Bônus Extra Top 40 Temas Autorais",
       "kind": "Bônus estratégico de redação",
-      "source_path": "_ingest/dropbox-redacao-20260905/bonus_ditto/03_Bonus_Extras/03_Bonus_Extra_Top_40_Temas_Autorais.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/bonus/bonus-extra-top-40-temas-autorais.pdf",
       "pages": 13,
       "themes": [
@@ -5784,7 +5811,6 @@
     {
       "title": "Bônus Extra Mapa Tematico Redação ENEM 15 25",
       "kind": "Bônus estratégico de redação",
-      "source_path": "_ingest/dropbox-redacao-20260905/bonus_ditto/03_Bonus_Extras/04_Bonus_Extra_Mapa_Tematico_Redacao_ENEM_15_25.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/bonus/bonus-extra-mapa-tematico-redacao-enem-15-25.pdf",
       "pages": 9,
       "themes": [
@@ -5798,7 +5824,6 @@
     {
       "title": "Tema 01 - Ditadura Democracia - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 01 - Ditadura Democracia/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-01-ditadura-democracia-modelo-1.pdf",
       "pages": 11,
       "themes": [
@@ -5812,7 +5837,6 @@
     {
       "title": "Tema 01 - Ditadura Democracia - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 01 - Ditadura Democracia/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-01-ditadura-democracia-modelo-2.pdf",
       "pages": 16,
       "themes": [
@@ -5826,7 +5850,6 @@
     {
       "title": "Tema 02 - Jovens Negros Periféricos - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 02 - Jovens Negros Perifericos/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-02-jovens-negros-perifericos-modelo-1.pdf",
       "pages": 11,
       "themes": [
@@ -5840,7 +5863,6 @@
     {
       "title": "Tema 02 - Jovens Negros Periféricos - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 02 - Jovens Negros Perifericos/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-02-jovens-negros-perifericos-modelo-2.pdf",
       "pages": 17,
       "themes": [
@@ -5854,7 +5876,6 @@
     {
       "title": "Tema 03 - Exploração Sexual Crianças Adolescentes - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 03 - Exploracao Sexual Criancas Adolescentes/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-03-exploracao-sexual-criancas-adolescentes-modelo-1.pdf",
       "pages": 11,
       "themes": [
@@ -5868,7 +5889,6 @@
     {
       "title": "Tema 03 - Exploração Sexual Crianças Adolescentes - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 03 - Exploracao Sexual Criancas Adolescentes/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-03-exploracao-sexual-criancas-adolescentes-modelo-2.pdf",
       "pages": 17,
       "themes": [
@@ -5882,7 +5902,6 @@
     {
       "title": "Tema 04 - Inclusão Digital Populações Marginalizadas - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 04 - Inclusao Digital Populacoes Marginalizadas/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-04-inclusao-digital-populacoes-marginalizadas-modelo-1.pdf",
       "pages": 10,
       "themes": [
@@ -5896,7 +5915,6 @@
     {
       "title": "Tema 04 - Inclusão Digital Populações Marginalizadas - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 04 - Inclusao Digital Populacoes Marginalizadas/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-04-inclusao-digital-populacoes-marginalizadas-modelo-2.pdf",
       "pages": 17,
       "themes": [
@@ -5910,7 +5928,6 @@
     {
       "title": "Tema 05 - Acesso Justiça Equidade - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 05 - Acesso Justica Equidade/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-05-acesso-justica-equidade-modelo-1.pdf",
       "pages": 11,
       "themes": [
@@ -5924,7 +5941,6 @@
     {
       "title": "Tema 05 - Acesso Justiça Equidade - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 05 - Acesso Justica Equidade/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-05-acesso-justica-equidade-modelo-2.pdf",
       "pages": 16,
       "themes": [
@@ -5938,7 +5954,6 @@
     {
       "title": "Tema 06 - Lei Menino Bernardo - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 06 - Lei Menino Bernardo/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-06-lei-menino-bernardo-modelo-1.pdf",
       "pages": 11,
       "themes": [
@@ -5952,7 +5967,6 @@
     {
       "title": "Tema 06 - Lei Menino Bernardo - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 06 - Lei Menino Bernardo/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-06-lei-menino-bernardo-modelo-2.pdf",
       "pages": 17,
       "themes": [
@@ -5966,7 +5980,6 @@
     {
       "title": "Tema 07 - Doação Órgãos Recusa Familiar - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 07 - Doacao Orgaos Recusa Familiar/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-07-doacao-orgaos-recusa-familiar-modelo-1.pdf",
       "pages": 11,
       "themes": [
@@ -5980,7 +5993,6 @@
     {
       "title": "Tema 07 - Doação Órgãos Recusa Familiar - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 07 - Doacao Orgaos Recusa Familiar/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-07-doacao-orgaos-recusa-familiar-modelo-2.pdf",
       "pages": 17,
       "themes": [
@@ -5994,7 +6006,6 @@
     {
       "title": "Tema 08 - Sistema Penitenciário Ressocialização - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 08 - Sistema Penitenciario Ressocializacao/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-08-sistema-penitenciario-ressocializacao-modelo-1.pdf",
       "pages": 11,
       "themes": [
@@ -6008,7 +6019,6 @@
     {
       "title": "Tema 08 - Sistema Penitenciário Ressocialização - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 08 - Sistema Penitenciario Ressocializacao/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-08-sistema-penitenciario-ressocializacao-modelo-2.pdf",
       "pages": 17,
       "themes": [
@@ -6022,7 +6032,6 @@
     {
       "title": "Tema 09 - Privacidade Segurança Era Digital - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 09 - Privacidade Seguranca Era Digital/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-09-privacidade-seguranca-era-digital-modelo-1.pdf",
       "pages": 10,
       "themes": [
@@ -6036,7 +6045,6 @@
     {
       "title": "Tema 09 - Privacidade Segurança Era Digital - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 09 - Privacidade Seguranca Era Digital/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-09-privacidade-seguranca-era-digital-modelo-2.pdf",
       "pages": 17,
       "themes": [
@@ -6050,7 +6058,6 @@
     {
       "title": "Tema 10 - Publicidade Jogos Azar Influenciadores - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 10 - Publicidade Jogos Azar Influenciadores/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-10-publicidade-jogos-azar-influenciadores-modelo-1.pdf",
       "pages": 10,
       "themes": [
@@ -6064,7 +6071,6 @@
     {
       "title": "Tema 10 - Publicidade Jogos Azar Influenciadores - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 10 - Publicidade Jogos Azar Influenciadores/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-10-publicidade-jogos-azar-influenciadores-modelo-2.pdf",
       "pages": 17,
       "themes": [
@@ -6078,7 +6084,6 @@
     {
       "title": "Tema 11 - Novas Escalas Trabalho - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 11 - Novas Escalas Trabalho/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-11-novas-escalas-trabalho-modelo-1.pdf",
       "pages": 11,
       "themes": [
@@ -6092,7 +6097,6 @@
     {
       "title": "Tema 11 - Novas Escalas Trabalho - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 11 - Novas Escalas Trabalho/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-11-novas-escalas-trabalho-modelo-2.pdf",
       "pages": 16,
       "themes": [
@@ -6106,7 +6110,6 @@
     {
       "title": "Tema 12 - Vida Trânsito - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 12 - Vida Transito/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-12-vida-transito-modelo-1.pdf",
       "pages": 11,
       "themes": [
@@ -6120,7 +6123,6 @@
     {
       "title": "Tema 12 - Vida Trânsito - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 12 - Vida Transito/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-12-vida-transito-modelo-2.pdf",
       "pages": 16,
       "themes": [
@@ -6134,7 +6136,6 @@
     {
       "title": "Tema 13 - Urbanização Desordenada Periferias - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 13 - Urbanizacao Desordenada Periferias/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-13-urbanizacao-desordenada-periferias-modelo-1.pdf",
       "pages": 11,
       "themes": [
@@ -6148,7 +6149,6 @@
     {
       "title": "Tema 13 - Urbanização Desordenada Periferias - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 13 - Urbanizacao Desordenada Periferias/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-13-urbanizacao-desordenada-periferias-modelo-2.pdf",
       "pages": 16,
       "themes": [
@@ -6162,7 +6162,6 @@
     {
       "title": "Tema 14 - Juventude Futuro Sustentável - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 14 - Juventude Futuro Sustentavel/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-14-juventude-futuro-sustentavel-modelo-1.pdf",
       "pages": 11,
       "themes": [
@@ -6176,7 +6175,6 @@
     {
       "title": "Tema 14 - Juventude Futuro Sustentável - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 14 - Juventude Futuro Sustentavel/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-14-juventude-futuro-sustentavel-modelo-2.pdf",
       "pages": 16,
       "themes": [
@@ -6190,7 +6188,6 @@
     {
       "title": "Tema 15 - Gêneros Musicais Periféricos - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 15 - Generos Musicais Perifericos/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-15-generos-musicais-perifericos-modelo-1.pdf",
       "pages": 11,
       "themes": [
@@ -6204,7 +6201,6 @@
     {
       "title": "Tema 15 - Gêneros Musicais Periféricos - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 15 - Generos Musicais Perifericos/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-15-generos-musicais-perifericos-modelo-2.pdf",
       "pages": 16,
       "themes": [
@@ -6218,7 +6214,6 @@
     {
       "title": "Tema 16 - Idosos Ambiente Digital - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 16 - Idosos Ambiente Digital/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-16-idosos-ambiente-digital-modelo-1.pdf",
       "pages": 10,
       "themes": [
@@ -6232,7 +6227,6 @@
     {
       "title": "Tema 16 - Idosos Ambiente Digital - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 16 - Idosos Ambiente Digital/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-16-idosos-ambiente-digital-modelo-2.pdf",
       "pages": 17,
       "themes": [
@@ -6246,7 +6240,6 @@
     {
       "title": "Tema 17 - Analfabetismo Funcional - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 17 - Analfabetismo Funcional/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-17-analfabetismo-funcional-modelo-1.pdf",
       "pages": 11,
       "themes": [
@@ -6260,7 +6253,6 @@
     {
       "title": "Tema 17 - Analfabetismo Funcional - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 17 - Analfabetismo Funcional/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-17-analfabetismo-funcional-modelo-2.pdf",
       "pages": 16,
       "themes": [
@@ -6274,7 +6266,6 @@
     {
       "title": "Tema 18 - Aplicativos Comunicação Burnout - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 18 - Aplicativos Comunicacao Burnout/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-18-aplicativos-comunicacao-burnout-modelo-1.pdf",
       "pages": 11,
       "themes": [
@@ -6288,7 +6279,6 @@
     {
       "title": "Tema 18 - Aplicativos Comunicação Burnout - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 18 - Aplicativos Comunicacao Burnout/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-18-aplicativos-comunicacao-burnout-modelo-2.pdf",
       "pages": 16,
       "themes": [
@@ -6302,7 +6292,6 @@
     {
       "title": "Tema 19 - Celular Inclusão Exclusao Educacional - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 19 - Celular Inclusao Exclusao Educacional/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-19-celular-inclusao-exclusao-educacional-modelo-1.pdf",
       "pages": 11,
       "themes": [
@@ -6316,7 +6305,6 @@
     {
       "title": "Tema 19 - Celular Inclusão Exclusao Educacional - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 19 - Celular Inclusao Exclusao Educacional/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-19-celular-inclusao-exclusao-educacional-modelo-2.pdf",
       "pages": 16,
       "themes": [
@@ -6330,7 +6318,6 @@
     {
       "title": "Tema 20 - Preparacao Final Eixos Redação - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 20 - Preparacao Final Eixos Redacao/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-20-preparacao-final-eixos-redacao-modelo-1.pdf",
       "pages": 11,
       "themes": [
@@ -6344,7 +6331,6 @@
     {
       "title": "Tema 20 - Preparacao Final Eixos Redação - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 20 - Preparacao Final Eixos Redacao/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-20-preparacao-final-eixos-redacao-modelo-2.pdf",
       "pages": 16,
       "themes": [
@@ -6358,7 +6344,6 @@
     {
       "title": "Tema 21 - Desigualdade Educacional - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 21 - Desigualdade Educacional/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-21-desigualdade-educacional-modelo-1.pdf",
       "pages": 11,
       "themes": [
@@ -6372,7 +6357,6 @@
     {
       "title": "Tema 21 - Desigualdade Educacional - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 21 - Desigualdade Educacional/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-21-desigualdade-educacional-modelo-2.pdf",
       "pages": 16,
       "themes": [
@@ -6386,7 +6370,6 @@
     {
       "title": "Tema 22 - Precarizacao Trabalho Docente - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 22 - Precarizacao Trabalho Docente/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-22-precarizacao-trabalho-docente-modelo-1.pdf",
       "pages": 11,
       "themes": [
@@ -6400,7 +6383,6 @@
     {
       "title": "Tema 22 - Precarizacao Trabalho Docente - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 22 - Precarizacao Trabalho Docente/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-22-precarizacao-trabalho-docente-modelo-2.pdf",
       "pages": 16,
       "themes": [
@@ -6414,7 +6396,6 @@
     {
       "title": "Tema 23 - Idosos Ambiente Digital Revisao - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 23 - Idosos Ambiente Digital Revisao/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-23-idosos-ambiente-digital-revisao-modelo-1.pdf",
       "pages": 10,
       "themes": [
@@ -6428,7 +6409,6 @@
     {
       "title": "Tema 23 - Idosos Ambiente Digital Revisao - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 23 - Idosos Ambiente Digital Revisao/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-23-idosos-ambiente-digital-revisao-modelo-2.pdf",
       "pages": 17,
       "themes": [
@@ -6442,7 +6422,6 @@
     {
       "title": "Tema 24 - Evasão Escolar - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 24 - Evasao Escolar/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-24-evasao-escolar-modelo-1.pdf",
       "pages": 11,
       "themes": [
@@ -6456,7 +6435,6 @@
     {
       "title": "Tema 24 - Evasão Escolar - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 24 - Evasao Escolar/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-24-evasao-escolar-modelo-2.pdf",
       "pages": 16,
       "themes": [
@@ -6470,7 +6448,6 @@
     {
       "title": "Tema 25 - Redes Sociais Bullying Escolar - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 25 - Redes Sociais Bullying Escolar/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-25-redes-sociais-bullying-escolar-modelo-1.pdf",
       "pages": 11,
       "themes": [
@@ -6484,7 +6461,6 @@
     {
       "title": "Tema 25 - Redes Sociais Bullying Escolar - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 25 - Redes Sociais Bullying Escolar/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-25-redes-sociais-bullying-escolar-modelo-2.pdf",
       "pages": 16,
       "themes": [
@@ -6498,7 +6474,6 @@
     {
       "title": "Tema 26 - Acesso Água Direito Humano - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 26 - Acesso Agua Direito Humano/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-26-acesso-agua-direito-humano-modelo-1.pdf",
       "pages": 11,
       "themes": [
@@ -6512,7 +6487,6 @@
     {
       "title": "Tema 26 - Acesso Água Direito Humano - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 26 - Acesso Agua Direito Humano/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-26-acesso-agua-direito-humano-modelo-2.pdf",
       "pages": 16,
       "themes": [
@@ -6526,7 +6500,6 @@
     {
       "title": "Tema 27 - Estetica Adulta Infância - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 27 - Estetica Adulta Infancia/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-27-estetica-adulta-infancia-modelo-1.pdf",
       "pages": 11,
       "themes": [
@@ -6540,7 +6513,6 @@
     {
       "title": "Tema 27 - Estetica Adulta Infância - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 27 - Estetica Adulta Infancia/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-27-estetica-adulta-infancia-modelo-2.pdf",
       "pages": 16,
       "themes": [
@@ -6554,7 +6526,6 @@
     {
       "title": "Tema 28 - Redes Sociais Opinião Jornalismo - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 28 - Redes Sociais Opiniao Jornalismo/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-28-redes-sociais-opiniao-jornalismo-modelo-1.pdf",
       "pages": 10,
       "themes": [
@@ -6568,7 +6539,6 @@
     {
       "title": "Tema 28 - Redes Sociais Opinião Jornalismo - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 28 - Redes Sociais Opiniao Jornalismo/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-28-redes-sociais-opiniao-jornalismo-modelo-2.pdf",
       "pages": 17,
       "themes": [
@@ -6582,7 +6552,6 @@
     {
       "title": "Tema 29 - Reforma Agrária Justiça Campo - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 29 - Reforma Agraria Justica Campo/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-29-reforma-agraria-justica-campo-modelo-1.pdf",
       "pages": 11,
       "themes": [
@@ -6596,7 +6565,6 @@
     {
       "title": "Tema 29 - Reforma Agrária Justiça Campo - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 29 - Reforma Agraria Justica Campo/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-29-reforma-agraria-justica-campo-modelo-2.pdf",
       "pages": 16,
       "themes": [
@@ -6610,7 +6578,6 @@
     {
       "title": "Tema 30 - Segurança Pública Periferias - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 30 - Seguranca Publica Periferias/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-30-seguranca-publica-periferias-modelo-1.pdf",
       "pages": 11,
       "themes": [
@@ -6624,7 +6591,6 @@
     {
       "title": "Tema 30 - Segurança Pública Periferias - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 30 - Seguranca Publica Periferias/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-30-seguranca-publica-periferias-modelo-2.pdf",
       "pages": 16,
       "themes": [
@@ -6638,7 +6604,6 @@
     {
       "title": "Tema 31 - Gentrificação Deslocamento - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 31 - Gentrificacao Deslocamento/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-31-gentrificacao-deslocamento-modelo-1.pdf",
       "pages": 11,
       "themes": [
@@ -6652,7 +6617,6 @@
     {
       "title": "Tema 31 - Gentrificação Deslocamento - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 31 - Gentrificacao Deslocamento/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-31-gentrificacao-deslocamento-modelo-2.pdf",
       "pages": 16,
       "themes": [
@@ -6666,7 +6630,6 @@
     {
       "title": "Tema 32 - Patrimônio Cultural Baixa Renda - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 32 - Patrimonio Cultural Baixa Renda/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-32-patrimonio-cultural-baixa-renda-modelo-1.pdf",
       "pages": 11,
       "themes": [
@@ -6680,7 +6643,6 @@
     {
       "title": "Tema 32 - Patrimônio Cultural Baixa Renda - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 32 - Patrimonio Cultural Baixa Renda/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-32-patrimonio-cultural-baixa-renda-modelo-2.pdf",
       "pages": 16,
       "themes": [
@@ -6694,7 +6656,6 @@
     {
       "title": "Tema 33 - Desinformacao Eleitoral - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 33 - Desinformacao Eleitoral/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-33-desinformacao-eleitoral-modelo-1.pdf",
       "pages": 10,
       "themes": [
@@ -6708,7 +6669,6 @@
     {
       "title": "Tema 33 - Desinformacao Eleitoral - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 33 - Desinformacao Eleitoral/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-33-desinformacao-eleitoral-modelo-2.pdf",
       "pages": 17,
       "themes": [
@@ -6722,7 +6682,6 @@
     {
       "title": "Tema 34 - Ia Eleições Brasileiras - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 34 - Ia Eleicoes Brasileiras/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-34-ia-eleicoes-brasileiras-modelo-1.pdf",
       "pages": 10,
       "themes": [
@@ -6735,7 +6694,6 @@
     {
       "title": "Tema 34 - Ia Eleições Brasileiras - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 34 - Ia Eleicoes Brasileiras/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-34-ia-eleicoes-brasileiras-modelo-2.pdf",
       "pages": 16,
       "themes": [
@@ -6749,7 +6707,6 @@
     {
       "title": "Tema 35 - Valorização da Vida no Trânsito - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 35 - Valorizacao da Vida no Transito/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-35-valorizacao-da-vida-no-transito-modelo-1.pdf",
       "pages": 10,
       "themes": [
@@ -6761,7 +6718,6 @@
     {
       "title": "Tema 35 - Valorização da Vida no Trânsito - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 35 - Valorizacao da Vida no Transito/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-35-valorizacao-da-vida-no-transito-modelo-2.pdf",
       "pages": 16,
       "themes": [
@@ -6773,7 +6729,6 @@
     {
       "title": "Tema 36 - Educação Empreendedora - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 36 - Educacao Empreendedora/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-36-educacao-empreendedora-modelo-1.pdf",
       "pages": 10,
       "themes": [
@@ -6787,7 +6742,6 @@
     {
       "title": "Tema 36 - Educação Empreendedora - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 36 - Educacao Empreendedora/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-36-educacao-empreendedora-modelo-2.pdf",
       "pages": 16,
       "themes": [
@@ -6801,7 +6755,6 @@
     {
       "title": "Tema 37 - Agricultura Sustentável - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 37 - Agricultura Sustentavel/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-37-agricultura-sustentavel-modelo-1.pdf",
       "pages": 10,
       "themes": [
@@ -6815,7 +6768,6 @@
     {
       "title": "Tema 37 - Agricultura Sustentável - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 37 - Agricultura Sustentavel/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-37-agricultura-sustentavel-modelo-2.pdf",
       "pages": 16,
       "themes": [
@@ -6827,7 +6779,6 @@
     {
       "title": "Tema 38 - Violência Contra Crianças e Adolescentes - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 38 - Violencia Contra Criancas e Adolescentes/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-38-violencia-contra-criancas-e-adolescentes-modelo-1.pdf",
       "pages": 10,
       "themes": [
@@ -6841,7 +6792,6 @@
     {
       "title": "Tema 38 - Violência Contra Crianças e Adolescentes - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 38 - Violencia Contra Criancas e Adolescentes/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-38-violencia-contra-criancas-e-adolescentes-modelo-2.pdf",
       "pages": 16,
       "themes": [
@@ -6855,7 +6805,6 @@
     {
       "title": "Tema 39 - Educação de Jovens e Adultos - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 39 - Educacao de Jovens e Adultos/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-39-educacao-de-jovens-e-adultos-modelo-1.pdf",
       "pages": 10,
       "themes": [
@@ -6869,7 +6818,6 @@
     {
       "title": "Tema 39 - Educação de Jovens e Adultos - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 39 - Educacao de Jovens e Adultos/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-39-educacao-de-jovens-e-adultos-modelo-2.pdf",
       "pages": 16,
       "themes": [
@@ -6883,7 +6831,6 @@
     {
       "title": "Tema 40 - Alimentação Adequada e Saudável - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 40 - Alimentacao Adequada e Saudavel/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-40-alimentacao-adequada-e-saudavel-modelo-1.pdf",
       "pages": 10,
       "themes": [
@@ -6897,7 +6844,6 @@
     {
       "title": "Tema 40 - Alimentação Adequada e Saudável - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 40 - Alimentacao Adequada e Saudavel/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-40-alimentacao-adequada-e-saudavel-modelo-2.pdf",
       "pages": 21,
       "themes": [
@@ -6911,7 +6857,6 @@
     {
       "title": "Tema 41 - Educação Sem Violência Menino Bernardo - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 41 - Educacao Sem Violencia Menino Bernardo/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-41-educacao-sem-violencia-menino-bernardo-modelo-1.pdf",
       "pages": 12,
       "themes": [
@@ -6925,7 +6870,6 @@
     {
       "title": "Tema 41 - Educação Sem Violência Menino Bernardo - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 41 - Educacao Sem Violencia Menino Bernardo/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-41-educacao-sem-violencia-menino-bernardo-modelo-2.pdf",
       "pages": 21,
       "themes": [
@@ -6939,7 +6883,6 @@
     {
       "title": "Tema 42 - Saberes Tradicionais Indígenas - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 42 - Saberes Tradicionais Indigenas/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-42-saberes-tradicionais-indigenas-modelo-1.pdf",
       "pages": 10,
       "themes": [
@@ -6953,7 +6896,6 @@
     {
       "title": "Tema 42 - Saberes Tradicionais Indígenas - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 42 - Saberes Tradicionais Indigenas/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-42-saberes-tradicionais-indigenas-modelo-2.pdf",
       "pages": 19,
       "themes": [
@@ -6967,7 +6909,6 @@
     {
       "title": "Tema 43 - Proteção Crianças Plataformas Digitais - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 43 - Protecao Criancas Plataformas Digitais/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-43-protecao-criancas-plataformas-digitais-modelo-1.pdf",
       "pages": 10,
       "themes": [
@@ -6981,7 +6922,6 @@
     {
       "title": "Tema 43 - Proteção Crianças Plataformas Digitais - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 43 - Protecao Criancas Plataformas Digitais/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-43-protecao-criancas-plataformas-digitais-modelo-2.pdf",
       "pages": 18,
       "themes": [
@@ -6995,7 +6935,6 @@
     {
       "title": "Tema 44 - Eventos Climáticos Extremos Cidades Economia - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 44 - Eventos Climaticos Extremos Cidades Economia/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-44-eventos-climaticos-extremos-cidades-economia-modelo-1.pdf",
       "pages": 11,
       "themes": [
@@ -7009,7 +6948,6 @@
     {
       "title": "Tema 44 - Eventos Climáticos Extremos Cidades Economia - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 44 - Eventos Climaticos Extremos Cidades Economia/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-44-eventos-climaticos-extremos-cidades-economia-modelo-2.pdf",
       "pages": 21,
       "themes": [
@@ -7023,7 +6961,6 @@
     {
       "title": "Tema 45 - Democratização do Acesso ao Cinema - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 45 - Democratizacao do Acesso ao Cinema/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-45-democratizacao-do-acesso-ao-cinema-modelo-1.pdf",
       "pages": 37,
       "themes": [
@@ -7037,7 +6974,6 @@
     {
       "title": "Tema 46 - Direitos e Cidadania LGBTQIA - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 46 - Direitos e Cidadania LGBTQIA/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-46-direitos-e-cidadania-lgbtqia-modelo-1.pdf",
       "pages": 39,
       "themes": [
@@ -7051,7 +6987,6 @@
     {
       "title": "Tema 47 - Dados Pessoais e Manipulação Digital - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 47 - Dados Pessoais e Manipulacao Digital/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-47-dados-pessoais-e-manipulacao-digital-modelo-1.pdf",
       "pages": 16,
       "themes": [
@@ -7065,7 +7000,6 @@
     {
       "title": "Tema 47 - Dados Pessoais e Manipulação Digital - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 47 - Dados Pessoais e Manipulacao Digital/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-47-dados-pessoais-e-manipulacao-digital-modelo-2.pdf",
       "pages": 83,
       "themes": [
@@ -7079,7 +7013,6 @@
     {
       "title": "Tema 48 - Distância Currículo Realidade Estudantes - Modelo 1",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 48 - Distancia Curriculo Realidade Estudantes/Modelo 1.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-48-distancia-curriculo-realidade-estudantes-modelo-1.pdf",
       "pages": 22,
       "themes": [
@@ -7093,7 +7026,6 @@
     {
       "title": "Tema 48 - Distância Currículo Realidade Estudantes - Modelo 2",
       "kind": "Modelo de repertório por tema",
-      "source_path": "_ingest/dropbox-redacao-20260905/refeitos_ditto/Tema 48 - Distancia Curriculo Realidade Estudantes/Modelo 2.pdf",
       "public_path": "./assets/redacao/pdfs/20260905/temas-refeitos/tema-48-distancia-curriculo-realidade-estudantes-modelo-2.pdf",
       "pages": 19,
       "themes": [

@@ -7,6 +7,8 @@
   };
 
   const SCORE_FIELDS = ["linguagens", "humanas", "natureza", "matematica", "redacao"];
+  const PUBLIC_SCHOOL_MODALITIES = new Set(["LB_EP", "LI_EP"]);
+  const PUBLIC_SCHOOL_FILTER = "REDE_PUBLICA";
   let cachedPayload = null;
   let cachedRows = null;
 
@@ -22,6 +24,29 @@
   function toNumber(value) {
     const numeric = Number(value);
     return Number.isFinite(numeric) ? numeric : null;
+  }
+
+  function sumNumeric(rows, key) {
+    return rows.reduce((sum, row) => sum + (toNumber(row?.[key]) || 0), 0);
+  }
+
+  function weightedAverage(rows, valueKey, weightKey = "vagas") {
+    const valid = rows.filter((row) => {
+      const value = toNumber(row?.[valueKey]);
+      const weight = toNumber(row?.[weightKey]);
+      return value !== null && value > 0 && weight !== null && weight > 0;
+    });
+    const totalWeight = sumNumeric(valid, weightKey);
+    if (!totalWeight) return null;
+    const weighted = valid.reduce(
+      (sum, row) => sum + Number(row[valueKey]) * Number(row[weightKey]),
+      0,
+    );
+    return Math.round((weighted / totalWeight) * 100) / 100;
+  }
+
+  function isPublicSchoolModality(value) {
+    return PUBLIC_SCHOOL_MODALITIES.has(String(value || "").toUpperCase());
   }
 
   function decodeRows(payload) {
@@ -215,14 +240,16 @@
     const courseTerm = normalizeText(filters.curso || filters.course || "");
     const institutionTerm = normalizeText(filters.instituicao || filters.institution || "");
     const cityTerm = normalizeText(filters.municipio || filters.city || "");
-    const modalidade = normalizeText(filters.modalidade || filters.tipo_cota || "");
+    const rawModalidade = String(filters.modalidade || filters.tipo_cota || "").toUpperCase();
+    const modalidade = normalizeText(rawModalidade);
     const uf = normalizeText(filters.uf || "");
     return rows.filter((row) => {
       if (exactCourse && normalizeText(row.curso) !== exactCourse) return false;
       if (courseTerm && !normalizeText(row.curso).includes(courseTerm)) return false;
       if (institutionTerm && !normalizeText([row.sg_ies, row.no_ies].join(" ")).includes(institutionTerm)) return false;
       if (cityTerm && !normalizeText(row.municipio).includes(cityTerm)) return false;
-      if (modalidade && normalizeText(row.tipo_cota) !== modalidade) return false;
+      if (rawModalidade === PUBLIC_SCHOOL_FILTER && !isPublicSchoolModality(row.tipo_cota)) return false;
+      if (modalidade && rawModalidade !== PUBLIC_SCHOOL_FILTER && normalizeText(row.tipo_cota) !== modalidade) return false;
       if (uf && normalizeText(row.uf) !== uf) return false;
       if (!terms.length) return true;
       const haystack = normalizeText(
@@ -232,11 +259,76 @@
     });
   }
 
+  function aggregatePublicSchoolOffers(rows = []) {
+    const byOffer = new Map();
+    rows.filter((row) => isPublicSchoolModality(row.tipo_cota)).forEach((row) => {
+      const key = offerCollapseKey(row);
+      if (!byOffer.has(key)) byOffer.set(key, []);
+      byOffer.get(key).push(row);
+    });
+    return [...byOffer.entries()].map(([key, offerRows]) => {
+      const base = offerRows[0];
+      return {
+        ...base,
+        id: `${key}_rede-publica`,
+        tipo_cota: PUBLIC_SCHOOL_FILTER,
+        modalidade: "Rede publica (LB_EP + LI_EP)",
+        vagas: sumNumeric(offerRows, "vagas"),
+        inscricoes: sumNumeric(offerRows, "inscricoes"),
+        nota_corte: weightedAverage(offerRows, "nota_corte"),
+        componentes_rede_publica: offerRows.map((row) => ({
+          tipo_cota: row.tipo_cota,
+          vagas: toNumber(row.vagas) || 0,
+          nota_corte: toNumber(row.nota_corte),
+        })),
+      };
+    });
+  }
+
+  function summarizeAdmissionRows(rows = [], label) {
+    return {
+      label,
+      cutoff: weightedAverage(rows, "nota_corte"),
+      seats: sumNumeric(rows, "vagas"),
+      components: rows.map((row) => ({
+        modalidade: row.tipo_cota,
+        cutoff: toNumber(row.nota_corte),
+        seats: toNumber(row.vagas) || 0,
+      })),
+    };
+  }
+
+  async function getOfferAdmissionReference(offerId) {
+    const { rows } = await loadSisu2025Data();
+    const offerRows = rows.filter((row) => row.oferta_id === offerId);
+    if (!offerRows.length) return null;
+    const base = offerRows[0];
+    const amplaRows = offerRows.filter((row) => String(row.tipo_cota || "").toUpperCase() === "AC");
+    const publicRows = offerRows.filter((row) => isPublicSchoolModality(row.tipo_cota));
+    return {
+      offerId,
+      edition: base.edicao || "2025",
+      course: base.curso,
+      institution: base.sg_ies,
+      institutionName: base.no_ies,
+      campus: base.campus,
+      city: base.municipio,
+      uf: base.uf,
+      totalSeats: sumNumeric(offerRows, "vagas"),
+      amplaConcorrencia: summarizeAdmissionRows(amplaRows, "Ampla concorrencia"),
+      redePublica: summarizeAdmissionRows(publicRows, "Rede publica"),
+      source: window.SISU_2025_INTELLIGENCE_DATA?.source || null,
+    };
+  }
+
   async function simulateSisu2025(options = {}) {
     const { rows } = await loadSisu2025Data();
     const scores = options.scores || estimateScoresFromHits(options.hits || {}, options.redacao, options.statistic || "median");
     const filtered = filterRows(rows, options);
-    const evaluated = filtered
+    const rowsForEvaluation = String(options.modalidade || options.tipo_cota || "").toUpperCase() === PUBLIC_SCHOOL_FILTER
+      ? aggregatePublicSchoolOffers(filtered)
+      : filtered;
+    const evaluated = rowsForEvaluation
       .map((row) => evaluateRow(row, scores, options))
       .filter(validOfferRow)
       .sort(compareSisuResults);
@@ -267,6 +359,7 @@
     scoresFromSimuladoCorrection,
     calculateWeightedScore,
     evaluateRow,
+    getOfferAdmissionReference,
     simulateSisu2025,
   };
 })();

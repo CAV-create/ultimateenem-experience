@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="1000" viewBox="0 0 420 500" role="img" aria-labelledby="title desc">
+  <title id="title">ULTIMATE ENEM by CAV</title>
+  <desc id="desc">Marca vetorial com cobra enrolada em eixo tenue, livro e letra U.</desc>
+  <defs>
+    <style>
+      .serif { font-family: Georgia, "Times New Roman", serif; }
+      .sans { font-family: Arial, Helvetica, sans-serif; }
+      .yellow { fill: #f4c64d; }
+      .white { fill: #f7f7f4; }
+    </style>
+  </defs>
+
+  <g aria-hidden="true">
+    <text x="210" y="220" class="serif yellow" font-size="228" font-weight="700" text-anchor="middle">U</text>
+
+    <g fill="none" stroke="#f4c64d" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M135 172 Q174 160 207 187 L207 226 Q174 199 135 211 Z" stroke-width="8"/>
+      <path d="M285 172 Q246 160 213 187 L213 226 Q246 199 285 211 Z" stroke-width="8"/>
+      <path d="M135 216 Q173 207 207 232" stroke-width="5"/>
+      <path d="M285 216 Q247 207 213 232" stroke-width="5"/>
+      <path d="M210 184 L210 231" stroke-width="4"/>
+    </g>
+
+    <line x1="210" y1="55" x2="210" y2="179" stroke="#f4c64d" stroke-width="2" stroke-linecap="round" opacity="0.55"/>
+    <path d="M226 57 C250 69 248 91 219 103 C189 115 188 137 215 148 C242 159 244 178 215 191"
+      fill="none" stroke="#f4c64d" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+    <ellipse cx="228" cy="56" rx="12" ry="8" fill="#f4c64d"/>
+    <circle cx="233" cy="54" r="1.8" fill="#071722"/>
+  </g>
+
+  <text x="210" y="286" class="serif yellow" font-size="43" font-weight="700" letter-spacing="7" text-anchor="middle">ULTIMATE</text>
+  <text x="210" y="378" class="serif white" font-size="104" font-weight="700" text-anchor="middle">ENEM</text>
+
+  <g aria-hidden="true" stroke="#f4c64d" stroke-width="3" stroke-linecap="round">
+    <line x1="78" y1="408" x2="146" y2="408"/>
+    <line x1="274" y1="408" x2="342" y2="408"/>
+  </g>
+  <text x="210" y="419" class="serif yellow" font-size="28" font-style="italic" text-anchor="middle">by CAVPRIME</text>
+
+  <text x="210" y="461" class="sans white" font-size="15" font-weight="700" letter-spacing="3" text-anchor="middle">KNOWLEDGE TRANSFORMS.</text>
+  <text x="210" y="486" class="sans white" font-size="15" font-weight="700" letter-spacing="3" text-anchor="middle">GREATER FUTURES.</text>
+</svg>

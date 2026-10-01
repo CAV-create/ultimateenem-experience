@@ -1,0 +1,167 @@
+{
+  "package": "cavprime final 25 de setembro",
+  "version": "final-sem-contorno-02-03-04",
+  "assets": [
+    {
+      "path": "01_CAPA_FINAL/cavprime_capa_final_desktop.png",
+      "bytes": 1651728,
+      "sha256": "b45c2f5d92dd2122a997b7b51ecce669993e7bfa3b1c4de17eaf9b024dee981d"
+    },
+    {
+      "path": "01_CAPA_FINAL/cavprime_capa_final_desktop.webp",
+      "bytes": 186272,
+      "sha256": "1fe84429fcfd8b7b051150ae260a3c04c9239d66d3acb49fc49bf38bed3e560b"
+    },
+    {
+      "path": "01_CAPA_FINAL/cavprime_capa_final_preview.jpg",
+      "bytes": 210930,
+      "sha256": "e0cd101b9e2919baa64906bd0029f7fa92fd3e8243a04156049095bc0db383d7"
+    },
+    {
+      "path": "02_LOGOS_LOCKUPS_PNG/dia_de_a.png",
+      "bytes": 63385,
+      "sha256": "c71cce107a0622f076d574775e16faeb2654361ea80c06615d41d3803addc9e3"
+    },
+    {
+      "path": "02_LOGOS_LOCKUPS_PNG/discmed.png",
+      "bytes": 69747,
+      "sha256": "f0c6fab154e4f3b7787c2293605db21ccaf15e73ce7e12eda29ece81710dda41"
+    },
+    {
+      "path": "02_LOGOS_LOCKUPS_PNG/medpism.png",
+      "bytes": 72256,
+      "sha256": "a13bdefd77bc84ca5365dc5942759975af36eca2592bb80e79ab2227b0dce9bf"
+    },
+    {
+      "path": "02_LOGOS_LOCKUPS_PNG/ultimate_enem.png",
+      "bytes": 64969,
+      "sha256": "7bc77120539df23d5ab8a1ad19e6aa0d89751cfd5b9c7deb6bea39b983a1a1f9"
+    },
+    {
+      "path": "02_LOGOS_LOCKUPS_PNG/vaibem.png",
+      "bytes": 77882,
+      "sha256": "f24f3679ce4445a65142b60182e9ff740e7e7417c6b690e08875c2fe7fbcad77"
+    },
+    {
+      "path": "03_LOGOS_LOCKUPS_WEBP/dia_de_a.webp",
+      "bytes": 10414,
+      "sha256": "865c35b6cdf02900914eb21910bac6518ce7a952f4696380d99ac6dd2ffb3857"
+    },
+    {
+      "path": "03_LOGOS_LOCKUPS_WEBP/discmed.webp",
+      "bytes": 12322,
+      "sha256": "018cbb2496665f4324c23cbddfb6ca5b6a8d460dab6fbb1a912a07b97e1b197f"
+    },
+    {
+      "path": "03_LOGOS_LOCKUPS_WEBP/medpism.webp",
+      "bytes": 13152,
+      "sha256": "ef4887f5faede253abc38d9785bc0025e1beae5ad7dbfe87d83d08f11c51c3a7"
+    },
+    {
+      "path": "03_LOGOS_LOCKUPS_WEBP/ultimate_enem.webp",
+      "bytes": 11424,
+      "sha256": "8bc17bdee2610512d55fb035dea596c2acae74061c9974fa8fdc2ad475dd6336"
+    },
+    {
+      "path": "03_LOGOS_LOCKUPS_WEBP/vaibem.webp",
+      "bytes": 14292,
+      "sha256": "dc475a530b8594249d1af4794bc34a58f631da5978c0835e196b8f39a2081730"
+    },
+    {
+      "path": "04_CARDS_UI/dia_de_a_card.png",
+      "bytes": 77415,
+      "sha256": "cae61a482d6a86527cbc0ca6fd06817c1c3b4db0fc319f7ec5170bb755e63f90"
+    },
+    {
+      "path": "04_CARDS_UI/dia_de_a_card.webp",
+      "bytes": 11958,
+      "sha256": "dcd314a2942ef69fab68f68660a047ce1627e33836d5f390dd4a818d3447ffb3"
+    },
+    {
+      "path": "04_CARDS_UI/discmed_card.png",
+      "bytes": 84217,
+      "sha256": "3ebc18a9c461bb27bb1ec70839f2cb0fefd3024d2fd64d69b2d11b5300e15801"
+    },
+    {
+      "path": "04_CARDS_UI/discmed_card.webp",
+      "bytes": 13584,
+      "sha256": "7bdba78845867debfdfd401f17b4f4845f4b1c6a6ac9f40b841b8451746eeab0"
+    },
+    {
+      "path": "04_CARDS_UI/medpism_card.png",
+      "bytes": 87323,
+      "sha256": "b39cb87682291272f635627e8c2a375baf34a543de6b450b85e77e03a1903810"
+    },
+    {
+      "path": "04_CARDS_UI/medpism_card.webp",
+      "bytes": 14792,
+      "sha256": "7c4dff54b47a46cd3a2c7e1cad7dd774a15725a12ef556e505e35e43104a75f5"
+    },
+    {
+      "path": "04_CARDS_UI/ultimate_enem_card.png",
+      "bytes": 79068,
+      "sha256": "06721c4dbecbe89133b1ccaed0538b900d4db0d1b5a9b0505a3bea9720f001fa"
+    },
+    {
+      "path": "04_CARDS_UI/ultimate_enem_card.webp",
+      "bytes": 12498,
+      "sha256": "57a5fefc707803d1c687310317af8b1097782706a4e3b082b99d401ec8ed7604"
+    },
+    {
+      "path": "04_CARDS_UI/vaibem_card.png",
+      "bytes": 93695,
+      "sha256": "b7b5d35e18f159daab9b3abb245c3df78b3346edfe2ba5e8b0a01c326bd3fdde"
+    },
+    {
+      "path": "04_CARDS_UI/vaibem_card.webp",
+      "bytes": 15518,
+      "sha256": "03a77ea4c64e6f67ddfb096b0cf9794a9a7d1eecc8e0d5a4e3a14d405a209646"
+    },
+    {
+      "path": "05_REFERENCIAS_ORIGINAIS/auditoria_logos_sem_contorno.jpg",
+      "bytes": 94169,
+      "sha256": "3f5435be9c234de5a99cead0e5bbbeff2db859312419f25d3a3cd471d16819f1"
+    },
+    {
+      "path": "05_REFERENCIAS_ORIGINAIS/medpism_referencia_aprovada.png",
+      "bytes": 82492,
+      "sha256": "5422ced367cf86e6cbfbd51a0404edabdb6d409ef16dd1e45d989858a5cee7be"
+    },
+    {
+      "path": "05_REFERENCIAS_ORIGINAIS/ultimate_enem_alinhado.png",
+      "bytes": 693306,
+      "sha256": "81518dea093dc03a82aace99c8b4af6f8044d8a0cdf2f3b7e9bdbf31c6006dec"
+    },
+    {
+      "path": "05_REFERENCIAS_ORIGINAIS/vaibem_referencia_oficial_sem_estrela.png",
+      "bytes": 1538898,
+      "sha256": "23780e6626d2b378ca6d65af2af61b993f53d31dfe9a49c14e3330985f5f4c3a"
+    },
+    {
+      "path": "06_CODEX/CHECKLIST_IMPLEMENTACAO.txt",
+      "bytes": 645,
+      "sha256": "5accbb0adc5c067fcb892a963c9c27951231d776552a09242f36ac7cfae6d789"
+    },
+    {
+      "path": "06_CODEX/README_CODEX.md",
+      "bytes": 5040,
+      "sha256": "23feea54f08e421173986d971fd1041cb32a6ecb1f963ff889af6176a7c05c28"
+    },
+    {
+      "path": "06_CODEX/asset_manifest.json",
+      "bytes": 2598,
+      "sha256": "6c7dc2617b7fd15ba2a2e13494249ff73747ef2821c9bb2d7ed3023f426d87b9"
+    },
+    {
+      "path": "06_CODEX/design_tokens.json",
+      "bytes": 909,
+      "sha256": "66a07a40692f347ce8b81fb9d3a60f9116eedfb496b57f979a02f57ba48ad34f"
+    }
+  ],
+  "package_name": "pacote 3 final cavprime",
+  "final_adjustments": [
+    "logos centralizadas nos cinco slots",
+    "botoes ACESSAR AGORA completos e sem corte",
+    "capa final azul aprovada"
+  ]
+}

@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="1000" viewBox="0 0 420 500" role="img" aria-labelledby="title desc">
+  <title id="title">MedPISM by CAVPRIME</title>
+  <desc id="desc">Marca vetorial UFJF com aro amarelo solido e cobra acima das letras.</desc>
+  <defs>
+    <style>
+      .serif { font-family: Georgia, "Times New Roman", serif; }
+      .sans { font-family: Arial, Helvetica, sans-serif; }
+      .yellow { fill: #f4c64d; }
+      .white { fill: #f7f7f4; }
+    </style>
+  </defs>
+
+  <circle cx="210" cy="122" r="101" fill="none" stroke="#f4c64d" stroke-width="14"/>
+
+  <g aria-hidden="true">
+    <line x1="210" y1="39" x2="210" y2="99" stroke="#f4c64d" stroke-width="2" stroke-linecap="round" opacity="0.55"/>
+    <path d="M222 42 C240 51 238 65 217 73 C196 81 195 94 214 101"
+      fill="none" stroke="#f4c64d" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+    <ellipse cx="224" cy="41" rx="10" ry="7" fill="#f4c64d"/>
+    <circle cx="228" cy="40" r="1.6" fill="#071722"/>
+  </g>
+
+  <text x="210" y="174" class="serif yellow" font-size="72" font-weight="700" letter-spacing="4" text-anchor="middle">UFJF</text>
+
+  <text x="210" y="313" class="serif" font-size="76" font-weight="700" text-anchor="middle">
+    <tspan class="white">Med</tspan><tspan class="yellow">PISM</tspan>
+  </text>
+
+  <g aria-hidden="true" stroke="#f4c64d" stroke-width="3" stroke-linecap="round">
+    <line x1="72" y1="357" x2="132" y2="357"/>
+    <line x1="288" y1="357" x2="348" y2="357"/>
+  </g>
+  <text x="210" y="367" class="sans yellow" font-size="23" font-weight="700" font-style="italic" text-anchor="middle">by CAVPRIME</text>
+
+  <text x="210" y="423" class="sans white" font-size="17" font-weight="700" letter-spacing="3" text-anchor="middle">DISCIPLINE TODAY.</text>
+  <text x="210" y="453" class="sans white" font-size="17" font-weight="700" letter-spacing="3" text-anchor="middle">EXCELLENT DOCTORS</text>
+  <text x="210" y="481" class="sans white" font-size="17" font-weight="700" letter-spacing="3" text-anchor="middle">TOMORROW.</text>
+</svg>

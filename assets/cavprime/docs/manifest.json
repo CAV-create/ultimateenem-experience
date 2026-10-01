@@ -1,0 +1,171 @@
+{
+  "logos": [
+    {
+      "id": "cavprime",
+      "original_png": "logos/original_png/cavprime.png",
+      "mobile_webp": "logos/mobile_webp/cavprime.webp",
+      "preview_jpg": "logos/preview_jpg/cavprime.jpg",
+      "dimensions_original": {
+        "width": 1122,
+        "height": 1402
+      },
+      "recommended_use": "Usar WEBP no app/site mobile e PNG original em materiais premium, impressão ou quando precisar da máxima fidelidade."
+    },
+    {
+      "id": "ultimate_enem",
+      "original_png": "logos/original_png/ultimate_enem.png",
+      "mobile_webp": "logos/mobile_webp/ultimate_enem.webp",
+      "preview_jpg": "logos/preview_jpg/ultimate_enem.jpg",
+      "dimensions_original": {
+        "width": 714,
+        "height": 904
+      },
+      "recommended_use": "Usar WEBP no app/site mobile e PNG original em materiais premium, impressão ou quando precisar da máxima fidelidade."
+    },
+    {
+      "id": "dia_de_a",
+      "original_png": "logos/original_png/dia_de_a.png",
+      "mobile_webp": "logos/mobile_webp/dia_de_a.webp",
+      "preview_jpg": "logos/preview_jpg/dia_de_a.jpg",
+      "dimensions_original": {
+        "width": 1672,
+        "height": 941
+      },
+      "recommended_use": "Usar WEBP no app/site mobile e PNG original em materiais premium, impressão ou quando precisar da máxima fidelidade."
+    },
+    {
+      "id": "discmed",
+      "original_png": "logos/original_png/discmed.png",
+      "mobile_webp": "logos/mobile_webp/discmed.webp",
+      "preview_jpg": "logos/preview_jpg/discmed.jpg",
+      "dimensions_original": {
+        "width": 1122,
+        "height": 1402
+      },
+      "recommended_use": "Usar WEBP no app/site mobile e PNG original em materiais premium, impressão ou quando precisar da máxima fidelidade."
+    },
+    {
+      "id": "medpism",
+      "original_png": "logos/original_png/medpism.png",
+      "mobile_webp": "logos/mobile_webp/medpism.webp",
+      "preview_jpg": "logos/preview_jpg/medpism.jpg",
+      "dimensions_original": {
+        "width": 1254,
+        "height": 1254
+      },
+      "recommended_use": "Usar WEBP no app/site mobile e PNG original em materiais premium, impressão ou quando precisar da máxima fidelidade."
+    },
+    {
+      "id": "vaibem",
+      "original_png": "logos/original_png/vaibem.png",
+      "mobile_webp": "logos/mobile_webp/vaibem.webp",
+      "preview_jpg": "logos/preview_jpg/vaibem.jpg",
+      "dimensions_original": {
+        "width": 1254,
+        "height": 1254
+      },
+      "recommended_use": "Usar WEBP no app/site mobile e PNG original em materiais premium, impressão ou quando precisar da máxima fidelidade."
+    }
+  ],
+  "pdfs": [
+    {
+      "id": "timbrado_ultimate_enem",
+      "path": "pdfs/timbrados/CAVPRIME_Timbrado_ULTIMATE_ENEM.pdf",
+      "size_kb": 156.7
+    },
+    {
+      "id": "timbrado_dia_de_a",
+      "path": "pdfs/timbrados/CAVPRIME_Timbrado_DIA_DE_A.pdf",
+      "size_kb": 167.1
+    },
+    {
+      "id": "timbrado_discmed",
+      "path": "pdfs/timbrados/CAVPRIME_Timbrado_discMED.pdf",
+      "size_kb": 147.5
+    },
+    {
+      "id": "timbrado_medpism",
+      "path": "pdfs/timbrados/CAVPRIME_Timbrado_MedPISM.pdf",
+      "size_kb": 142.1
+    },
+    {
+      "id": "timbrado_vaibem",
+      "path": "pdfs/timbrados/CAVPRIME_Timbrado_VaiBem.pdf",
+      "size_kb": 151.4
+    },
+    {
+      "id": "timbrados_5_cursos",
+      "path": "pdfs/timbrados/CAVPRIME_Timbrados_5_Cursos.pdf",
+      "size_kb": 359.4
+    },
+    {
+      "id": "relatorio_cavprime_turma",
+      "path": "pdfs/relatorios/01_CAVPRIME_Diagnostico_Turma.pdf",
+      "size_kb": 154.0
+    },
+    {
+      "id": "relatorio_ultimate_enem",
+      "path": "pdfs/relatorios/02_ULTIMATE_ENEM_Diagnostico.pdf",
+      "size_kb": 310.3
+    },
+    {
+      "id": "relatorio_dia_de_a",
+      "path": "pdfs/relatorios/03_DIA_DE_A_Diagnostico.pdf",
+      "size_kb": 284.4
+    },
+    {
+      "id": "relatorio_discmed",
+      "path": "pdfs/relatorios/04_discMED_Diagnostico.pdf",
+      "size_kb": 333.8
+    },
+    {
+      "id": "relatorio_medpism_i",
+      "path": "pdfs/relatorios/05_MedPISM_I_Diagnostico.pdf",
+      "size_kb": 366.0
+    },
+    {
+      "id": "relatorio_medpism_ii",
+      "path": "pdfs/relatorios/06_MedPISM_II_Diagnostico.pdf",
+      "size_kb": 366.1
+    },
+    {
+      "id": "relatorio_medpism_iii",
+      "path": "pdfs/relatorios/07_MedPISM_III_Diagnostico.pdf",
+      "size_kb": 349.9
+    },
+    {
+      "id": "relatorio_vaibem",
+      "path": "pdfs/relatorios/08_VaiBem_Diagnostico.pdf",
+      "size_kb": 1028.2
+    },
+    {
+      "id": "relatorios_completo",
+      "path": "pdfs/relatorios/CAVPRIME_Relatorios_Diagnosticos_Completo.pdf",
+      "size_kb": 1766.3
+    },
+    {
+      "id": "vaibem_3ao7_folha_atividades",
+      "path": "pdfs/folhas_especiais/VaiBem_Folha_Atividades_3ao7_Ano.pdf",
+      "size_kb": 124.6
+    },
+    {
+      "id": "capa_mobile_conferencia",
+      "path": "pdfs/folhas_especiais/CAVPRIME_Mobile_Conferencia.pdf",
+      "size_kb": 1033.9
+    }
+  ],
+  "capas": [
+    {
+      "id": "desktop_principal_png",
+      "path": "capas/desktop/cavprime_um_futuro_mais_brilhante.png"
+    },
+    {
+      "id": "mobile_principal_png",
+      "path": "capas/mobile/CAVPRIME_Mobile_Revisado.png"
+    },
+    {
+      "id": "mobile_principal_webp",
+      "path": "capas/mobile/CAVPRIME_Mobile_Leve.webp"
+    }
+  ]
+}

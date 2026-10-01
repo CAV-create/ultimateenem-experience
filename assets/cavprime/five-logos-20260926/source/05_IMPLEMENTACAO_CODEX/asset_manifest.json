@@ -1,0 +1,102 @@
+{
+  "package": "CAVPRIME logos capa app Codex final",
+  "source": "Prancha aprovada nesta conversa",
+  "logos": {
+    "ultimate_enem": {
+      "display_name": "ULTIMATE ENEM",
+      "master_png": "01_LOGOS_MASTER_PNG/ultimate_enem_master_2x.png",
+      "desktop_webp": "02_DESKTOP_WEBP/ultimate_enem_desktop.webp",
+      "mobile_webp": "03_MOBILE_WEBP/ultimate_enem_mobile.webp",
+      "card_png": "04_CARDS_4x5/ultimate_enem_card.png",
+      "card_webp": "04_CARDS_4x5/ultimate_enem_card.webp",
+      "desktop_dimensions": [
+        900,
+        980
+      ],
+      "mobile_dimensions": [
+        520,
+        566
+      ],
+      "do_not_redesign": true
+    },
+    "dia_de_a": {
+      "display_name": "DIA DE A",
+      "master_png": "01_LOGOS_MASTER_PNG/dia_de_a_master_2x.png",
+      "desktop_webp": "02_DESKTOP_WEBP/dia_de_a_desktop.webp",
+      "mobile_webp": "03_MOBILE_WEBP/dia_de_a_mobile.webp",
+      "card_png": "04_CARDS_4x5/dia_de_a_card.png",
+      "card_webp": "04_CARDS_4x5/dia_de_a_card.webp",
+      "desktop_dimensions": [
+        900,
+        1010
+      ],
+      "mobile_dimensions": [
+        520,
+        584
+      ],
+      "do_not_redesign": true
+    },
+    "discmed": {
+      "display_name": "discMED",
+      "master_png": "01_LOGOS_MASTER_PNG/discmed_master_2x.png",
+      "desktop_webp": "02_DESKTOP_WEBP/discmed_desktop.webp",
+      "mobile_webp": "03_MOBILE_WEBP/discmed_mobile.webp",
+      "card_png": "04_CARDS_4x5/discmed_card.png",
+      "card_webp": "04_CARDS_4x5/discmed_card.webp",
+      "desktop_dimensions": [
+        900,
+        968
+      ],
+      "mobile_dimensions": [
+        520,
+        559
+      ],
+      "do_not_redesign": true
+    },
+    "medpism": {
+      "display_name": "MedPISM",
+      "master_png": "01_LOGOS_MASTER_PNG/medpism_master_2x.png",
+      "desktop_webp": "02_DESKTOP_WEBP/medpism_desktop.webp",
+      "mobile_webp": "03_MOBILE_WEBP/medpism_mobile.webp",
+      "card_png": "04_CARDS_4x5/medpism_card.png",
+      "card_webp": "04_CARDS_4x5/medpism_card.webp",
+      "desktop_dimensions": [
+        900,
+        864
+      ],
+      "mobile_dimensions": [
+        520,
+        499
+      ],
+      "do_not_redesign": true
+    },
+    "vaibem": {
+      "display_name": "VAI BEM",
+      "master_png": "01_LOGOS_MASTER_PNG/vaibem_master_2x.png",
+      "desktop_webp": "02_DESKTOP_WEBP/vaibem_desktop.webp",
+      "mobile_webp": "03_MOBILE_WEBP/vaibem_mobile.webp",
+      "card_png": "04_CARDS_4x5/vaibem_card.png",
+      "card_webp": "04_CARDS_4x5/vaibem_card.webp",
+      "desktop_dimensions": [
+        900,
+        847
+      ],
+      "mobile_dimensions": [
+        520,
+        490
+      ],
+      "do_not_redesign": true
+    }
+  },
+  "rules": [
+    "Não regenerar, redesenhar, vetorizar automaticamente ou reescrever as logos.",
+    "Usar object-fit: contain; nunca cover.",
+    "Não aplicar overflow:hidden em contêiner que possa cortar a marca.",
+    "Preservar a área de segurança interna e a proporção original.",
+    "Não adicionar borda amarela externa aos cards/logos.",
+    "Todos os slogans em inglês e a assinatura by CAVPRIME fazem parte do lockup aprovado.",
+    "ULTIMATE ENEM: ENEM branco e em negrito.",
+    "MedPISM: Med branco e em negrito; UF à esquerda, JF à direita e serpente central sem encobrir as letras.",
+    "VaiBem: professor dourado/amarelo, aluno branco; arcos preservados; sem estrela; AULA PARTICULAR; by CAVPRIME; BRIGHT MINDS. BRIGHTER FUTURES."
+  ]
+}

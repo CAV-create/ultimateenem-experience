@@ -1,0 +1,290 @@
+:root {
+  color-scheme: dark;
+}
+
+body {
+  background: #070809;
+}
+
+.app {
+  max-width: 1380px;
+  padding: 18px;
+}
+
+.top {
+  position: sticky;
+  top: 10px;
+  z-index: 20;
+  min-height: 76px;
+  border-radius: 8px;
+  background: rgba(9, 10, 11, 0.96);
+  backdrop-filter: blur(16px);
+}
+
+.back-link {
+  color: #d8d9dc;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.back-link:hover {
+  color: var(--gold);
+}
+
+.vai-bem-lockup {
+  flex: 1;
+}
+
+.brand {
+  font-size: 1.8rem;
+  letter-spacing: 0;
+}
+
+.subject-picker {
+  position: relative;
+}
+
+.subject-picker > summary,
+.connection-details > summary,
+.conversation-history > summary,
+.notebook-actions > summary {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 13px;
+  border: 1px solid #494b50;
+  border-radius: 7px;
+  color: #dedfe1;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 800;
+  list-style: none;
+}
+
+.subject-picker > summary::-webkit-details-marker,
+.connection-details > summary::-webkit-details-marker,
+.conversation-history > summary::-webkit-details-marker,
+.notebook-actions > summary::-webkit-details-marker {
+  display: none;
+}
+
+.subject-picker .modes {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: min(320px, 80vw);
+  display: grid;
+  padding: 8px;
+  border: 1px solid #5b4b15;
+  border-radius: 8px;
+  background: #111216;
+  box-shadow: 0 18px 55px #000c;
+}
+
+.grid {
+  grid-template-columns: minmax(320px, 0.78fr) minmax(460px, 1.22fr);
+  align-items: start;
+}
+
+.card {
+  border-radius: 8px;
+  background: #111318;
+}
+
+.lesson-card {
+  position: sticky;
+  top: 102px;
+}
+
+.head {
+  min-height: 54px;
+  align-items: center;
+}
+
+.step-label {
+  color: var(--gold);
+  font-size: 0.75rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.teacher {
+  padding: 24px;
+  background: linear-gradient(135deg, rgba(244, 196, 48, 0.09), transparent 55%);
+}
+
+.avatar {
+  border-width: 2px;
+}
+
+.session-label {
+  margin-top: 22px;
+  color: var(--gold);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.bubble {
+  margin-top: 10px;
+  border-left-width: 2px;
+  background: #0a0b0d;
+}
+
+.learning-preference {
+  display: grid;
+  gap: 7px;
+  margin-top: 18px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.learning-preference select {
+  min-height: 46px;
+  padding: 0 12px;
+  border: 1px solid #3f4249;
+  border-radius: 7px;
+  background: #0d0e11;
+  color: #fff;
+  font: inherit;
+}
+
+.controls {
+  margin-top: 16px;
+}
+
+.controls .btn {
+  flex: 1 1 auto;
+}
+
+.controls .gold {
+  flex-basis: 100%;
+  min-height: 52px;
+  font-size: 1rem;
+}
+
+.controls .btn:disabled:not(.gold) {
+  display: none;
+}
+
+.meter {
+  margin-top: 15px;
+}
+
+.status {
+  border: 0;
+  padding: 9px 0;
+  color: var(--muted);
+}
+
+.connection-details {
+  margin-top: 8px;
+}
+
+.connection-details > summary {
+  min-height: 36px;
+  justify-content: flex-start;
+  padding: 0;
+  border: 0;
+  color: #858991;
+  font-size: 0.72rem;
+}
+
+.conversation-history {
+  border-top: 1px solid #34312b;
+}
+
+.conversation-history > summary,
+.notebook-actions > summary {
+  justify-content: space-between;
+  border: 0;
+  border-radius: 0;
+}
+
+.talk {
+  padding-top: 0;
+}
+
+.msgs {
+  height: 220px;
+}
+
+.paper {
+  min-height: 690px;
+  margin: 12px;
+  border-radius: 7px;
+}
+
+.notebook-actions {
+  border-top: 1px solid #34312b;
+}
+
+.tools {
+  flex-wrap: wrap;
+}
+
+@media (max-width: 960px) {
+  .top {
+    position: static;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .lesson-card {
+    position: static;
+  }
+
+  .notebook-card {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 620px) {
+  .app {
+    padding: 10px;
+  }
+
+  .top {
+    align-items: stretch;
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .brand {
+    font-size: 1.55rem;
+  }
+
+  .subject-picker .modes {
+    position: static;
+    width: 100%;
+    margin-top: 8px;
+  }
+
+  .teacher {
+    padding: 18px;
+  }
+
+  .who {
+    align-items: flex-start;
+  }
+
+  .avatar {
+    width: 58px;
+    height: 58px;
+    font-size: 1.35rem;
+  }
+
+  .who h1 {
+    font-size: 1.35rem;
+  }
+
+  .paper {
+    min-height: 520px;
+    margin: 8px;
+  }
+}

@@ -1,0 +1,21 @@
+CAVPRIME FINAL 25 DE SETEMBRO — CHECKLIST
+
+[ ] Ler README_CODEX.md
+[ ] Ler asset_manifest.json
+[ ] Usar WEBP em produção e PNG como fallback
+[ ] Não redesenhar logos
+[ ] VaiBem: arcos presentes, sem estrela
+[ ] VaiBem: AULA PARTICULAR + by CAVPRIME + BRIGHT MINDS. BRIGHTER FUTURES.
+[ ] MedPISM: UFJF + símbolo médico + slogan inglês
+[ ] Todos os cards: ACESSAR AGORA
+[ ] Formulário de login funcional em código
+[ ] Testar desktop, tablet e mobile
+[ ] DIA DE A, discMED e MedPISM sem contorno amarelo externo.
+[ ] Nenhuma logo reconstruída; usar assets do pacote.
+[ ] VaiBem com arcos e sem estrela; slogan e by CAVPRIME preservados.
+
+[ ] Logos centralizadas no eixo horizontal de cada slot.
+[ ] Cinco botões ACESSAR AGORA 100% visíveis e sem clipping.
+[ ] Sem overflow:hidden cortando CTA.
+
+[ ] CTA ACESSAR AGORA aparece completo nos 5 cards, incluindo contorno inferior e margem de segurança.

@@ -1,0 +1,27 @@
+{
+  "colors": {
+    "background_navy": "#061C2A",
+    "background_black": "#07090A",
+    "gold_primary": "#D7A21E",
+    "gold_bright": "#F4C64D",
+    "white": "#F7F7F4",
+    "muted_text": "#C8CED2",
+    "border_gold": "rgba(215,162,30,0.85)"
+  },
+  "layout": {
+    "desktop_split": "72% hero / 28% login approximately; follow final reference rather than hard-coding if viewport changes",
+    "card_count": 5,
+    "card_order": [
+      "ultimate_enem",
+      "dia_de_a",
+      "discmed",
+      "medpism",
+      "vaibem"
+    ],
+    "mobile_behavior": "stack login and hero; keep cards horizontally scrollable or 2-column/1-column based on width; never distort logos"
+  },
+  "typography": {
+    "rule": "Do not recreate typography inside logo assets. Treat logo lockups as immutable raster assets.",
+    "ui": "Use a clean sans-serif for functional UI; preserve the visual hierarchy of the approved cover."
+  }
+}

@@ -1,0 +1,69 @@
+// VAI BEM V2 — emissor de token efêmero para Gemini Live
+export default async function handler(req, res) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
+
+  if (!apiKey) {
+    return res.status(503).json({
+      error: 'gemini_api_key_missing',
+      message: 'GEMINI_API_KEY não está disponível neste deployment.'
+    });
+  }
+
+  const isProbe = req.method === 'GET' && req.query?.probe === 'token';
+  if (req.method === 'GET' && !isProbe) {
+    return res.status(200).json({ ok: true, geminiApiKeyConfigured: true });
+  }
+
+  if (req.method !== 'POST' && !isProbe) {
+    res.setHeader('Allow', 'GET, POST');
+    return res.status(405).json({ error: 'method_not_allowed' });
+  }
+
+  const model = 'models/gemini-3.1-flash-live-preview';
+  const expireTime = new Date(Date.now() + 20 * 60 * 1000).toISOString();
+  const newSessionExpireTime = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+  const body = { uses: 1, expireTime, newSessionExpireTime };
+
+  try {
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/auth_tokens', {
+      method: 'POST',
+      signal: AbortSignal.timeout(12000),
+      headers: {
+        'x-goog-api-key': apiKey,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+
+    const raw = await response.text();
+    let data = {};
+    try { data = JSON.parse(raw); } catch {}
+
+    if (!response.ok || !data?.name) {
+      console.error('GEMINI_LIVE_TOKEN_FAILED', {
+        status: response.status,
+        errorCode: data?.error?.status || 'invalid_response'
+      });
+      return res.status(502).json({
+        ok: false,
+        error: 'gemini_token_failed',
+        status: response.status,
+        message: 'Não foi possível emitir a credencial temporária. Tente novamente.'
+      });
+    }
+
+    if (isProbe) {
+      return res.status(200).json({ ok: true, tokenIssuance: true, model });
+    }
+
+    return res.status(200).json({ token: data.name, model, expiresAt: expireTime });
+  } catch (error) {
+    console.error('GEMINI_LIVE_TOKEN_EXCEPTION', { name: error?.name || 'Error' });
+    return res.status(500).json({
+      ok: false,
+      error: 'gemini_token_exception',
+      message: 'O serviço de voz não respondeu a tempo. Tente conectar novamente.'
+    });
+  }
+}
