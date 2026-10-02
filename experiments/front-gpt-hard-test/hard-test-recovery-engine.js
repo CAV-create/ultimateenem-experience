@@ -317,6 +317,339 @@
     },
   };
 
+  const enemRecoveryBlueprints = Object.freeze({
+    linguagem: [
+      {
+        context: "Uma reportagem de saúde pública reúne percentuais de vacinação, compara os dados de diferentes regiões e explica a importância da cobertura vacinal sem expressar opinião pessoal.",
+        command: "Identifique a função da linguagem que predomina nesse texto.",
+      },
+      {
+        context: "Durante uma reunião hospitalar, profissionais usam expressões técnicas compreendidas pela equipe, mas pouco conhecidas por pessoas de fora daquele grupo profissional.",
+        command: "Identifique o fenômeno linguístico exemplificado pelo uso desse vocabulário.",
+      },
+      {
+        context: "Um cartaz de uma campanha comunitária apresenta a frase “Participe agora” ao lado da imagem de moradores reunidos para recuperar uma praça do bairro.",
+        command: "Analise a finalidade produzida pelo emprego do verbo no imperativo.",
+      },
+      {
+        context: "Uma campanha de preservação de rios recria uma frase conhecida de outro texto e altera algumas palavras para denunciar o descarte de resíduos na água.",
+        command: "Identifique a relação estabelecida entre a campanha e o texto retomado.",
+      },
+      {
+        context: "Ao resolver uma questão de leitura, uma estudante encontra duas alternativas aparentemente possíveis, mas apenas uma delas pode ser comprovada por uma passagem do texto-base.",
+        command: "Determine o procedimento mais seguro para escolher a resposta.",
+      },
+    ],
+    territorio: [
+      {
+        context: "Entre as décadas de 1950 e 1980, a industrialização concentrou empregos urbanos enquanto a mecanização e a concentração fundiária reduziram oportunidades de trabalho em várias áreas rurais.",
+        command: "Identifique o movimento populacional que contribuiu para acelerar a urbanização brasileira nesse período.",
+      },
+      {
+        context: "Um mapa urbano mostra rápida expansão de bairros periféricos, mas a rede de saneamento, o transporte coletivo e a oferta de moradias não cresceram no mesmo ritmo.",
+        command: "Analise a consequência mais provável desse processo de urbanização.",
+      },
+      {
+        context: "Uma série demográfica registra queda contínua da natalidade e aumento da expectativa de vida de uma população ao longo de quatro décadas.",
+        command: "Determine a tendência da estrutura etária indicada por esses dados.",
+      },
+      {
+        context: "Em um mapa temático, diferentes cores representam faixas de densidade populacional e pequenos símbolos indicam cidades com mais de um milhão de habitantes.",
+        command: "Identifique a função da legenda para a leitura desse mapa.",
+      },
+      {
+        context: "Registros geológicos mostram terremotos frequentes e a formação de extensas cadeias montanhosas nas proximidades do limite entre grandes blocos da litosfera.",
+        command: "Relacione esses fenômenos ao processo responsável pela transformação do relevo.",
+      },
+    ],
+    biologia: [
+      {
+        context: "Pesquisadores de uma área de manguezal registram a salinidade da água, a disponibilidade de alimento e as interações entre caranguejos, aves, plantas e microrganismos.",
+        command: "Identifique o campo da Biologia que estuda o conjunto dessas relações.",
+      },
+      {
+        context: "Um programa de conservação acompanha tartarugas marinhas na faixa de areia em que elas retornam periodicamente para construir ninhos e depositar ovos.",
+        command: "Identifique o conceito ecológico correspondente ao local onde essa espécie vive e se reproduz.",
+      },
+      {
+        context: "Uma planta de ambiente seco possui cutícula espessa e folhas reduzidas, características que diminuem a perda de água e favorecem sua reprodução naquele ambiente.",
+        command: "Identifique como se classifica uma característica que aumenta a sobrevivência em determinada condição ambiental.",
+      },
+      {
+        context: "Mesmo com variações externas, um organismo saudável mantém temperatura, glicemia e concentração de sais dentro de limites compatíveis com o funcionamento celular.",
+        command: "Identifique o processo de manutenção dessas condições internas relativamente estáveis.",
+      },
+      {
+        context: "A vigilância epidemiológica detecta mudanças frequentes em proteínas da superfície de um vírus, embora ele continue infectando o mesmo tipo de célula hospedeira.",
+        command: "Explique a consequência dessas mudanças para o reconhecimento do vírus pelo sistema imune.",
+      },
+    ],
+    ambiente: [
+      {
+        context: "Um esquema do balanço energético terrestre mostra que parte da radiação emitida pela superfície é absorvida e reemitida por gases presentes naturalmente na atmosfera.",
+        command: "Explique a importância desse processo para a manutenção da vida no planeta.",
+      },
+      {
+        context: "Dois bairros têm área semelhante, mas um deles possui praças arborizadas e solos permeáveis, enquanto o outro concentra asfalto, concreto e pouca vegetação.",
+        command: "Analise o efeito esperado do aumento de árvores no segundo bairro.",
+      },
+      {
+        context: "Após um vazamento industrial, técnicos precisam compreender onde o contaminante surgiu, por quais caminhos ele alcançou o rio e quais organismos foram atingidos.",
+        command: "Determine a sequência de análise mais adequada para investigar esse impacto.",
+      },
+      {
+        context: "Uma cidade prepara seu plano climático e compara ações como ampliar energia renovável, reduzir a queima de combustíveis e recuperar áreas capazes de retirar carbono da atmosfera.",
+        command: "Identifique o objetivo comum dessas medidas de mitigação.",
+      },
+      {
+        context: "A mortandade de peixes em uma lagoa começou depois que chuvas intensas transportaram fertilizantes de lavouras vizinhas para a água, favorecendo a proliferação de algas.",
+        command: "Determine o critério mais seguro para escolher uma intervenção ambiental para esse caso.",
+      },
+    ],
+    fisica: [
+      {
+        context: "Uma colher metálica fria é colocada em uma bebida quente. Depois de algum tempo, colher e bebida se aproximam da mesma temperatura pela transferência de energia entre elas.",
+        command: "Identifique a grandeza física associada à energia transferida por diferença de temperatura.",
+      },
+      {
+        context: "Em um experimento, a distância foi registrada em metros e o tempo em minutos, mas a resposta solicitada deve ser apresentada em metros por segundo.",
+        command: "Determine a conferência necessária antes de iniciar o cálculo.",
+      },
+      {
+        context: "Em uma radiografia, ossos aparecem mais claros que muitos tecidos moles porque materiais de maior densidade interagem de modo diferente com os raios X.",
+        command: "Explique o comportamento da radiação ao atravessar o material mais denso.",
+      },
+      {
+        context: "Um gráfico descreve o movimento de um ciclista ao longo do tempo, mas apresenta duas escalas diferentes e unidades específicas em cada eixo.",
+        command: "Identifique os elementos que devem ser lidos primeiro para interpretar corretamente os dados.",
+      },
+      {
+        context: "Durante a frenagem de uma bicicleta, a energia cinética do conjunto diminui enquanto os freios e as rodas sofrem aquecimento.",
+        command: "Explique o que ocorreu com a energia cinética durante essa interação.",
+      },
+    ],
+    circuitos: [
+      {
+        context: "Um sensor usa dois resistores de 2 Ω e 4 Ω ligados em série no mesmo ramo do circuito, de modo que a corrente percorre ambos em sequência.",
+        command: "Calcule a resistência equivalente desse conjunto.",
+      },
+      {
+        context: "Em uma bancada didática, três resistores de 3 Ω, 5 Ω e 2 Ω foram conectados em série para limitar a corrente de um pequeno dispositivo.",
+        command: "Calcule a resistência equivalente da associação.",
+      },
+      {
+        context: "Uma lâmpada e dois resistores estão conectados em um único laço, sem ramificações entre a fonte e os componentes.",
+        command: "Identifique como a corrente elétrica percorre essa associação em série.",
+      },
+      {
+        context: "Ao conferir um componente com um multímetro, uma estudante precisa registrar corretamente a grandeza elétrica medida pelo aparelho.",
+        command: "Identifique a unidade adequada para expressar a resistência elétrica.",
+      },
+      {
+        context: "Um circuito de proteção contém resistores de 1 Ω e 9 Ω ligados em série antes de um equipamento sensível.",
+        command: "Calcule a resistência equivalente instalada no circuito.",
+      },
+    ],
+    quimica: [
+      {
+        context: "Duas amostras aquosas apresentam pH 2 e pH 4. Como a escala é logarítmica, cada unidade de diferença corresponde a um fator dez na concentração de H^{+}.",
+        command: "Calcule quantas vezes a primeira amostra possui maior concentração de H^{+}.",
+      },
+      {
+        context: "Um laboratório compara duas soluções de pH 3 e pH 6 para escolher a que apresenta maior concentração de íons H^{+}.",
+        command: "Determine o fator de diferença entre as concentrações dessas soluções.",
+      },
+      {
+        context: "Quatro frascos sem identificação foram medidos e apresentaram pH 2, pH 4, pH 7 e pH 9, respectivamente.",
+        command: "Identifique a solução com maior concentração de H^{+}.",
+      },
+      {
+        context: "Durante a calibração de um equipamento, a equipe observa uma variação de exatamente uma unidade entre duas medidas consecutivas de pH.",
+        command: "Determine o fator correspondente a essa diferença na concentração de H^{+}.",
+      },
+      {
+        context: "Uma solução de pH 5 é comparada a outra de pH 3. A diferença deve ser interpretada pelo caráter logarítmico da escala, e não por subtração simples de concentrações.",
+        command: "Compare a concentração de H^{+} da solução de pH 5 com a da solução de pH 3.",
+      },
+    ],
+    estequiometria: [
+      {
+        context: "A combustão do hidrogênio é representada pela equação balanceada 2 H_{2}(g) + O_{2}(g) -> 2 H_{2}O(l). Uma amostra fornece 1 mol de O_{2}.",
+        command: "Determine a quantidade, em mol, de H_{2}O formada segundo a proporção da equação.",
+      },
+      {
+        context: "Para converter quantidade de matéria em número de partículas, um estudante consulta a constante de Avogadro adotada nos cálculos químicos.",
+        command: "Identifique quantas entidades correspondem a 1 mol de qualquer espécie.",
+      },
+      {
+        context: "Uma análise fornece a quantidade de matéria de uma substância em mol, mas o relatório final solicita a massa correspondente em gramas.",
+        command: "Identifique a relação necessária para realizar essa conversão.",
+      },
+      {
+        context: "Antes de usar os coeficientes de uma reação, a equipe precisa garantir que o número de átomos de cada elemento seja conservado entre reagentes e produtos.",
+        command: "Determine o procedimento que deve ser realizado antes da proporção estequiométrica.",
+      },
+      {
+        context: "Em uma reação já balanceada, 1 mol de O_{2} produz 36 g de H_{2}O. Mantidas as mesmas condições, serão usados 3 mol de O_{2}.",
+        command: "Calcule a massa de água produzida nessa nova situação.",
+      },
+    ],
+    porcentagem: [
+      {
+        context: "Uma farmácia anuncia 10% de desconto sobre um produto cujo preço original é R$ 60. O desconto deve ser calculado antes do preço final.",
+        command: "Calcule o valor que o cliente pagará pelo produto.",
+      },
+      {
+        context: "Em uma turma com 50 estudantes, 20% participaram de uma atividade de revisão no contraturno.",
+        command: "Calcule quantos estudantes participaram da atividade.",
+      },
+      {
+        context: "Uma mensalidade de R$ 80 recebe acréscimo de 25% devido à inclusão de um novo serviço contratado pela família.",
+        command: "Calcule o valor total da mensalidade após o acréscimo.",
+      },
+      {
+        context: "Uma campanha concede 30% de desconto sobre uma taxa de R$ 100, mas o registro solicita apenas o valor retirado, não o preço final.",
+        command: "Determine o valor correspondente ao desconto concedido.",
+      },
+      {
+        context: "Um livro custava R$ 80 e recebeu um abatimento fixo de R$ 12 no caixa, independentemente de qualquer outra promoção.",
+        command: "Calcule o preço final do livro depois do abatimento.",
+      },
+    ],
+    funcao_linear: [
+      {
+        context: "Um serviço de entrega cobra uma parcela fixa de R$ 5 mais R$ 3 por quilômetro percorrido. Uma encomenda será transportada por 4 km.",
+        command: "Calcule o preço total dessa entrega.",
+      },
+      {
+        context: "Uma empresa cobra R$ 10 de taxa inicial e acrescenta R$ 2 por unidade utilizada. Um cliente usou 5 unidades.",
+        command: "Calcule o valor total cobrado do cliente.",
+      },
+      {
+        context: "O custo de uma corrida é representado por V = 8 + 2k, em que k indica a quantidade de quilômetros percorridos.",
+        command: "Identifique o significado do número 8 nesse modelo.",
+      },
+      {
+        context: "No modelo V = 8 + 2k, a variável k representa a distância percorrida e cada quilômetro acrescenta o mesmo valor à tarifa.",
+        command: "Identifique o significado do coeficiente 2 nessa expressão.",
+      },
+      {
+        context: "A produção de uma oficina em determinado período é descrita pela expressão V = 4 + 5x. Para a situação analisada, x assume o valor 2.",
+        command: "Calcule o valor de V após a substituição da variável.",
+      },
+    ],
+    escala: [
+      {
+        context: "Em um mapa de escala 1:100 000, a distância em linha reta entre duas unidades de saúde mede 2 cm com a régua.",
+        command: "Calcule a distância real entre essas unidades em quilômetros.",
+      },
+      {
+        context: "Uma rota mede 2 cm em um mapa construído na escala 1:50 000. A resposta deve ser convertida de centímetros reais para quilômetros.",
+        command: "Determine a distância real representada no mapa.",
+      },
+      {
+        context: "Um atlas utiliza a escala 1:200 000 para representar uma região extensa. Um segmento de interesse mede exatamente 1 cm no papel.",
+        command: "Calcule a distância real correspondente a esse segmento.",
+      },
+      {
+        context: "Uma estudante conhece a medida de uma estrada no mapa e o valor n de uma escala numérica escrita na forma 1:n.",
+        command: "Identifique por qual elemento da escala a medida do mapa deve ser multiplicada para obter a distância real.",
+      },
+      {
+        context: "Depois do cálculo cartográfico, a distância real encontrada foi de 100 000 cm, mas o relatório solicita o resultado em quilômetros.",
+        command: "Determine a equivalência correta para concluir essa conversão.",
+      },
+    ],
+    probabilidade: [
+      {
+        context: "Uma caixa transparente contém 4 fichas azuis e 1 ficha vermelha, todas com o mesmo tamanho e a mesma chance de serem retiradas.",
+        command: "Calcule a probabilidade de retirar uma ficha azul em uma única tentativa.",
+      },
+      {
+        context: "Um dado cúbico comum, com faces numeradas de 1 a 6, será lançado uma vez sobre uma superfície plana.",
+        command: "Determine o número de resultados possíveis desse experimento.",
+      },
+      {
+        context: "Em um experimento aleatório bem definido, o evento analisado não pode ocorrer em nenhuma das possibilidades do espaço amostral.",
+        command: "Determine a probabilidade atribuída a esse evento impossível.",
+      },
+      {
+        context: "Uma equipe já enumerou todos os resultados igualmente prováveis de um experimento e marcou aqueles que satisfazem a condição investigada.",
+        command: "Identifique a relação usada para calcular a probabilidade simples desse evento.",
+      },
+      {
+        context: "Uma urna contém 3 bolas azuis e 2 vermelhas, indistinguíveis pelo tato. Uma bola será retirada ao acaso.",
+        command: "Calcule a probabilidade de a bola retirada ser azul.",
+      },
+    ],
+    estatistica: [
+      {
+        context: "Duas medições de um mesmo indicador produziram os valores 4 e 6. O relatório solicita um único valor para representar o centro aritmético do conjunto.",
+        command: "Calcule a média aritmética dessas medições.",
+      },
+      {
+        context: "Os resultados observados em quatro dias foram 1, 2, 2 e 5. A equipe deseja destacar o valor que ocorreu com maior frequência.",
+        command: "Identifique a moda desse conjunto de dados.",
+      },
+      {
+        context: "Uma pequena série apresenta os valores 2, 4 e 9 já organizados em ordem crescente. O interesse está na posição central, não na soma dos dados.",
+        command: "Determine a mediana desse conjunto.",
+      },
+      {
+        context: "Dois gráficos de barras representam o mesmo fenômeno, mas usam intervalos diferentes no eixo vertical, produzindo impressões visuais distintas.",
+        command: "Identifique o elemento que deve ser observado antes de comparar as alturas das barras.",
+      },
+      {
+        context: "As medidas registradas em três observações foram 3, 7 e 8. A equipe quer expressar a distância entre o maior e o menor valor.",
+        command: "Calcule a amplitude desse conjunto de dados.",
+      },
+    ],
+    proporcionalidade: [
+      {
+        context: "Em uma papelaria, 2 cadernos iguais custam R$ 10. O preço unitário permanece constante e um estudante pretende comprar 4 cadernos.",
+        command: "Calcule o custo total da nova compra.",
+      },
+      {
+        context: "Um veículo mantém velocidade constante em uma estrada. Em uma segunda viagem, o tempo de deslocamento é duplicado sem alterar essa velocidade.",
+        command: "Determine como a distância percorrida se modifica nessa condição.",
+      },
+      {
+        context: "Uma tarefa pode ser dividida entre trabalhadores com o mesmo ritmo de produção. Ao aumentar a equipe, a quantidade total de trabalho permanece a mesma.",
+        command: "Determine o efeito esperado sobre o tempo necessário para concluir a tarefa.",
+      },
+      {
+        context: "Em um processo seletivo, 2 candidatos foram aprovados entre 10 inscritos. A equipe deseja representar essa relação por uma fração irredutível.",
+        command: "Calcule a razão entre o número de aprovados e o total de inscritos.",
+      },
+      {
+        context: "Antes de montar uma regra de três, uma estudante observa como duas grandezas variam e confere se existe proporcionalidade entre elas.",
+        command: "Identifique a classificação que deve ser feita antes de iniciar o cálculo.",
+      },
+    ],
+    geometria: [
+      {
+        context: "Uma placa retangular possui 4 cm de base e 2 cm de altura. Toda a superfície frontal será coberta por um material adesivo.",
+        command: "Calcule a área que receberá o revestimento.",
+      },
+      {
+        context: "Um canteiro quadrado tem lado de 3 cm em uma maquete. Uma fita será colocada ao longo de todo o seu contorno.",
+        command: "Calcule o perímetro representado nessa maquete.",
+      },
+      {
+        context: "Uma peça triangular possui base de 6 unidades e altura perpendicular de 4 unidades. O projeto solicita a medida de sua superfície.",
+        command: "Calcule a área dessa peça triangular.",
+      },
+      {
+        context: "O piso de uma sala irregular pode ser separado, sem sobreposição, em retângulos e triângulos cujas medidas são conhecidas.",
+        command: "Identifique a estratégia adequada para calcular a área total da figura composta.",
+      },
+      {
+        context: "Uma caixa será preenchida com pequenos cubos de aresta igual a 1 cm, e o resultado deve representar o espaço tridimensional ocupado.",
+        command: "Identifique a unidade adequada para expressar esse volume.",
+      },
+    ],
+  });
+
   const microSummaries = Object.freeze({
     linguagem: ["Leia primeiro o comando da questão.", "Localize no texto a evidência que sustenta a resposta.", "Relacione escolha linguística, público e efeito de sentido."],
     territorio: ["Identifique o espaço e os grupos envolvidos.", "Monte a cadeia causa → transformação → consequência.", "Confirme a resposta com um elemento da paisagem ou do processo histórico."],
@@ -721,20 +1054,23 @@
     const questions = pack.quiz.map(([prompt, correctText, distractors, explanation], index) => {
       const finalDistractors = courseKey === "ultimate" ? completeEnemDistractors(packKey, index, correctText, distractors) : distractors;
       const ordered = rotateOptions(correctText, finalDistractors, index + 1);
+      const blueprint = courseKey === "ultimate" ? enemRecoveryBlueprints[packKey]?.[index] : null;
       return {
         id: `${metadata.id || packKey}:recovery:${index + 1}`,
-        prompt,
+        prompt: blueprint ? `${blueprint.context} ${blueprint.command}` : prompt,
+        context: blueprint?.context || "",
+        command: blueprint?.command || prompt,
         options: ordered.options,
         correct: ordered.correct,
         explanation,
         competencyCode,
         skillCode,
-        difficulty: "Muito fácil",
+        difficulty: "Consolidação guiada",
       };
     });
     return {
       supported: true,
-      version: "cavmed-clinical-recovery-v7-enem-five-options",
+      version: "cavmed-clinical-recovery-v8-contextual-enem",
       policy,
       packKey,
       quantitative: isQuantitativeCase(metadata, packKey),
@@ -775,7 +1111,7 @@
   }
 
   window.CAV_RECOVERY_ENGINE = Object.freeze({
-    version: "2.4.0",
+    version: "2.5.0",
     coursePolicies,
     createSession,
     resolvePackKey,

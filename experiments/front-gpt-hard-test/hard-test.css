@@ -439,6 +439,11 @@
   gap: 24px;
 }
 
+.worked-example > header > div {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
 .worked-example h2 {
   margin: 7px 0 0;
   font-size: clamp(21px, 3vw, 29px);
@@ -446,7 +451,9 @@
 }
 
 .worked-example > header > span {
-  flex: 0 0 auto;
+  min-width: 0;
+  max-width: 52%;
+  flex: 0 1 auto;
   padding: 10px 12px;
   border: 1px solid #cfbd8e;
   border-radius: 6px;
@@ -455,6 +462,9 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 12px;
   font-weight: 800;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .worked-prompt {
@@ -668,9 +678,23 @@
 
 .recovery-question h3 {
   max-width: 900px;
-  margin: 16px 0 18px;
+  margin: 10px 0 18px;
   font-size: 17px;
   line-height: 1.45;
+}
+
+.recovery-question-context {
+  max-width: 900px;
+  margin-top: 18px;
+  color: #4f5850;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.recovery-question-command {
+  padding-top: 12px;
+  border-top: 1px solid #eceee8;
+  color: #1f2b20;
 }
 
 .recovery-options {

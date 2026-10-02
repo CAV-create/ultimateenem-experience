@@ -23,3 +23,10 @@ test('recovery interface labels all five ENEM alternatives from A to E', () => {
   assert.ok(labels.length >= 2, 'questão e correção devem compartilhar a escala A-E');
   assert.doesNotMatch(adapterCode, /\$\{\"ABCD\"\[optionIndex\]\}/);
 });
+
+test('student-facing recovery uses medical memory prescription and separated context', () => {
+  assert.match(adapterCode, /Prescrição de memória · 3 vezes ao dia/);
+  assert.match(adapterCode, /recovery-question-context/);
+  assert.match(adapterCode, /recovery-question-command/);
+  assert.doesNotMatch(adapterCode, /Flashcards estilo Anki|Modelo Anki|Muito fácil/);
+});

@@ -39,6 +39,10 @@ test('UltimateENEM recovery always has one answer and four distractors', () => {
       assert.equal(question.options.length, 5, `${expectedPack} deve ter alternativas A-E`);
       assert.equal(new Set(question.options).size, 5, `${expectedPack} não pode repetir alternativa`);
       assert.ok(question.correct >= 0 && question.correct <= 4);
+      assert.ok(question.context.length >= 80, `${expectedPack} precisa de contexto suficiente`);
+      assert.match(question.command, /^(Identifique|Analise|Determine|Relacione|Calcule|Compare|Explique|Justifique)\b/);
+      assert.equal(question.prompt, `${question.context} ${question.command}`);
+      assert.equal(question.difficulty, 'Consolidação guiada');
     }
   }
 });
