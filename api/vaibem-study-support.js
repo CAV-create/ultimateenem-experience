@@ -13,6 +13,15 @@ function outputText(payload) {
     .trim();
 }
 
+function geminiOutputText(payload) {
+  return (payload?.candidates || [])
+    .flatMap((candidate) => candidate?.content?.parts || [])
+    .map((part) => typeof part?.text === "string" ? part.text.trim() : "")
+    .filter(Boolean)
+    .join("\n")
+    .trim();
+}
+
 function parseJson(text) {
   const cleaned = String(text || "")
     .replace(/^```(?:json)?\s*/i, "")
@@ -181,6 +190,38 @@ async function requestOpenAI({ apiKey, model, instructions, content, maxOutputTo
   return parseJson(text);
 }
 
+async function requestGemini({ apiKey, model, instructions, content, maxOutputTokens = 12000 }) {
+  const cleanModel = String(model || "gemini-2.5-flash").replace(/^models\//, "");
+  if (!/^[a-z0-9._-]+$/i.test(cleanModel)) throw new Error("gemini_model_invalid");
+  const parts = [{ text: instructions }];
+  for (const item of content) {
+    if (item?.type === "input_text") parts.push({ text: String(item.text || "") });
+    if (item?.type === "input_file") parts.push({ inlineData: { mimeType: "application/pdf", data: item.file_data } });
+    if (item?.type === "input_image") {
+      const image = dataUrlParts(item.image_url);
+      if (image) parts.push({ inlineData: { mimeType: image.mimeType, data: image.base64 } });
+    }
+  }
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${cleanModel}:generateContent`, {
+    method: "POST",
+    signal: AbortSignal.timeout(60000),
+    headers: { "x-goog-api-key": apiKey, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [{ role: "user", parts }],
+      generationConfig: { responseMimeType: "application/json", maxOutputTokens },
+    }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  const text = geminiOutputText(payload);
+  if (!response.ok || !text) throw new Error(`gemini_response_failed_${response.status}`);
+  return parseJson(text);
+}
+
+async function requestStructured({ geminiKey, geminiModel, openAIKey, openAIModel, instructions, content, maxOutputTokens }) {
+  if (geminiKey) return requestGemini({ apiKey: geminiKey, model: geminiModel, instructions, content, maxOutputTokens });
+  return requestOpenAI({ apiKey: openAIKey, model: openAIModel, instructions, content, maxOutputTokens });
+}
+
 function commonContext(body) {
   return {
     subject: string(body?.subject || "Componente curricular", 120),
@@ -196,9 +237,11 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "method_not_allowed" });
   }
 
-  const apiKey = process.env.OPENAI_API_KEY;
-  const model = process.env.OPENAI_VISION_MODEL || process.env.OPENAI_MODEL;
-  if (!apiKey || !model) {
+  const geminiKey = process.env.GEMINI_API_KEY;
+  const geminiModel = process.env.GEMINI_VISION_MODEL || process.env.GEMINI_MODEL || "gemini-2.5-flash";
+  const openAIKey = process.env.OPENAI_API_KEY;
+  const openAIModel = process.env.OPENAI_VISION_MODEL || process.env.OPENAI_MODEL;
+  if (!geminiKey && (!openAIKey || !openAIModel)) {
     return res.status(503).json({ error: "study_support_not_configured", message: "Os professores plantonistas ainda não estão disponíveis neste ambiente." });
   }
 
@@ -221,9 +264,11 @@ export default async function handler(req, res) {
         "Retorne somente JSON puro com: topicTitle, summary, openingQuestion, objectives, sequence, vocabulary, guidedExamples, printableWarmup e teacherBriefing.",
         "sequence contém stage, title, instruction, visualTool e check. guidedExamples contém title, prompt, steps e answer. printableWarmup contém number, statement, support e answer.",
       ].join(" ");
-      const parsed = await requestOpenAI({
-        apiKey,
-        model,
+      const parsed = await requestStructured({
+        geminiKey,
+        geminiModel,
+        openAIKey,
+        openAIModel,
         instructions,
         content: [{ type: "input_text", text: `Disciplina: ${context.subject}\nAno escolar: ${context.grade}\nProfessor: ${context.teacher}\nData da avaliação: ${lessonContext.assessmentDate || "não informada"}\nConteúdos que vão cair:\n${topics}` }],
         maxOutputTokens: 9000,
@@ -257,9 +302,11 @@ export default async function handler(req, res) {
         "errorReport contém topic, skill, evidence, frequency, priority e nextStep.",
         "recovery contém title, reason, microSummary, guidance, workedExamples e exercises. Cada exercise contém number, statement, support, answer e comment.",
       ].join(" ");
-      const parsed = await requestOpenAI({
-        apiKey,
-        model,
+      const parsed = await requestStructured({
+        geminiKey,
+        geminiModel,
+        openAIKey,
+        openAIModel,
         instructions,
         content: [
           { type: "input_text", text: `Disciplina: ${context.subject}\nAno escolar: ${context.grade}\nProfessor responsável: ${context.teacher}\nNome da atividade: ${reviewContext.name || fileName}\nGabarito opcional informado pela família ou pelo aluno: ${string(req.body?.answerKey, 2500) || "não informado"}` },
