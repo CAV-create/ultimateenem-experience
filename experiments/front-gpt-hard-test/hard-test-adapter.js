@@ -1874,7 +1874,7 @@
       try {
         if (file.size > 4 * 1024 * 1024) throw new Error("file_too_large");
         const dataUrl = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(file); });
-        const response = await fetch("/api/cavprime-list-import-test", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, fileName: file.name, mimeType: file.type, dataUrl, answerKey }), signal: AbortSignal.timeout(45000) });
+        const response = await fetch("/api/cavprime-list-import-test", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, fileName: file.name, mimeType: file.type, dataUrl, answerKey }), signal: AbortSignal.timeout(150000) });
         const payload = await response.json();
         if (!response.ok || !Array.isArray(payload.questions) || !payload.questions.length) throw new Error("import_unavailable");
         parsed = payload.questions;
