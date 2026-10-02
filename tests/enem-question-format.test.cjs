@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const code = fs.readFileSync(path.join(__dirname, '../experiments/front-gpt-hard-test/hard-test-questions.js'), 'utf8');
+const adapterCode = fs.readFileSync(path.join(__dirname, '../experiments/front-gpt-hard-test/hard-test-adapter.js'), 'utf8');
 
 test('every native UltimateENEM item has one answer and four distinct distractors', () => {
   const window = {};
@@ -15,4 +16,10 @@ test('every native UltimateENEM item has one answer and four distinct distractor
     assert.equal(new Set(item.options).size, 5, `${item.id} não pode repetir alternativa`);
     assert.match(item.answer, /^[A-E]$/, `${item.id} precisa de gabarito A-E`);
   }
+});
+
+test('recovery interface labels all five ENEM alternatives from A to E', () => {
+  const labels = [...adapterCode.matchAll(/\$\{\"(ABCDE)\"\[optionIndex\]\}/g)];
+  assert.ok(labels.length >= 2, 'questão e correção devem compartilhar a escala A-E');
+  assert.doesNotMatch(adapterCode, /\$\{\"ABCD\"\[optionIndex\]\}/);
 });

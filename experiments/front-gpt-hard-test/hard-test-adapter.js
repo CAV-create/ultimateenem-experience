@@ -649,7 +649,7 @@
       const rationale = isCorrect
         ? questionItem.explanation
         : `“${option}” não responde ao conceito pedido. Compare com “${questionItem.options[questionItem.correct]}” e volte à relação central do enunciado.`;
-      return `<div class="recovery-audit-row ${isCorrect ? "correct" : chosen ? "chosen-wrong" : ""}"><span>${"ABCD"[optionIndex]}</span><p><strong>${label}</strong>${scientificText(rationale)}</p></div>`;
+      return `<div class="recovery-audit-row ${isCorrect ? "correct" : chosen ? "chosen-wrong" : ""}"><span>${"ABCDE"[optionIndex]}</span><p><strong>${label}</strong>${scientificText(rationale)}</p></div>`;
     }).join("");
     return `<div class="recovery-feedback ${correct ? "correct" : "wrong"}"><strong>${correct ? "Acertou. O fundamento está firme." : "Ainda não. Vamos usar este erro como pista."}</strong><div class="recovery-audit">${rows}</div></div>`;
   }
@@ -661,7 +661,7 @@
       const classes = ["recovery-option"];
       if (answered && optionIndex === questionItem.correct) classes.push("correct");
       if (answered && optionIndex === answer && answer !== questionItem.correct) classes.push("wrong");
-      return `<button type="button" class="${classes.join(" ")}" data-action="recovery-answer" data-index="${index}" data-value="${optionIndex}" ${answered ? "disabled" : ""}><span>${"ABCD"[optionIndex]}</span><b>${scientificText(option)}</b></button>`;
+      return `<button type="button" class="${classes.join(" ")}" data-action="recovery-answer" data-index="${index}" data-value="${optionIndex}" ${answered ? "disabled" : ""}><span>${"ABCDE"[optionIndex]}</span><b>${scientificText(option)}</b></button>`;
     }).join("");
     return `<article class="recovery-question ${answered ? "answered" : ""}"><header><span>Questão ${index + 1}</span><small>Muito fácil · ${esc(questionItem.competencyCode)} · ${esc(questionItem.skillCode)}</small></header><h3>${markCommandVerb(questionItem.prompt)}</h3><div class="recovery-options" role="radiogroup" aria-label="Alternativas da questão ${index + 1}">${options}</div>${recoveryAnswerAudit(questionItem, answer)}</article>`;
   }
