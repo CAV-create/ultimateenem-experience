@@ -135,7 +135,7 @@ function sanitizeReview(value, context) {
     nextStep: string(error?.nextStep, 700),
   })).filter((error) => error.topic && error.evidence);
   const recoveryValue = value?.recovery || {};
-  const workedExamples = (Array.isArray(recoveryValue?.workedExamples) ? recoveryValue.workedExamples : []).slice(0, 4).map((example) => ({
+  const modelWorkedExamples = (Array.isArray(recoveryValue?.workedExamples) ? recoveryValue.workedExamples : []).slice(0, 4).map((example) => ({
     title: string(example?.title, 120),
     problem: string(example?.problem, 900),
     steps: strings(example?.steps, 10, 600),
@@ -149,6 +149,14 @@ function sanitizeReview(value, context) {
     comment: string(exercise?.comment, 900),
   })).filter((exercise) => exercise.statement);
   const needsRecovery = Boolean(value?.needsRecovery) || errorCount >= 3 || errorRate >= 0.3;
+  const workedExamples = modelWorkedExamples.length >= 2 ? modelWorkedExamples : exercises.slice(0, 2).map((exercise, index) => ({
+    title: `Exemplo resolvido ${index + 1}`,
+    problem: exercise.statement,
+    steps: [exercise.support, exercise.comment, exercise.answer ? `Resposta esperada: ${exercise.answer}` : ""].filter(Boolean),
+    answer: exercise.answer,
+  }));
+  const guidance = strings(recoveryValue?.guidance, 8, 500);
+  const recoveryGuidance = guidance.length ? guidance : errorReport.map((error) => error.nextStep).filter(Boolean).slice(0, 6);
   return {
     id: `activity-${Date.now()}`,
     fileName: context.fileName,
@@ -173,7 +181,7 @@ function sanitizeReview(value, context) {
       title: string(recoveryValue?.title || "Recuperação orientada", 180),
       reason: string(recoveryValue?.reason, 700),
       microSummary: string(recoveryValue?.microSummary, 1800),
-      guidance: strings(recoveryValue?.guidance, 8, 500),
+      guidance: recoveryGuidance,
       workedExamples,
       exercises,
     } : null,
@@ -329,7 +337,7 @@ export default async function handler(req, res) {
         "overview contém title, summary, totalQuestions, answeredQuestions, correctCount, partialCount e errorCount.",
         "annotations contém questionNumber, page, anchor, status, studentAnswer, expectedAnswer, comment, why, competency, skill, topic e position.",
         "errorReport contém topic, skill, evidence, frequency, priority e nextStep.",
-        "recovery contém title, reason, microSummary, guidance, workedExamples e exercises. Cada exercise contém number, statement, support, answer e comment.",
+        "recovery contém title, reason, microSummary, guidance, workedExamples e exercises. guidance deve ter de três a cinco orientações práticas. workedExamples deve conter exatamente dois objetos completos, cada um com title, problem, steps e answer. Cada exercise contém number, statement, support, answer e comment.",
       ].join(" ");
       const parsed = await requestStructured({
         geminiKey,
