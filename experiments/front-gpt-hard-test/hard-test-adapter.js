@@ -162,7 +162,11 @@
     });
   }
 
-  const sourceQuestions = (window.CAV_HARD_TEST_QUESTIONS || testData.questions || []).map((item) => ({
+  const rawSourceQuestions = window.CAV_HARD_TEST_QUESTIONS || testData.questions || [];
+  const validEnemQuestion = (item) => Array.isArray(item?.options) && item.options.length === 5 && /^[A-E]$/.test(item.answer || "") && new Set(item.options).size === 5;
+  const rejectedEnemQuestions = rawSourceQuestions.filter((item) => !validEnemQuestion(item));
+  if (rejectedEnemQuestions.length) console.error("Itens ENEM bloqueados: cada item precisa de um gabarito e quatro distratores distintos.", rejectedEnemQuestions.map((item) => item?.id || item?.number));
+  const sourceQuestions = rawSourceQuestions.filter(validEnemQuestion).map((item) => ({
     id: item.id,
     areaId: item.areaId,
     area: item.area,

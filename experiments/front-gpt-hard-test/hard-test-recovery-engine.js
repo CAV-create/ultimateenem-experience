@@ -657,6 +657,32 @@
     return "linguagem";
   }
 
+  const enemExtraDistractors = Object.freeze({
+    linguagem: ["Conativa", "Variação histórica", "Expressar a emoção do emissor", "citação sem produção de novo sentido", "eliminar opções antes de localizar a evidência"],
+    territorio: ["Migração de retorno", "expansão uniforme da infraestrutura urbana", "crescimento da participação de jovens", "definir a projeção cartográfica", "intemperismo provocado apenas pela chuva"],
+    biologia: ["as propriedades físicas das rochas", "população", "característica adquirida pelo uso", "mutualismo", "impedir a entrada do vírus na célula por completo"],
+    ambiente: ["elimina toda variação de temperatura", "aumentar o escoamento superficial", "consumo, propaganda e preço", "substituir vegetação por superfícies escuras", "a medida mais abrangente, mesmo sem relação causal"],
+    fisica: ["matéria que permanece armazenada no corpo", "a quantidade de casas decimais", "atravessar o material sem atenuação", "somente a cor das linhas", "deixou de existir durante o movimento"],
+    circuitos: ["12 Ω", "6 Ω", "aumenta a cada resistor", "joule", "11 Ω"],
+    quimica: ["1 000 vezes maior", "300 vezes", "pH 12", "1 000", "10 vezes menor"],
+    estequiometria: ["0,5 mol", "6,02 · 10² entidades", "a densidade da solução", "multiplicar todos os índices por dois", "144 g"],
+    porcentagem: ["R$ 56", "25", "R$ 120", "R$ 100", "R$ 64"],
+    funcao_linear: ["R$ 9", "R$ 30", "o valor por unidade", "a quantidade k", "20"],
+    escala: ["2 m", "100 km", "0,2 km", "orientação do mapa", "100 quilômetros"],
+    probabilidade: ["[[frac|4|1]]", "8", "−1", "casos possíveis divididos por favoráveis", "[[frac|3|2]]"],
+    estatistica: ["6", "3", "15", "apenas o maior valor", "11"],
+    proporcionalidade: ["R$ 15", "quadruplica", "o dobro do tempo", "[[frac|1|2]]", "multiplicar todos os valores entre si"],
+    geometria: ["4 cm²", "12 cm²", "6", "substituir todas as medidas por uma média", "cm⁴"],
+  });
+
+  function completeEnemDistractors(packKey, index, correct, distractors) {
+    const values = [...new Set(distractors.map((value) => String(value).trim()))].filter((value) => value && value !== correct);
+    const extra = enemExtraDistractors[packKey]?.[index];
+    if (values.length < 4 && extra && extra !== correct && !values.includes(extra)) values.push(extra);
+    if (values.length !== 4) throw new Error(`Item ENEM inválido em ${packKey}:${index + 1}: esperado um gabarito e quatro distratores`);
+    return values;
+  }
+
   function rotateOptions(correct, distractors, shift) {
     const all = [correct, ...distractors];
     const amount = shift % all.length;
@@ -693,7 +719,8 @@
     const competencyCode = metadata.competencyCode || "Competência em classificação";
     const skillCode = metadata.skillCode || "Habilidade em classificação";
     const questions = pack.quiz.map(([prompt, correctText, distractors, explanation], index) => {
-      const ordered = rotateOptions(correctText, distractors, index + 1);
+      const finalDistractors = courseKey === "ultimate" ? completeEnemDistractors(packKey, index, correctText, distractors) : distractors;
+      const ordered = rotateOptions(correctText, finalDistractors, index + 1);
       return {
         id: `${metadata.id || packKey}:recovery:${index + 1}`,
         prompt,
@@ -707,7 +734,7 @@
     });
     return {
       supported: true,
-      version: "cavmed-clinical-recovery-v6",
+      version: "cavmed-clinical-recovery-v7-enem-five-options",
       policy,
       packKey,
       quantitative: isQuantitativeCase(metadata, packKey),

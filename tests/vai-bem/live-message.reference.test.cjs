@@ -37,6 +37,10 @@ test('locks tutoring to Brazilian Portuguese and exposes START and RISE teachers
   assert.match(live.systemInstruction(), /PORTUGUÊS DO BRASIL/);
   assert.match(live.systemInstruction(), /nunca afirme que desenhou sem chamar a ferramenta/i);
   assert.match(live.systemInstruction(), /pizza deve ser um círculo com fatias/);
+  assert.match(live.systemInstruction(), /action=tabela/);
+  assert.match(live.systemInstruction(), /action=mapa_mental/);
+  assert.match(live.systemInstruction(), /action=desenho/);
+  assert.match(live.systemInstruction(), /vale para Matemática, Língua Portuguesa/);
   assert.equal(live.teachers.math.track, 'start');
   assert.equal(live.teachers.chem.track, 'rise');
   assert.equal(Object.keys(live.teachers).length, 17);
@@ -64,4 +68,5 @@ test('the Live setup declares the safe board tool and output audio', () => {
   assert.match(code, /functionDeclarations:\s*\[window\.VaiBemBoard\.declaration\]/);
   assert.match(code, /responseModalities:\s*\["AUDIO"\]/);
   assert.match(code, /action=diagrama/);
+  assert.match(code, /Pizza 5\/12/);
 });

@@ -1,6 +1,6 @@
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
-const {Board,validate,MOLECULES,DIAGRAMS}=require('../../vai-bem-board.js');
+const {Board,validate,MOLECULES,DIAGRAMS,COLORS,DRAW_KINDS}=require('../../vai-bem-board.js');
 class Element{
  constructor(){this.children=[];this.style={};this.attributes={};this.classes=new Set();this.classList={add:s=>this.classes.add(s),toggle:(s,on)=>on?this.classes.add(s):this.classes.delete(s)};this.textContent=''}
  append(...els){for(const el of els){el.parent=this;this.children.push(el)}}
@@ -80,4 +80,31 @@ test('visual toolkit draws concrete child-friendly and cross-subject illustratio
  for(const sample of samples){board.command({action:'diagrama',...sample},sample.id);const item=board.blocks.get(sample.id);assert.ok(item.steps.length>=3);assert.ok(item.steps.every(step=>step.style.opacity==='0'));}
  assert.throws(()=>validate({action:'diagrama',id:'bad-pizza',diagram:'pizza',title:'Pizza',values:[9,4],labels:[]}));
  assert.throws(()=>validate({action:'diagrama',id:'bad-clock',diagram:'relogio',title:'Relógio',values:[10,75],labels:[]}));
+});
+
+test('pizza supports twelve slices and rejects a thirteenth slice',()=>{
+ const {board}=fixture();
+ board.command({action:'diagrama',id:'pizza-12',diagram:'pizza',title:'Cinco doze avos',values:[5,12],labels:['5/12']},'pizza-12');
+ assert.equal(board.blocks.get('pizza-12').steps.length,19);
+ assert.throws(()=>validate({action:'diagrama',id:'pizza-13',diagram:'pizza',title:'Treze partes',values:[5,13],labels:[]}));
+});
+
+test('tables and mind maps validate structure and reveal by meaningful blocks',()=>{
+ const {board}=fixture();
+ board.command({action:'tabela',id:'verbs',title:'Tempos verbais',columns:['Tempo','Exemplo','Uso'],rows:[['Presente','Eu estudo.','Agora'],['Futuro','Eu estudarei.','Depois']],highlightRows:[2],palette:'turquesa'},'table');
+ assert.equal(board.blocks.get('verbs').steps.length,3);
+ board.command({action:'mapa_mental',id:'water',title:'Ciclo da água',palette:'amarelo',branches:[{title:'Evaporação',details:['Recebe calor'],color:'laranja'},{title:'Condensação',details:['Perde calor','Forma gotículas'],color:'azul'}]},'map');
+ assert.equal(board.blocks.get('water').steps.length,3);
+ assert.throws(()=>validate({action:'tabela',id:'bad-table',title:'Erro',columns:['A','B'],rows:[['uma célula']]}));
+ assert.throws(()=>validate({action:'mapa_mental',id:'bad-map',title:'Erro',branches:[{title:'Único',details:['Só um ramo']}]}));
+ assert.deepEqual(COLORS,['azul','verde','amarelo','vermelho','roxo','laranja','turquesa','cinza']);
+});
+
+test('safe drawing grammar accepts normalized primitives and rejects raw paths',()=>{
+ const {board}=fixture();
+ board.command({action:'desenho',id:'scene',title:'Casa e árvore',elements:[{kind:'rect',x:10,y:40,width:30,height:35,color:'amarelo',filled:true},{kind:'triangle',points:[8,40,25,20,42,40],color:'vermelho',filled:true},{kind:'arrow',x:45,y:60,x2:70,y2:30,color:'azul'},{kind:'text',x:55,y:12,text:'Cenário',color:'roxo'}]},'drawing');
+ assert.equal(board.blocks.get('scene').steps.length,6);
+ assert.deepEqual(DRAW_KINDS,['circle','ellipse','rect','line','arrow','triangle','polygon','text']);
+ assert.throws(()=>validate({action:'desenho',id:'raw',title:'Inseguro',elements:[{kind:'path',d:'M0 0'}]}));
+ assert.throws(()=>validate({action:'desenho',id:'outside',title:'Fora',elements:[{kind:'line',x:-1,y:0,x2:10,y2:10}]}));
 });

@@ -1,0 +1,18 @@
+const { test } = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+
+const code = fs.readFileSync(path.join(__dirname, '../experiments/front-gpt-hard-test/hard-test-questions.js'), 'utf8');
+
+test('every native UltimateENEM item has one answer and four distinct distractors', () => {
+  const window = {};
+  vm.runInContext(code, vm.createContext({ window }));
+  assert.ok(window.CAV_HARD_TEST_QUESTIONS.length > 0);
+  for (const item of window.CAV_HARD_TEST_QUESTIONS) {
+    assert.equal(item.options.length, 5, `${item.id} deve ter alternativas A-E`);
+    assert.equal(new Set(item.options).size, 5, `${item.id} não pode repetir alternativa`);
+    assert.match(item.answer, /^[A-E]$/, `${item.id} precisa de gabarito A-E`);
+  }
+});

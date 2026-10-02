@@ -11,20 +11,25 @@ const MOLECULES={
  eteno:{title:'Eteno · alceno',left:'CH₂',right:'CH₂',double:true,group:'dupla'}
 };
 const KINDS={titulo:'Conceito',definicao:'Definição',formula:'Fórmula',etapa:'Passo',exemplo:'Exemplo'};
+const COLORS=['azul','verde','amarelo','vermelho','roxo','laranja','turquesa','cinza'];
+const DRAW_KINDS=['circle','ellipse','rect','line','arrow','triangle','polygon','text'];
+const ACTIONS=['anotar','diagrama','tabela','mapa_mental','desenho','molecula','destacar','estrutura','estequiometria','regra_de_tres'];
 const DIAGRAMS={
  fracao:'Fração em barra',pizza:'Fração em pizza',colecao:'Coleção de objetos',formas_geometricas:'Formas geométricas',relogio:'Relógio',
  reta_numerica:'Reta numérica',plano_cartesiano:'Plano cartesiano',comparacao:'Comparação',venn:'Diagrama de Venn',
  fluxo:'Fluxo',ciclo:'Ciclo',linha_do_tempo:'Linha do tempo',mapa_conceitual:'Mapa conceitual',triangulo_retangulo:'Triângulo retângulo',
  celula:'Célula',atomo:'Átomo',sistema_solar:'Sistema solar',circuito_eletrico:'Circuito elétrico',forcas:'Diagrama de forças',onda:'Onda'
 };
-const declaration={name:'atualizar_lousa',description:'Escreve uma anotação curta, desenha um diagrama pedagógico ou estrutura química, resolve uma proporção ou destaca parte de um desenho. Retorna imediatamente quando a ação é aceita na fila; a apresentação acontece aos poucos junto ao áudio. Use antes de explicar cada conceito, sem transcrever toda a fala. Reutilize id para corrigir um bloco.',parameters:{type:'OBJECT',properties:{
- action:{type:'STRING',enum:['anotar','diagrama','molecula','destacar','estrutura','estequiometria','regra_de_tres']},
+const declaration={name:'atualizar_lousa',description:'Escreve uma anotação curta, desenha um diagrama pedagógico seguro, monta tabela ou mapa mental, cria um desenho com formas validadas, mostra uma estrutura química, resolve uma proporção ou destaca parte de um desenho. Retorna imediatamente quando a ação é aceita na fila; a apresentação acontece aos poucos junto ao áudio. Use antes de explicar cada conceito, sem transcrever toda a fala. Reutilize id para corrigir um bloco.',parameters:{type:'OBJECT',properties:{
+ action:{type:'STRING',enum:ACTIONS},
  a:{type:'NUMBER',description:'Regra de três: valor superior esquerdo.'},b:{type:'NUMBER',description:'Valor superior direito.'},c:{type:'NUMBER',description:'Valor inferior esquerdo; x fica à direita.'},
  direction:{type:'STRING',enum:['horizontal','vertical'],description:'Direção das setas; omita para escolher o fator mais simples. Horizontal apenas para proporção direta.'},
  relation:{type:'STRING',enum:['direta','inversa']},leftUnit:{type:'STRING'},rightUnit:{type:'STRING'},leftLabel:{type:'STRING'},rightLabel:{type:'STRING'},
  id:{type:'STRING',description:'Identificador curto único do bloco. Reutilize para corrigir; ex. cetona-1.'},
  text:{type:'STRING',description:'Anotação em português revisado, até 240 caracteres; use símbolos Unicode em fórmulas, sem Markdown.'},
  kind:{type:'STRING',enum:Object.keys(KINDS)},
+ color:{type:'STRING',enum:COLORS,description:'Cor funcional opcional para destacar uma anotação, ramo ou forma.'},
+ palette:{type:'STRING',enum:COLORS,description:'Cor principal opcional da tabela ou mapa mental.'},
  diagram:{type:'STRING',enum:Object.keys(DIAGRAMS),description:'Diagrama pedagógico seguro e determinístico.'},
  labels:{type:'ARRAY',items:{type:'STRING'},description:'Rótulos curtos do diagrama. Em fluxo ou ciclo, use de 2 a 6 etapas.'},
     values:{type:'ARRAY',items:{type:'NUMBER'},description:'Valores do diagrama. Pizza ou fração: [numerador,denominador]. Coleção: [destacados,total]. Relógio: [hora,minuto]. Reta: [mínimo,máximo,pontos...]. Comparação: um valor por rótulo.'},
@@ -32,6 +37,11 @@ const declaration={name:'atualizar_lousa',description:'Escreve uma anotação cu
  smiles:{type:'STRING',description:'SMILES da molécula real, até 1500 caracteres. Necessário em estrutura. Não use nomes como SMILES.'},
  title:{type:'STRING',description:'Nome da molécula ou título do exercício, até 100 caracteres.'},
  format:{type:'STRING',enum:['bastao','expandida'],description:'Bastão omite C e H ligados a C; expandida mostra hidrogênios explícitos.'},
+ columns:{type:'ARRAY',items:{type:'STRING'},description:'Tabela: de 2 a 6 títulos de colunas, curtos e claros.'},
+ rows:{type:'ARRAY',items:{type:'ARRAY',items:{type:'STRING'}},description:'Tabela: de 1 a 12 linhas, cada uma com a mesma quantidade de células das colunas.'},
+ highlightRows:{type:'ARRAY',items:{type:'NUMBER'},description:'Tabela: números das linhas que merecem destaque, começando em 1.'},
+ branches:{type:'ARRAY',items:{type:'OBJECT',properties:{title:{type:'STRING'},details:{type:'ARRAY',items:{type:'STRING'}},color:{type:'STRING',enum:COLORS}},required:['title','details']},description:'Mapa mental: de 2 a 6 ramos, cada um com título e de 1 a 3 detalhes.'},
+ elements:{type:'ARRAY',items:{type:'OBJECT',properties:{kind:{type:'STRING',enum:DRAW_KINDS},x:{type:'NUMBER'},y:{type:'NUMBER'},x2:{type:'NUMBER'},y2:{type:'NUMBER'},width:{type:'NUMBER'},height:{type:'NUMBER'},radius:{type:'NUMBER'},points:{type:'ARRAY',items:{type:'NUMBER'}},text:{type:'STRING'},color:{type:'STRING',enum:COLORS},filled:{type:'BOOLEAN'}},required:['kind']},description:'Desenho seguro: até 36 formas com coordenadas percentuais de 0 a 100. circle usa x,y,radius; ellipse e rect usam x,y,width,height; line e arrow usam x,y,x2,y2; triangle e polygon usam points; text usa x,y,text.'},
  reactants:{type:'ARRAY',items:{type:'STRING'},description:'Fórmulas dos reagentes, sem coeficientes ou estados físicos. Ex.: [C2H6,O2]'},
  products:{type:'ARRAY',items:{type:'STRING'},description:'Fórmulas dos produtos. Ex.: [CO2,H2O]'},
  given:{type:'STRING',description:'Fórmula da espécie cuja quantidade é conhecida.'},
@@ -43,7 +53,7 @@ const declaration={name:'atualizar_lousa',description:'Escreve uma anotação cu
   group:{type:'STRING',enum:['carbonila','carboxila','hidroxila','laterais','dupla','aromatico','estrutura']}
 },required:['action','id']}};
 function validate(args){
- if(!args||typeof args!=='object'||!['anotar','diagrama','molecula','destacar','estrutura','estequiometria','regra_de_tres'].includes(args.action))throw Error('Ação inválida');
+ if(!args||typeof args!=='object'||!ACTIONS.includes(args.action))throw Error('Ação inválida');
  if(typeof args.id!=='string'||! /^[a-zA-Z0-9_-]{1,64}$/.test(args.id))throw Error('id inválido');
  if(args.action==='regra_de_tres')return {...args,...root.VaiBemChem.ruleOfThree(args)};
  if(args.action==='estrutura'){
@@ -59,7 +69,8 @@ function validate(args){
  if(args.action==='anotar'){
   if(typeof args.text!=='string'||!args.text.trim()||args.text.length>240)throw Error('Use uma anotação de 1 a 240 caracteres');
   if(!Object.hasOwn(KINDS,args.kind))throw Error('Tipo de anotação inválido');
-  return {action:args.action,id:args.id,text:args.text.trim().replace(/\s+/g,' '),kind:args.kind};
+  if(args.color!==undefined&&!COLORS.includes(args.color))throw Error('Cor inválida');
+  return {action:args.action,id:args.id,text:args.text.trim().replace(/\s+/g,' '),kind:args.kind,color:args.color||'azul'};
  }
  if(args.action==='diagrama'){
   if(!Object.hasOwn(DIAGRAMS,args.diagram))throw Error('Tipo de diagrama inválido');
@@ -84,6 +95,58 @@ function validate(args){
   if(args.diagram==='triangulo_retangulo'&&labels.length>3)throw Error('Triângulo aceita até 3 rótulos');
   return {action:args.action,id:args.id,diagram:args.diagram,title:args.title.trim(),labels,values};
  }
+ if(args.action==='tabela'){
+  if(typeof args.title!=='string'||!args.title.trim()||args.title.length>100)throw Error('Informe um título de até 100 caracteres');
+  if(!Array.isArray(args.columns)||args.columns.length<2||args.columns.length>6)throw Error('A tabela exige de 2 a 6 colunas');
+  const columns=args.columns.map(value=>String(value).trim());
+  if(columns.some(value=>!value||value.length>40))throw Error('Use títulos de coluna de 1 a 40 caracteres');
+  if(!Array.isArray(args.rows)||args.rows.length<1||args.rows.length>12)throw Error('A tabela exige de 1 a 12 linhas');
+  const rows=args.rows.map(row=>{
+   if(!Array.isArray(row)||row.length!==columns.length)throw Error('Todas as linhas devem ter o mesmo número de células das colunas');
+   const cells=row.map(value=>String(value).trim());
+   if(cells.some(value=>!value||value.length>80))throw Error('Use células de 1 a 80 caracteres');
+   return cells;
+  });
+  const highlightRows=args.highlightRows===undefined?[]:args.highlightRows;
+  if(!Array.isArray(highlightRows)||highlightRows.some(value=>!Number.isInteger(value)||value<1||value>rows.length))throw Error('Linhas de destaque inválidas');
+  if(args.palette!==undefined&&!COLORS.includes(args.palette))throw Error('Paleta inválida');
+  return {action:args.action,id:args.id,title:args.title.trim(),columns,rows,highlightRows:[...new Set(highlightRows)],palette:args.palette||'azul'};
+ }
+ if(args.action==='mapa_mental'){
+  if(typeof args.title!=='string'||!args.title.trim()||args.title.length>70)throw Error('Informe um tema central de até 70 caracteres');
+  if(!Array.isArray(args.branches)||args.branches.length<2||args.branches.length>6)throw Error('O mapa mental exige de 2 a 6 ramos');
+  const branches=args.branches.map((branch,index)=>{
+   if(!branch||typeof branch!=='object'||typeof branch.title!=='string'||!branch.title.trim()||branch.title.length>40)throw Error('Cada ramo exige um título de até 40 caracteres');
+   if(!Array.isArray(branch.details)||branch.details.length<1||branch.details.length>3)throw Error('Cada ramo exige de 1 a 3 detalhes');
+   const details=branch.details.map(value=>String(value).trim());
+   if(details.some(value=>!value||value.length>70))throw Error('Use detalhes de 1 a 70 caracteres');
+   if(branch.color!==undefined&&!COLORS.includes(branch.color))throw Error('Cor de ramo inválida');
+   return {title:branch.title.trim(),details,color:branch.color||COLORS[index%COLORS.length]};
+  });
+  if(args.palette!==undefined&&!COLORS.includes(args.palette))throw Error('Paleta inválida');
+  return {action:args.action,id:args.id,title:args.title.trim(),branches,palette:args.palette||'amarelo'};
+ }
+ if(args.action==='desenho'){
+  if(typeof args.title!=='string'||!args.title.trim()||args.title.length>100)throw Error('Informe um título de até 100 caracteres');
+  if(!Array.isArray(args.elements)||args.elements.length<1||args.elements.length>36)throw Error('O desenho exige de 1 a 36 elementos');
+  const number=(element,key,required=true)=>{const value=element[key];if(!required&&value===undefined)return undefined;if(typeof value!=='number'||!Number.isFinite(value)||value<0||value>100)throw Error(`Coordenada ${key} inválida`);return value};
+  const elements=args.elements.map(element=>{
+   if(!element||typeof element!=='object'||!DRAW_KINDS.includes(element.kind))throw Error('Forma de desenho inválida');
+   if(element.color!==undefined&&!COLORS.includes(element.color))throw Error('Cor de forma inválida');
+   const base={kind:element.kind,color:element.color||'azul',filled:Boolean(element.filled)};
+   if(element.kind==='circle')return {...base,x:number(element,'x'),y:number(element,'y'),radius:number(element,'radius')||1};
+   if(['ellipse','rect'].includes(element.kind))return {...base,x:number(element,'x'),y:number(element,'y'),width:number(element,'width')||1,height:number(element,'height')||1};
+   if(['line','arrow'].includes(element.kind))return {...base,x:number(element,'x'),y:number(element,'y'),x2:number(element,'x2'),y2:number(element,'y2')};
+   if(['triangle','polygon'].includes(element.kind)){
+    if(!Array.isArray(element.points)||element.points.length<(element.kind==='triangle'?6:6)||element.points.length>24||element.points.length%2||element.points.some(value=>typeof value!=='number'||!Number.isFinite(value)||value<0||value>100))throw Error('Pontos do polígono inválidos');
+    if(element.kind==='triangle'&&element.points.length!==6)throw Error('Triângulo exige três pontos');
+    return {...base,points:[...element.points]};
+   }
+   if(typeof element.text!=='string'||!element.text.trim()||element.text.length>50)throw Error('Texto do desenho inválido');
+   return {...base,x:number(element,'x'),y:number(element,'y'),text:element.text.trim()};
+  });
+  return {action:args.action,id:args.id,title:args.title.trim(),elements};
+ }
  if(args.action==='molecula'){
   if(!Object.hasOwn(MOLECULES,args.molecule))throw Error('Estrutura não disponível; use uma fórmula em anotar');
   return {action:args.action,id:args.id,molecule:args.molecule};
@@ -99,9 +162,9 @@ class Board{
  enqueue(item){item.turn=this.turn;item.created=this.now();this.items.push(item);this.wake();return item}
  note(args,callId){
   const old=this.blocks.get(args.id);
-  if(old&&old.text===args.text&&old.kind===args.kind)return;
+  if(old&&old.text===args.text&&old.kind===args.kind&&old.color===args.color)return;
   if(old){this.items=this.items.filter(x=>x.id!==args.id);old.element.remove()}
-  const element=document.createElement('div');element.className='board-note board-'+args.kind;
+  const element=document.createElement('div');element.className=`board-note board-${args.kind} board-color-${args.color}`;
   const label=document.createElement('span');label.className='board-label';label.textContent=KINDS[args.kind]||'Anotação';
   const content=document.createElement('div');content.className='board-content';element.append(label,content);element.hidden=true;this.container.appendChild(element);
   const item={...args,element,content,words:args.text.match(/\S+\s*/g)||[],shown:0,callId};
@@ -218,6 +281,34 @@ class Board{
    const element=document.createElement('figure');element.className='board-figure board-diagram';element.hidden=true;
    const caption=document.createElement('figcaption');caption.textContent=args.title;
    const {svg,steps}=drawDiagram(args);element.append(caption,svg);this.container.appendChild(element);
+   const item={...args,element,steps,shown:0,callId};this.blocks.set(args.id,item);this.enqueue(item);
+  }
+  else if(args.action==='tabela'){
+   const old=this.blocks.get(args.id);if(old){old.element.remove();this.items=this.items.filter(x=>x.id!==args.id)}
+   const element=document.createElement('section');element.className=`board-visual board-table board-table-cols-${args.columns.length} board-color-${args.palette}`;element.hidden=true;
+   const heading=document.createElement('h3');heading.textContent=args.title;element.appendChild(heading);
+   const scroll=document.createElement('div');scroll.className='board-table-scroll';const table=document.createElement('table');
+   const header=document.createElement('tr');header.style.opacity='0';for(const value of args.columns){const th=document.createElement('th');th.scope='col';th.textContent=value;header.appendChild(th)}
+   const thead=document.createElement('thead');thead.appendChild(header);table.appendChild(thead);const tbody=document.createElement('tbody');const steps=[header];
+   args.rows.forEach((values,index)=>{const row=document.createElement('tr');row.style.opacity='0';if(args.highlightRows.includes(index+1))row.className='board-row-highlight';for(const value of values){const cell=document.createElement('td');cell.textContent=value;row.appendChild(cell)}tbody.appendChild(row);steps.push(row)});
+   table.appendChild(tbody);scroll.appendChild(table);element.appendChild(scroll);this.container.appendChild(element);
+   const item={...args,element,steps,shown:0,callId};this.blocks.set(args.id,item);this.enqueue(item);
+  }
+  else if(args.action==='mapa_mental'){
+   const old=this.blocks.get(args.id);if(old){old.element.remove();this.items=this.items.filter(x=>x.id!==args.id)}
+   const element=document.createElement('section');element.className=`board-visual board-mind-map board-color-${args.palette}`;element.hidden=true;
+   const heading=document.createElement('h3');heading.textContent='Mapa mental';element.appendChild(heading);
+   const stage=document.createElement('div');stage.className='board-mind-stage';const center=document.createElement('div');center.className='board-mind-center';center.textContent=args.title;center.style.opacity='0';stage.appendChild(center);
+   const grid=document.createElement('div');grid.className='board-mind-branches';const steps=[center];
+   args.branches.forEach(branch=>{const card=document.createElement('article');card.className=`board-mind-branch board-color-${branch.color}`;card.style.opacity='0';const title=document.createElement('strong');title.textContent=branch.title;const list=document.createElement('ul');for(const detail of branch.details){const item=document.createElement('li');item.textContent=detail;list.appendChild(item)}card.append(title,list);grid.appendChild(card);steps.push(card)});
+   stage.appendChild(grid);element.appendChild(stage);this.container.appendChild(element);
+   const item={...args,element,steps,shown:0,callId};this.blocks.set(args.id,item);this.enqueue(item);
+  }
+  else if(args.action==='desenho'){
+   const old=this.blocks.get(args.id);if(old){old.element.remove();this.items=this.items.filter(x=>x.id!==args.id)}
+   const element=document.createElement('figure');element.className='board-figure board-diagram board-sketch';element.hidden=true;
+   const caption=document.createElement('figcaption');caption.textContent=args.title;
+   const {svg,steps}=drawSketch(args);element.append(caption,svg);this.container.appendChild(element);
    const item={...args,element,steps,shown:0,callId};this.blocks.set(args.id,item);this.enqueue(item);
   }
   else if(args.action==='molecula'){
@@ -384,5 +475,23 @@ function drawDiagram(args){
  }
  return {svg,steps};
 }
-const api={Board,declaration,validate,MOLECULES,DIAGRAMS};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.VaiBemBoard=api;
+function drawSketch(args){
+ const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg'),steps=[];
+ svg.setAttribute('viewBox','0 0 640 360');svg.setAttribute('role','img');svg.setAttribute('aria-label',args.title);
+ const scaleX=value=>value*6.4,scaleY=value=>value*3.6;
+ const make=(tag,attrs={},text)=>{const el=document.createElementNS(ns,tag);for(const [key,value]of Object.entries(attrs))el.setAttribute(key,String(value));if(text!==undefined)el.textContent=String(text);el.style.opacity='0';svg.appendChild(el);steps.push(el);return el};
+ const arrow=(element,cls)=>{const x1=scaleX(element.x),y1=scaleY(element.y),x2=scaleX(element.x2),y2=scaleY(element.y2);make('line',{x1,y1,x2,y2,class:cls});const angle=Math.atan2(y2-y1,x2-x1),size=13;make('line',{x1:x2,y1:y2,x2:x2-size*Math.cos(angle-.55),y2:y2-size*Math.sin(angle-.55),class:cls});make('line',{x1:x2,y1:y2,x2:x2-size*Math.cos(angle+.55),y2:y2-size*Math.sin(angle+.55),class:cls})};
+ for(const element of args.elements){
+  const cls=`sketch-color-${element.color}${element.filled?' sketch-filled':''}`;
+  if(element.kind==='circle')make('circle',{cx:scaleX(element.x),cy:scaleY(element.y),r:Math.min(scaleX(element.radius),scaleY(element.radius)),class:cls});
+  else if(element.kind==='ellipse')make('ellipse',{cx:scaleX(element.x),cy:scaleY(element.y),rx:scaleX(element.width)/2,ry:scaleY(element.height)/2,class:cls});
+  else if(element.kind==='rect')make('rect',{x:scaleX(element.x),y:scaleY(element.y),width:scaleX(element.width),height:scaleY(element.height),rx:7,class:cls});
+  else if(element.kind==='line')make('line',{x1:scaleX(element.x),y1:scaleY(element.y),x2:scaleX(element.x2),y2:scaleY(element.y2),class:cls});
+  else if(element.kind==='arrow')arrow(element,cls);
+  else if(['triangle','polygon'].includes(element.kind)){const points=[];for(let index=0;index<element.points.length;index+=2)points.push(`${scaleX(element.points[index])},${scaleY(element.points[index+1])}`);make('polygon',{points:points.join(' '),class:cls})}
+  else make('text',{x:scaleX(element.x),y:scaleY(element.y),'text-anchor':'middle','dominant-baseline':'middle',class:`sketch-text sketch-color-${element.color}`},element.text);
+ }
+ return {svg,steps};
+}
+const api={Board,declaration,validate,MOLECULES,DIAGRAMS,COLORS,DRAW_KINDS};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.VaiBemBoard=api;
 })(typeof window!=='undefined'?window:globalThis);
