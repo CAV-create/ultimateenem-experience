@@ -37,7 +37,15 @@ function dataUrlParts(dataUrl) {
 }
 
 function string(value, max = 600) {
-  return String(value || "").trim().slice(0, max);
+  const flatten = (item, depth = 0) => {
+    if (item === null || item === undefined) return "";
+    if (["string", "number", "boolean"].includes(typeof item)) return String(item).trim();
+    if (depth >= 3) return "";
+    if (Array.isArray(item)) return item.map((entry) => flatten(entry, depth + 1)).filter(Boolean).join("; ");
+    if (typeof item === "object") return Object.values(item).map((entry) => flatten(entry, depth + 1)).filter(Boolean).join(" — ");
+    return "";
+  };
+  return flatten(value).slice(0, max);
 }
 
 function number(value, fallback = 0, min = 0, max = Number.MAX_SAFE_INTEGER) {
@@ -57,7 +65,7 @@ function sanitizeLessonPlan(value, context) {
     stage: string(step?.stage || `Etapa ${index + 1}`, 40),
     title: string(step?.title, 100),
     instruction: string(step?.instruction, 900),
-    visualTool: string(step?.visualTool, 180),
+    visualTool: string(step?.visualTool, 500),
     check: string(step?.check, 260),
   })).filter((step) => step.title && step.instruction);
   const guidedExamples = (Array.isArray(value?.guidedExamples) ? value.guidedExamples : []).slice(0, 4).map((example) => ({
@@ -86,7 +94,7 @@ function sanitizeLessonPlan(value, context) {
     vocabulary: strings(value?.vocabulary, 12, 180),
     guidedExamples,
     printableWarmup,
-    teacherBriefing: string(value?.teacherBriefing, 1400),
+    teacherBriefing: string(value?.teacherBriefing, 2200),
     preparedAt: new Date().toISOString(),
   };
 }
@@ -272,7 +280,7 @@ export default async function handler(req, res) {
         "Planeje uma abertura diagnóstica curta, objetivos observáveis, sequência progressiva, recursos visuais de lousa e verificações de compreensão.",
         "Em Exatas ou Ciências quantitativas, inclua exemplos fáceis resolvidos passo a passo antes da prática.",
         "Em Linguagens e Humanidades, inclua texto, evidência ou situação concreta antes da pergunta.",
-        "A prática imprimível deve ser autoral e ter gabarito separado.",
+        "A prática imprimível deve ser autoral, ter gabarito separado e conter exatamente seis exercícios.",
         "Retorne somente JSON puro com: topicTitle, summary, openingQuestion, objectives, sequence, vocabulary, guidedExamples, printableWarmup e teacherBriefing.",
         "sequence contém stage, title, instruction, visualTool e check. guidedExamples contém title, prompt, steps e answer. printableWarmup contém number, statement, support e answer.",
       ].join(" ");
@@ -306,7 +314,7 @@ export default async function handler(req, res) {
         "Para cada questão, produza um comentário curto, a resposta esperada, a justificativa e a habilidade ou tópico envolvido.",
         "Use status somente correct, partial, incorrect ou attention. Informe a página e o texto-âncora. Em imagem, estime position x e y de 0 a 100; em PDF, position pode ser null.",
         "Considere recuperação necessária quando houver pelo menos três erros, 30% ou mais de erros, ou uma lacuna conceitual recorrente.",
-        "Quando houver recuperação, produza relatório dos erros, microresumo autoral, orientação, dois exemplos resolvidos progressivos e uma lista imprimível autoral com pelo menos cinco exercícios e gabarito comentado.",
+        "Quando houver recuperação, produza relatório dos erros, microresumo autoral, orientação, dois exemplos resolvidos progressivos e uma lista imprimível autoral com exatamente seis exercícios e gabarito comentado.",
         "A lista de recuperação deve ensinar o assunto, não copiar as questões enviadas. Não cite escolas presenciais, links privados, apostilas externas, fornecedores ou o motor de inteligência.",
         "Retorne somente JSON puro com: overview, annotations, needsRecovery, errorReport e recovery.",
         "overview contém title, summary, totalQuestions, answeredQuestions, correctCount, partialCount e errorCount.",
