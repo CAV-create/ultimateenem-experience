@@ -41,6 +41,22 @@
     },
   });
 
+  const grades = Object.freeze({
+    start: Object.freeze([
+      { id: "3-fundamental", label: "3º ano do Ensino Fundamental" },
+      { id: "4-fundamental", label: "4º ano do Ensino Fundamental" },
+      { id: "5-fundamental", label: "5º ano do Ensino Fundamental" },
+      { id: "6-fundamental", label: "6º ano do Ensino Fundamental" },
+      { id: "7-fundamental", label: "7º ano do Ensino Fundamental" },
+      { id: "8-fundamental", label: "8º ano do Ensino Fundamental" },
+    ]),
+    rise: Object.freeze([
+      { id: "9-fundamental", label: "9º ano do Ensino Fundamental" },
+      { id: "1-medio", label: "1º ano do Ensino Médio" },
+      { id: "2-medio", label: "2º ano do Ensino Médio" },
+    ]),
+  });
+
   let context = null;
   let mode = "math";
   let ws = null;
@@ -71,6 +87,8 @@
 
   function ensureState(state) {
     state.vaibemTrack ||= "start";
+    if (!Object.hasOwn(grades, state.vaibemTrack)) state.vaibemTrack = "start";
+    if (!grades[state.vaibemTrack].some((item) => item.id === state.vaibemGrade)) state.vaibemGrade = grades[state.vaibemTrack][0].id;
     state.vaibemArea = Object.hasOwn(areas, state.vaibemArea) ? state.vaibemArea : "exatas";
     const available = Object.values(teachers).filter((item) => item.track === state.vaibemTrack && item.area === state.vaibemArea);
     if (!teachers[state.vaibemTeacher] || teachers[state.vaibemTeacher].track !== state.vaibemTrack || teachers[state.vaibemTeacher].area !== state.vaibemArea) {
@@ -78,6 +96,7 @@
     }
     state.vaibemLiveNotebooks ||= [];
     state.vaibemLiveNotebookId ||= "";
+    window.CAV_VAIBEM_STUDY?.ensureState?.(state);
     return state;
   }
 
@@ -92,6 +111,8 @@
     const state = ensureState(ctx.state);
     const activeTrack = tracks[state.vaibemTrack];
     const activeTeacher = teachers[state.vaibemTeacher];
+    const activeGrade = grades[state.vaibemTrack].find((item) => item.id === state.vaibemGrade) || grades[state.vaibemTrack][0];
+    const activePlan = window.CAV_VAIBEM_STUDY?.currentPlan?.(state);
     const sessions = state.vaibemLiveNotebooks.length;
     return ctx.shell(`<div class="home-intro"><div class="kicker">Aula particular VaiBem</div><h1>Converse. Veja. Faça junto.</h1><p>O professor escuta sua dúvida, explica em voz natural e constrói o quadro durante a conversa.</p></div>
       <section class="vb-home-band">
@@ -99,10 +120,12 @@
           ${Object.entries(tracks).map(([key, item]) => `<button type="button" data-vb-track="${key}" class="${state.vaibemTrack === key ? "selected" : ""}" aria-pressed="${state.vaibemTrack === key}"><strong>${item.label.replace("VaiBem ", "")}</strong><small>${item.range}</small></button>`).join("")}
         </div>
         <div class="vb-home-copy"><span class="kicker">${activeTrack.label}</span><h2>${activeTrack.description}</h2><p>Escolha a área e o especialista. A conversa continua na mesma sessão; não é preciso reabrir o microfone a cada pergunta.</p></div>
+        <label class="vb-grade-select"><span>Ano escolar</span><select id="vb-grade-select">${grades[state.vaibemTrack].map((item) => `<option value="${item.id}" ${item.id === activeGrade.id ? "selected" : ""}>${item.label}</option>`).join("")}</select></label>
         <div class="vb-area-switch" role="group" aria-label="Escolha a área do conhecimento">${Object.entries(areas).map(([key, label]) => `<button type="button" data-vb-area="${key}" class="${state.vaibemArea === key ? "selected" : ""}" aria-pressed="${state.vaibemArea === key}">${label}</button>`).join("")}</div>
         <div class="vb-teacher-list">${teacherOptions(state)}</div>
-        <div class="vb-next-step"><div><span class="kicker">Seu próximo passo</span><strong>${activeTeacher.teacher} · ${activeTeacher.subject}</strong><small>${activeTeacher.specialty}<br>${activeTeacher.focus}</small></div><button type="button" class="btn goldbtn" id="vb-enter-room">Entrar na aula →</button></div>
+        <div class="vb-next-step"><div><span class="kicker">${activePlan ? "Aula preparada" : "Seu próximo passo"}</span><strong>${activePlan ? activePlan.topicTitle : `${activeTeacher.teacher} · ${activeTeacher.subject}`}</strong><small>${activePlan ? `${activeTeacher.teacher} já recebeu os conteúdos de ${activeGrade.label}.` : `${activeTeacher.specialty}<br>${activeTeacher.focus}`}</small></div><button type="button" class="btn goldbtn" id="vb-enter-room">${activePlan ? "Entrar na aula preparada" : "Entrar na aula"} →</button></div>
       </section>
+      ${window.CAV_VAIBEM_STUDY?.homeRows?.(ctx) || ""}
       ${ctx.row("Meu caderno", `${sessions} ${sessions === 1 ? "aula salva" : "aulas salvas"} para retomar.`, "vaibem/caderno", "book")}
       ${ctx.row("O que estou aprendendo", "Evidências acumuladas e próxima explicação sugerida.", "vaibem/evolucao", "chart")}`, "hoje", "vaibem");
   }
@@ -296,8 +319,10 @@
     const ageRule = item.track === "start"
       ? "Use linguagem concreta. Organize cálculos como: o que eu tenho, o que preciso descobrir e qual é o primeiro passo. Faça uma pergunta curta por vez."
       : "Conduza com autonomia crescente: explique o primeiro passo, peça que o aluno proponha o seguinte e intervenha quando houver impasse.";
+    const preparedLesson = context?.state ? window.CAV_VAIBEM_STUDY?.planBriefing?.(context.state, item.id, context.state.vaibemGrade) : "";
     return `RESPONDA INCONFUNDIVELMENTE EM PORTUGUÊS DO BRASIL. Você nunca deve responder em espanhol, inglês ou outro idioma, salvo se o aluno pedir explicitamente uma aula de língua estrangeira. Se a fala estiver pouco clara, peça ao aluno que repita em português em vez de adivinhar palavras de outro idioma.
 Você é ${item.teacher}, ${item.specialty}, especialista do Hospital CAVMED no ${track.label}. Disciplina: ${item.subject}. Turma de referência: ${item.grade}. ${ageRule}
+${preparedLesson ? `${preparedLesson}\nComece pela abertura diagnóstica do plano, ajuste a aula conforme as respostas reais do aluno e não conte que recebeu um briefing interno.` : ""}
 Converse como um professor atento sentado ao lado do aluno. Escute até o fim, identifique exatamente onde ele travou e responda apenas o necessário. Fale em blocos curtos, com naturalidade e pausas. Se o aluno interromper, pare imediatamente e escute. Termine cada ideia importante com uma pergunta curta de verificação.
 Você possui uma lousa pela ferramenta atualizar_lousa. Use-a antes ou durante a explicação para registrar conceitos curtos e revisados. Não transcreva toda a fala. Reutilize o mesmo id para corrigir um bloco.
 	REGRA VISUAL OBRIGATÓRIA: quando o aluno disser que é visual, pedir para ver, desenhar, mostrar, ilustrar ou apontar uma imagem, chame a ferramenta antes de explicar. Nunca responda apenas "imagine" e nunca afirme que desenhou sem chamar a ferramenta. Respeite o objeto pedido: pizza deve ser um círculo com fatias, não um retângulo. Para crianças, prefira uma imagem concreta sempre que ela puder substituir abstração verbal.
@@ -378,7 +403,11 @@ A ferramenta confirma apenas o enfileiramento. Continue falando enquanto o quadr
     byId("vb-live-state").className = "vb-live-on";
     setStatus("Microfone ativo. Pode falar normalmente.", "good");
     setBubble("Estou ouvindo. Faça sua pergunta normalmente.");
-    ws.send(JSON.stringify({ clientContent: { turns: [{ role: "user", parts: [{ text: `Inicie a aula saudando o aluno em português brasileiro e pergunte qual é a dúvida de ${teacher().subject}.` }] }], turnComplete: true } }));
+    const plan = context?.state ? window.CAV_VAIBEM_STUDY?.currentPlan?.(context.state, teacher().id, context.state.vaibemGrade) : null;
+    const opening = plan
+      ? `Inicie em português brasileiro a aula já preparada sobre ${plan.topicTitle}. Faça primeiro esta abertura diagnóstica, sem mencionar briefing ou motor interno: ${plan.openingQuestion}`
+      : `Inicie a aula saudando o aluno em português brasileiro e pergunte qual é a dúvida de ${teacher().subject}.`;
+    ws.send(JSON.stringify({ clientContent: { turns: [{ role: "user", parts: [{ text: opening }] }], turnComplete: true } }));
   }
 
   function extractAudioParts(message) {
@@ -666,6 +695,12 @@ A ferramenta confirma apenas o enfileiramento. Continue falando enquanto o quadr
         ctx.save();
         ctx.render(false);
       }));
+      byId("vb-grade-select")?.addEventListener("change", (event) => {
+        ctx.state.vaibemGrade = event.target.value;
+        ensureState(ctx.state);
+        ctx.save();
+        ctx.render(false);
+      });
       document.querySelectorAll("[data-vb-teacher]").forEach((button) => button.addEventListener("click", () => {
         ctx.state.vaibemTeacher = button.dataset.vbTeacher;
         ctx.save();
@@ -729,6 +764,7 @@ A ferramenta confirma apenas o enfileiramento. Continue falando enquanto o quadr
   window.CAV_VAIBEM_LIVE = {
     teachers,
     tracks,
+    grades,
     areas,
     ensureState,
     renderHome,

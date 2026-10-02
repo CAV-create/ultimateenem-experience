@@ -1422,12 +1422,17 @@
     }
     let html = null;
     const vaiBemLive = window.CAV_VAIBEM_LIVE;
+    const vaiBemStudy = window.CAV_VAIBEM_STUDY;
     const vaiBemCtx = vaiBemContext();
     if (route === "vaibem" && vaiBemLive) html = vaiBemLive.renderHome(vaiBemCtx);
     else if (route === "vaibem/sala" && vaiBemLive) html = vaiBemLive.renderRoom(vaiBemCtx);
     else if (route === "vaibem/caderno" && vaiBemLive) html = vaiBemLive.renderNotebookList(vaiBemCtx);
     else if (route.startsWith("vaibem/caderno/") && vaiBemLive) html = vaiBemLive.renderNotebook(vaiBemCtx, decodeURIComponent(route.slice("vaibem/caderno/".length)));
     else if (route === "vaibem/evolucao" && vaiBemLive) html = vaiBemLive.renderProgress(vaiBemCtx);
+    else if (route === "vaibem/atividade" && vaiBemStudy) html = vaiBemStudy.renderActivity(vaiBemCtx);
+    else if (route.startsWith("vaibem/atividade/") && vaiBemStudy) html = vaiBemStudy.renderReview(vaiBemCtx, decodeURIComponent(route.slice("vaibem/atividade/".length)));
+    else if (route === "vaibem/preparar" && vaiBemStudy) html = vaiBemStudy.renderPreparation(vaiBemCtx);
+    else if (route === "vaibem/preparar/resultado" && vaiBemStudy) html = vaiBemStudy.renderPrepared(vaiBemCtx);
     else if (route === "lista-externa") html = externalListHome();
     else if (route === "lista-externa/revisar") html = externalReview();
     else if (route === "lista-externa/responder") html = externalQuestion();
@@ -1456,6 +1461,7 @@
       if (resetScroll) window.scrollTo(0, 0);
       applyExperienceCohesion();
       vaiBemLive?.mount?.(route, vaiBemCtx);
+      vaiBemStudy?.mount?.(route, vaiBemCtx);
       return;
     }
     originalRender(resetScroll);
@@ -1490,6 +1496,9 @@
     "vaibem/sala": "Aula particular",
     "vaibem/caderno": "Meu caderno",
     "vaibem/evolucao": "Evolução",
+    "vaibem/atividade": "Correção de atividade",
+    "vaibem/preparar": "Preparar a próxima aula",
+    "vaibem/preparar/resultado": "Aula preparada",
     recuperacao: "Recuperação guiada",
     erros: "Prontuário",
     relatorio: "Prontuário médico da aprendizagem",
