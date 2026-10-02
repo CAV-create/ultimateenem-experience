@@ -213,7 +213,7 @@ async function requestGemini({ apiKey, model, instructions, content, maxOutputTo
   });
   const payload = await response.json().catch(() => ({}));
   const text = geminiOutputText(payload);
-  if (!response.ok || !text) throw new Error(`gemini_response_failed_${response.status}`);
+  if (!response.ok || !text) throw new Error(`gemini_${response.status}_${String(payload?.error?.status || "empty").replace(/[^a-z0-9_-]/gi, "")}`);
   return parseJson(text);
 }
 
@@ -322,6 +322,7 @@ export default async function handler(req, res) {
     return res.status(error?.name === "TimeoutError" ? 504 : 502).json({
       error: error?.name === "TimeoutError" ? "study_support_timeout" : "study_support_failed",
       message: "Os professores não conseguiram concluir esta leitura agora. O arquivo e o planejamento do aluno permanecem preservados no navegador.",
+      ...(req.query?.debug === "1" ? { diagnostic: String(error?.message || "unknown").slice(0, 120) } : {}),
     });
   }
 }
