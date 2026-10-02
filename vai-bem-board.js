@@ -13,14 +13,14 @@ const MOLECULES={
 const KINDS={titulo:'Conceito',definicao:'Definição',formula:'Fórmula',etapa:'Passo',exemplo:'Exemplo'};
 const COLORS=['azul','verde','amarelo','vermelho','roxo','laranja','turquesa','cinza'];
 const DRAW_KINDS=['circle','ellipse','rect','line','arrow','triangle','polygon','text'];
-const ACTIONS=['anotar','diagrama','tabela','mapa_mental','desenho','molecula','destacar','estrutura','estequiometria','regra_de_tres'];
+const ACTIONS=['anotar','diagrama','tabela','mapa_mental','infografico','desenho','molecula','destacar','estrutura','estequiometria','regra_de_tres'];
 const DIAGRAMS={
  fracao:'Fração em barra',pizza:'Fração em pizza',colecao:'Coleção de objetos',formas_geometricas:'Formas geométricas',relogio:'Relógio',
  reta_numerica:'Reta numérica',plano_cartesiano:'Plano cartesiano',comparacao:'Comparação',venn:'Diagrama de Venn',
  fluxo:'Fluxo',ciclo:'Ciclo',linha_do_tempo:'Linha do tempo',mapa_conceitual:'Mapa conceitual',triangulo_retangulo:'Triângulo retângulo',
  celula:'Célula',atomo:'Átomo',sistema_solar:'Sistema solar',circuito_eletrico:'Circuito elétrico',forcas:'Diagrama de forças',onda:'Onda'
 };
-const declaration={name:'atualizar_lousa',description:'Escreve uma anotação curta, desenha um diagrama pedagógico seguro, monta tabela ou mapa mental, cria um desenho com formas validadas, mostra uma estrutura química, resolve uma proporção ou destaca parte de um desenho. Retorna imediatamente quando a ação é aceita na fila; a apresentação acontece aos poucos junto ao áudio. Use antes de explicar cada conceito, sem transcrever toda a fala. Reutilize id para corrigir um bloco.',parameters:{type:'OBJECT',properties:{
+const declaration={name:'atualizar_lousa',description:'Escreve uma anotação curta, desenha um diagrama pedagógico seguro, monta tabela, mapa mental conectado ou infográfico de revisão, cria um desenho com formas validadas, mostra uma estrutura química, resolve uma proporção ou destaca parte de um desenho. Retorna imediatamente quando a ação é aceita na fila; a apresentação acontece aos poucos junto ao áudio. Use antes de explicar cada conceito, sem transcrever toda a fala. Reutilize id para corrigir um bloco.',parameters:{type:'OBJECT',properties:{
  action:{type:'STRING',enum:ACTIONS},
  a:{type:'NUMBER',description:'Regra de três: valor superior esquerdo.'},b:{type:'NUMBER',description:'Valor superior direito.'},c:{type:'NUMBER',description:'Valor inferior esquerdo; x fica à direita.'},
  direction:{type:'STRING',enum:['horizontal','vertical'],description:'Direção das setas; omita para escolher o fator mais simples. Horizontal apenas para proporção direta.'},
@@ -40,7 +40,10 @@ const declaration={name:'atualizar_lousa',description:'Escreve uma anotação cu
  columns:{type:'ARRAY',items:{type:'STRING'},description:'Tabela: de 2 a 6 títulos de colunas, curtos e claros.'},
  rows:{type:'ARRAY',items:{type:'ARRAY',items:{type:'STRING'}},description:'Tabela: de 1 a 12 linhas, cada uma com a mesma quantidade de células das colunas.'},
  highlightRows:{type:'ARRAY',items:{type:'NUMBER'},description:'Tabela: números das linhas que merecem destaque, começando em 1.'},
- branches:{type:'ARRAY',items:{type:'OBJECT',properties:{title:{type:'STRING'},details:{type:'ARRAY',items:{type:'STRING'}},color:{type:'STRING',enum:COLORS}},required:['title','details']},description:'Mapa mental: de 2 a 6 ramos, cada um com título e de 1 a 3 detalhes.'},
+ branches:{type:'ARRAY',items:{type:'OBJECT',properties:{title:{type:'STRING'},details:{type:'ARRAY',items:{type:'STRING'}},color:{type:'STRING',enum:COLORS}},required:['title','details']},description:'Mapa mental conectado: de 2 a 8 ramos principais, cada um com título e de 1 a 5 subgalhos.'},
+ subtitle:{type:'STRING',description:'Infográfico: frase curta que explica a leitura visual, até 120 caracteres.'},
+ layout:{type:'STRING',enum:['fluxo','comparacao','linha_do_tempo','camadas'],description:'Organização visual do infográfico.'},
+ panels:{type:'ARRAY',items:{type:'OBJECT',properties:{title:{type:'STRING'},detail:{type:'STRING'},cue:{type:'STRING'},color:{type:'STRING',enum:COLORS}},required:['title','detail']},description:'Infográfico: de 2 a 8 painéis, cada um com título, explicação curta, pista opcional e cor funcional.'},
  elements:{type:'ARRAY',items:{type:'OBJECT',properties:{kind:{type:'STRING',enum:DRAW_KINDS},x:{type:'NUMBER'},y:{type:'NUMBER'},x2:{type:'NUMBER'},y2:{type:'NUMBER'},width:{type:'NUMBER'},height:{type:'NUMBER'},radius:{type:'NUMBER'},points:{type:'ARRAY',items:{type:'NUMBER'}},text:{type:'STRING'},color:{type:'STRING',enum:COLORS},filled:{type:'BOOLEAN'}},required:['kind']},description:'Desenho seguro: até 36 formas com coordenadas percentuais de 0 a 100. circle usa x,y,radius; ellipse e rect usam x,y,width,height; line e arrow usam x,y,x2,y2; triangle e polygon usam points; text usa x,y,text.'},
  reactants:{type:'ARRAY',items:{type:'STRING'},description:'Fórmulas dos reagentes, sem coeficientes ou estados físicos. Ex.: [C2H6,O2]'},
  products:{type:'ARRAY',items:{type:'STRING'},description:'Fórmulas dos produtos. Ex.: [CO2,H2O]'},
@@ -114,17 +117,31 @@ function validate(args){
  }
  if(args.action==='mapa_mental'){
   if(typeof args.title!=='string'||!args.title.trim()||args.title.length>70)throw Error('Informe um tema central de até 70 caracteres');
-  if(!Array.isArray(args.branches)||args.branches.length<2||args.branches.length>6)throw Error('O mapa mental exige de 2 a 6 ramos');
+  if(!Array.isArray(args.branches)||args.branches.length<2||args.branches.length>8)throw Error('O mapa mental exige de 2 a 8 ramos');
   const branches=args.branches.map((branch,index)=>{
    if(!branch||typeof branch!=='object'||typeof branch.title!=='string'||!branch.title.trim()||branch.title.length>40)throw Error('Cada ramo exige um título de até 40 caracteres');
-   if(!Array.isArray(branch.details)||branch.details.length<1||branch.details.length>3)throw Error('Cada ramo exige de 1 a 3 detalhes');
+   if(!Array.isArray(branch.details)||branch.details.length<1||branch.details.length>5)throw Error('Cada ramo exige de 1 a 5 subgalhos');
    const details=branch.details.map(value=>String(value).trim());
-   if(details.some(value=>!value||value.length>70))throw Error('Use detalhes de 1 a 70 caracteres');
+   if(details.some(value=>!value||value.length>85))throw Error('Use subgalhos de 1 a 85 caracteres');
    if(branch.color!==undefined&&!COLORS.includes(branch.color))throw Error('Cor de ramo inválida');
    return {title:branch.title.trim(),details,color:branch.color||COLORS[index%COLORS.length]};
   });
   if(args.palette!==undefined&&!COLORS.includes(args.palette))throw Error('Paleta inválida');
   return {action:args.action,id:args.id,title:args.title.trim(),branches,palette:args.palette||'amarelo'};
+ }
+ if(args.action==='infografico'){
+  if(typeof args.title!=='string'||!args.title.trim()||args.title.length>100)throw Error('Informe um título de até 100 caracteres');
+  if(args.subtitle!==undefined&&(typeof args.subtitle!=='string'||!args.subtitle.trim()||args.subtitle.length>120))throw Error('Use uma explicação de até 120 caracteres');
+  if(!['fluxo','comparacao','linha_do_tempo','camadas'].includes(args.layout||'fluxo'))throw Error('Formato de infográfico inválido');
+  if(!Array.isArray(args.panels)||args.panels.length<2||args.panels.length>8)throw Error('O infográfico exige de 2 a 8 painéis');
+  const panels=args.panels.map((panel,index)=>{
+   if(!panel||typeof panel!=='object'||typeof panel.title!=='string'||!panel.title.trim()||panel.title.length>45)throw Error('Cada painel exige um título de até 45 caracteres');
+   if(typeof panel.detail!=='string'||!panel.detail.trim()||panel.detail.length>120)throw Error('Cada painel exige uma explicação de até 120 caracteres');
+   if(panel.cue!==undefined&&(typeof panel.cue!=='string'||!panel.cue.trim()||panel.cue.length>60))throw Error('Use uma pista de até 60 caracteres');
+   if(panel.color!==undefined&&!COLORS.includes(panel.color))throw Error('Cor de painel inválida');
+   return {title:panel.title.trim(),detail:panel.detail.trim(),cue:panel.cue?.trim()||'',color:panel.color||COLORS[index%COLORS.length]};
+  });
+  return {action:args.action,id:args.id,title:args.title.trim(),subtitle:args.subtitle?.trim()||'',layout:args.layout||'fluxo',panels};
  }
  if(args.action==='desenho'){
   if(typeof args.title!=='string'||!args.title.trim()||args.title.length>100)throw Error('Informe um título de até 100 caracteres');
@@ -299,9 +316,19 @@ class Board{
    const element=document.createElement('section');element.className=`board-visual board-mind-map board-color-${args.palette}`;element.hidden=true;
    const heading=document.createElement('h3');heading.textContent='Mapa mental';element.appendChild(heading);
    const stage=document.createElement('div');stage.className='board-mind-stage';const center=document.createElement('div');center.className='board-mind-center';center.textContent=args.title;center.style.opacity='0';stage.appendChild(center);
-   const grid=document.createElement('div');grid.className='board-mind-branches';const steps=[center];
-   args.branches.forEach(branch=>{const card=document.createElement('article');card.className=`board-mind-branch board-color-${branch.color}`;card.style.opacity='0';const title=document.createElement('strong');title.textContent=branch.title;const list=document.createElement('ul');for(const detail of branch.details){const item=document.createElement('li');item.textContent=detail;list.appendChild(item)}card.append(title,list);grid.appendChild(card);steps.push(card)});
-   stage.appendChild(grid);element.appendChild(stage);this.container.appendChild(element);
+   const tree=document.createElement('div');tree.className='board-mind-tree';const steps=[center];
+   args.branches.forEach((branch,index)=>{const limb=document.createElement('div');limb.className=`board-mind-limb board-mind-${index%2?'right':'left'} board-color-${branch.color}`;const card=document.createElement('article');card.className='board-mind-branch';card.style.opacity='0';const header=document.createElement('header');const number=document.createElement('i');number.textContent=String(index+1).padStart(2,'0');const title=document.createElement('strong');title.textContent=branch.title;header.append(number,title);const list=document.createElement('ul');for(const detail of branch.details){const item=document.createElement('li');item.textContent=detail;list.appendChild(item)}card.append(header,list);limb.appendChild(card);tree.appendChild(limb);steps.push(card)});
+   stage.appendChild(tree);element.appendChild(stage);this.container.appendChild(element);
+   const item={...args,element,steps,shown:0,callId};this.blocks.set(args.id,item);this.enqueue(item);
+  }
+  else if(args.action==='infografico'){
+   const old=this.blocks.get(args.id);if(old){old.element.remove();this.items=this.items.filter(x=>x.id!==args.id)}
+   const element=document.createElement('section');element.className=`board-visual board-infographic board-infographic-${args.layout} board-infographic-count-${args.panels.length}`;element.hidden=true;
+   const heading=document.createElement('h3');heading.textContent=args.title;element.appendChild(heading);
+   if(args.subtitle){const subtitle=document.createElement('p');subtitle.className='board-infographic-subtitle';subtitle.textContent=args.subtitle;element.appendChild(subtitle)}
+   const flow=document.createElement('div');flow.className='board-infographic-flow';const steps=[];
+   args.panels.forEach((panel,index)=>{const card=document.createElement('article');card.className=`board-infographic-panel board-color-${panel.color}`;card.style.opacity='0';const number=document.createElement('span');number.textContent=String(index+1).padStart(2,'0');const title=document.createElement('strong');title.textContent=panel.title;const detail=document.createElement('p');detail.textContent=panel.detail;card.append(number,title,detail);if(panel.cue){const cue=document.createElement('small');cue.textContent=panel.cue;card.appendChild(cue)}flow.appendChild(card);steps.push(card)});
+   element.appendChild(flow);this.container.appendChild(element);
    const item={...args,element,steps,shown:0,callId};this.blocks.set(args.id,item);this.enqueue(item);
   }
   else if(args.action==='desenho'){

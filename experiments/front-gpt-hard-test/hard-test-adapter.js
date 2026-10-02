@@ -740,9 +740,38 @@
     return `<div class="anki-grid">${cards.map(([front, back], index) => `<button type="button" class="anki-card" data-action="flashcard-flip" aria-pressed="false" aria-label="Virar cartão de memória ${index + 1}"><span class="anki-card-inner"><span class="anki-face anki-front"><small>PERGUNTA ${index + 1}</small><strong>${scientificText(front.replace(/^Frente:\s*/i, ""))}</strong><em>Toque para ver a resposta</em></span><span class="anki-face anki-back"><small>RESPOSTA ${index + 1}</small><strong>${scientificText(back.replace(/^Verso:\s*/i, ""))}</strong><em>Toque para rever</em></span></span></button>`).join("")}</div>`;
   }
 
+  function recoveryMindBranches(curriculum) {
+    const cards = curriculum.flashcards || [];
+    const summary = curriculum.microSummary || [];
+    return (curriculum.map || []).map(([title, detail], index) => {
+      const card = cards[index % Math.max(cards.length, 1)] || [];
+      const candidates = [
+        detail,
+        card.length ? `${String(card[0]).replace(/^Frente:\s*/i, "")}: ${String(card[1]).replace(/^Verso:\s*/i, "")}` : "",
+        summary[index % Math.max(summary.length, 1)] || "",
+      ];
+      const seen = new Set();
+      const leaves = candidates.filter((value) => {
+        const key = normalizedText(value);
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+      return { title, leaves };
+    });
+  }
+
   function recoveryStudyTools(curriculum) {
-    const branches = curriculum.map.map(([title, detail], index) => `<div class="mind-map-branch"><i>${index + 1}</i><p><strong>${scientificText(title)}</strong><span>${scientificText(detail)}</span></p></div>`).join("");
-    return `<section class="recovery-study-grid"><div class="mind-map"><div class="kicker">Mapa de raciocínio</div><div class="mind-map-canvas"><div class="mind-map-core"><small>Diagnóstico central</small><strong>${scientificText(curriculum.title)}</strong></div><div class="mind-map-branches">${branches}</div></div></div><div class="flashcard-stack"><div class="kicker">Prescrição de memória · 3 vezes ao dia</div>${renderFlashcards(curriculum.flashcards)}</div></section>`;
+    const branches = recoveryMindBranches(curriculum).map(({ title, leaves }, index) => `<article class="mind-map-limb side-${index % 2 ? "right" : "left"} tone-${(index % 6) + 1}"><div class="mind-map-branch"><header><i>${String(index + 1).padStart(2, "0")}</i><strong>${scientificText(title)}</strong></header><ul>${leaves.map((leaf) => `<li>${scientificText(leaf)}</li>`).join("")}</ul></div></article>`).join("");
+    return `<section class="recovery-study-grid"><div class="mind-map"><header class="mind-map-heading"><div><div class="kicker">Mapa de raciocínio</div><h2>Uma espinha central. Vários caminhos de compreensão.</h2></div><small>RAMOS E SUBGALHOS CONECTADOS</small></header><div class="mind-map-canvas"><div class="mind-map-core"><small>Diagnóstico central</small><strong>${scientificText(curriculum.title)}</strong></div><div class="mind-map-trunk">${branches}</div></div></div><div class="flashcard-stack"><div class="kicker">Prescrição de memória · 3 vezes ao dia</div>${renderFlashcards(curriculum.flashcards)}</div></section>`;
+  }
+
+  function recoveryInfographic(curriculum) {
+    const map = curriculum.map || [];
+    if (!map.length) return "";
+    const actions = ["Reconheça o núcleo", "Relacione as pistas", "Aplique no contexto", "Confira a resposta", "Explique a escolha", "Retome o erro"];
+    const panels = map.slice(0, 6).map(([title, detail], index) => `<article class="review-infographic-panel tone-${(index % 6) + 1}"><span>${String(index + 1).padStart(2, "0")}</span><strong>${scientificText(title)}</strong><p>${scientificText(detail)}</p><small>${actions[index]}</small></article>`).join("");
+    return `<section class="review-infographic"><header><div><div class="kicker">Infográfico de revisão</div><h2>Do diagnóstico à resposta.</h2></div><small>LEITURA VISUAL DE 30 SEGUNDOS</small></header><div class="review-infographic-flow">${panels}</div><footer><span>Conduta final</span><strong>Use o percurso visual para explicar a ideia com suas próprias palavras antes de voltar à questão.</strong></footer></section>`;
   }
 
   function recoveryMicroSummary(curriculum) {
@@ -824,7 +853,7 @@
     const complete = answered === curriculum.questions.length;
     const source = curriculum.source;
     const conclusion = complete ? `<div class="recovery-complete"><span>${icon(scoreValue >= 4 ? "check" : "book")}</span><div><small>Atendimento concluído</small><strong>${scoreValue} de ${curriculum.questions.length} fundamentos consolidados</strong><p>${scoreValue >= 4 ? "Você já pode voltar à questão de origem com mais segurança." : "O caminho está aberto. Reveja os cartões e refaça a questão de origem com calma."}</p></div>${link(`Voltar ao prontuário ${icon("arrow")}`, "erros", "btn")}</div>` : "";
-    return shell(`${pageHead("Recuperação guiada", "Primeiro o fundamento.<br>Depois, a confiança.", "Cinco questões acessíveis, contextualizadas e ligadas à competência e à habilidade do erro original.")}<div class="recovery-identity"><div><small>Questão de origem</small><strong>${scientificText(entry.question.title)}</strong></div><div><span>${esc(curriculum.competencyCode)}</span><span>${esc(curriculum.skillCode)}</span><span>${scientificText(curriculum.microtheme)}</span></div></div><section class="recovery-source"><div><span class="source-badge">Caso clínico do Hospital CAVMED</span><h2>${scientificText(curriculum.title)}</h2><p>${scientificText(curriculum.summary)}</p><small><strong>${scientificText(source.title)}</strong> · ${scientificText(source.chapter)}</small><small>${scientificText(source.fit)}</small></div><aside><small>Clínica responsável</small><strong>${scientificText(source.path)}</strong><span>${scientificText(curriculum.policy.standard)}</span></aside></section>${recoveryMicroSummary(curriculum)}${recoveryStudyTools(curriculum)}${renderQuantitativeProtocol(curriculum)}${renderMolarRelations(curriculum.molarRelations)}${recoveryWorkedExample(curriculum)}${renderScientificNotation(curriculum.notation)}<div class="recovery-practice-head"><div><div class="kicker">Treino de confiança</div><h2>Resolva cinco questões contextualizadas da mesma habilidade.</h2></div><div class="recovery-progress"><strong>${answered}/5</strong><span><i style="width:${answered * 20}%"></i></span></div></div><div class="recovery-questions">${curriculum.questions.map((questionItem, index) => recoveryQuestionCard(questionItem, index, record)).join("")}</div>${conclusion}`, "erros");
+    return shell(`${pageHead("Recuperação guiada", "Primeiro o fundamento.<br>Depois, a confiança.", "Cinco questões acessíveis, contextualizadas e ligadas à competência e à habilidade do erro original.")}<div class="recovery-identity"><div><small>Questão de origem</small><strong>${scientificText(entry.question.title)}</strong></div><div><span>${esc(curriculum.competencyCode)}</span><span>${esc(curriculum.skillCode)}</span><span>${scientificText(curriculum.microtheme)}</span></div></div><section class="recovery-source"><div><span class="source-badge">Caso clínico do Hospital CAVMED</span><h2>${scientificText(curriculum.title)}</h2><p>${scientificText(curriculum.summary)}</p><small><strong>${scientificText(source.title)}</strong> · ${scientificText(source.chapter)}</small><small>${scientificText(source.fit)}</small></div><aside><small>Clínica responsável</small><strong>${scientificText(source.path)}</strong><span>${scientificText(curriculum.policy.standard)}</span></aside></section>${recoveryMicroSummary(curriculum)}${recoveryStudyTools(curriculum)}${recoveryInfographic(curriculum)}${renderQuantitativeProtocol(curriculum)}${renderMolarRelations(curriculum.molarRelations)}${recoveryWorkedExample(curriculum)}${renderScientificNotation(curriculum.notation)}<div class="recovery-practice-head"><div><div class="kicker">Treino de confiança</div><h2>Resolva cinco questões contextualizadas da mesma habilidade.</h2></div><div class="recovery-progress"><strong>${answered}/5</strong><span><i style="width:${answered * 20}%"></i></span></div></div><div class="recovery-questions">${curriculum.questions.map((questionItem, index) => recoveryQuestionCard(questionItem, index, record)).join("")}</div>${conclusion}`, "erros");
   }
 
   result = function hardResult() {

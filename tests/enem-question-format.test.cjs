@@ -30,3 +30,11 @@ test('student-facing recovery uses medical memory prescription and separated con
   assert.match(adapterCode, /recovery-question-command/);
   assert.doesNotMatch(adapterCode, /Flashcards estilo Anki|Modelo Anki|Muito fácil/);
 });
+
+test('recovery renders a connected mind tree and a review infographic', () => {
+  assert.match(adapterCode, /mind-map-trunk/);
+  assert.match(adapterCode, /mind-map-limb/);
+  assert.match(adapterCode, /RAMOS E SUBGALHOS CONECTADOS/);
+  assert.match(adapterCode, /review-infographic/);
+  assert.match(adapterCode, /Infográfico de revisão/);
+});
