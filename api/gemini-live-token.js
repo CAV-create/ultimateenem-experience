@@ -20,7 +20,15 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'method_not_allowed' });
   }
 
-  const model = 'models/gemini-3.1-flash-live-preview';
+  const configuredModel = process.env.GEMINI_LIVE_MODEL || 'gemini-3.8-live';
+  const model = configuredModel.startsWith('models/') ? configuredModel : `models/${configuredModel}`;
+  if (!/^models\/[a-z0-9._-]+$/i.test(model)) {
+    return res.status(500).json({
+      ok: false,
+      error: 'gemini_live_model_invalid',
+      message: 'O modelo de voz configurado no servidor é inválido.'
+    });
+  }
   const expireTime = new Date(Date.now() + 20 * 60 * 1000).toISOString();
   const newSessionExpireTime = new Date(Date.now() + 5 * 60 * 1000).toISOString();
   const body = { uses: 1, expireTime, newSessionExpireTime };

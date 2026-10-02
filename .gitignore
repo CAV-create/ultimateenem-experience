@@ -1,1 +1,4 @@
 _ingest/
+.env
+.env.local
+.env.*.local

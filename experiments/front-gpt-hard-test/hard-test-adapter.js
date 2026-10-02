@@ -221,6 +221,10 @@
     state.newsSelections ||= currentAffairsTopics.map((topic) => topic.id);
     state.trials ||= {};
     state.examTimer ||= { key: "", duration: 0, remaining: 0, running: false, deadline: 0 };
+    state.vaibemTrack ||= "start";
+    state.vaibemTeacher ||= "math";
+    state.vaibemLiveNotebooks ||= [];
+    state.vaibemLiveNotebookId ||= "";
     state.essay.aiReview ||= null;
     state.essay.reviewStatus ||= "idle";
     state.essay.reviewMessage ||= "";
@@ -1304,6 +1308,15 @@
   }
 
   resourcesModal = function hardResourcesModal() {
+    if (currentProduct === "vaibem") {
+      const sessions = state.vaibemLiveNotebooks?.length || 0;
+      openDialog("Sua aula, sem distrações.", [
+        ["Escolher professor", "Etapa escolar e disciplina da próxima conversa", "vaibem"],
+        ["Meu caderno", `${sessions} ${sessions === 1 ? "aula salva" : "aulas salvas"}`, "vaibem/caderno"],
+        ["O que estou aprendendo", "Evidências acumuladas e próximo passo", "vaibem/evolucao"],
+      ].map(([title, subtitle, route]) => link(`<span><strong>${title}</strong><small>${subtitle}</small></span>${icon("chevron")}`, route, "resource-row")).join(""));
+      return;
+    }
     if (currentProduct !== "ultimate") return originalResourcesModal();
     const entries = [
       [medicalCall(), "Próximo atendimento indicado pela equipe", "assistente"],
@@ -1325,6 +1338,7 @@
     }
     openDialog("Só o que você precisa.", entries.map(([title, subtitle, route]) => link(`<span><strong>${title}</strong><small>${subtitle}</small></span>${icon("chevron")}`, route, "resource-row")).join(""));
   };
+  handlers.resources = () => resourcesModal();
 
   bank = function hardBank() {
     return shell(`${pageHead("Farmácia ENEM", "Encontre a habilidade.<br>Treine com precisão.", "As questões selecionadas permanecem pesquisáveis sem despejar o banco inteiro na tela.")}<label class="field">Pesquisar por área, habilidade ou competência<input id="bank-search" type="search" placeholder="H18, interpretação, energia, matemática…"></label><div id="bank-results">${bankResults("")}</div><div class="space">${link("Voltar ao próximo passo " + icon("arrow"), "hoje", "btn")}</div>`);
@@ -1343,14 +1357,44 @@
     return shell(`${pageHead("Mapa da jornada", "Muito poder.<br>Um próximo passo por vez.", "O aluno vê apenas as ações que fazem sentido para o seu momento; parâmetros técnicos permanecem nos bastidores.")}${studentRows}${auditRows}`, "");
   }
 
+  let activeVaiBemRoute = "";
+
+  function vaiBemContext() {
+    return {
+      state,
+      esc,
+      shell,
+      pageHead,
+      row,
+      link,
+      btn,
+      icon,
+      save: originalSave,
+      render: (...args) => render(...args),
+      go,
+      toast,
+    };
+  }
+
   const routeRenderer = function hardRouteRenderer(resetScroll = true) {
     let route = location.hash.replace(/^#\/?/, "") || "hoje";
+    if (activeVaiBemRoute === "vaibem/sala" && route !== "vaibem/sala") {
+      window.CAV_VAIBEM_LIVE?.dispose?.().catch(() => {});
+    }
+    activeVaiBemRoute = route;
     if (!auditModeEnabled() && ["auditoria/recuperacao", "patentes"].includes(route)) {
       route = "mapa";
       history.replaceState(null, "", `${location.pathname}${location.search}#/mapa`);
     }
     let html = null;
-    if (route === "lista-externa") html = externalListHome();
+    const vaiBemLive = window.CAV_VAIBEM_LIVE;
+    const vaiBemCtx = vaiBemContext();
+    if (route === "vaibem" && vaiBemLive) html = vaiBemLive.renderHome(vaiBemCtx);
+    else if (route === "vaibem/sala" && vaiBemLive) html = vaiBemLive.renderRoom(vaiBemCtx);
+    else if (route === "vaibem/caderno" && vaiBemLive) html = vaiBemLive.renderNotebookList(vaiBemCtx);
+    else if (route.startsWith("vaibem/caderno/") && vaiBemLive) html = vaiBemLive.renderNotebook(vaiBemCtx, decodeURIComponent(route.slice("vaibem/caderno/".length)));
+    else if (route === "vaibem/evolucao" && vaiBemLive) html = vaiBemLive.renderProgress(vaiBemCtx);
+    else if (route === "lista-externa") html = externalListHome();
     else if (route === "lista-externa/revisar") html = externalReview();
     else if (route === "lista-externa/responder") html = externalQuestion();
     else if (route === "lista-externa/resultado") html = externalResult();
@@ -1377,6 +1421,7 @@
       document.title = `${resourceRouteLabels[route] || "Jornada do aluno"} · CAVPRIME`;
       if (resetScroll) window.scrollTo(0, 0);
       applyExperienceCohesion();
+      vaiBemLive?.mount?.(route, vaiBemCtx);
       return;
     }
     originalRender(resetScroll);
@@ -1407,6 +1452,10 @@
     "lista-externa/revisar": "Classificação da lista",
     "lista-externa/responder": "Lista externa",
     "lista-externa/resultado": "Correção da lista",
+    vaibem: "VaiBem",
+    "vaibem/sala": "Aula particular",
+    "vaibem/caderno": "Meu caderno",
+    "vaibem/evolucao": "Evolução",
     recuperacao: "Recuperação guiada",
     erros: "Prontuário",
     relatorio: "Prontuário médico da aprendizagem",
