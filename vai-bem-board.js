@@ -11,7 +11,12 @@ const MOLECULES={
  eteno:{title:'Eteno · alceno',left:'CH₂',right:'CH₂',double:true,group:'dupla'}
 };
 const KINDS={titulo:'Conceito',definicao:'Definição',formula:'Fórmula',etapa:'Passo',exemplo:'Exemplo'};
-const DIAGRAMS={fracao:'Fração',reta_numerica:'Reta numérica',fluxo:'Fluxo',comparacao:'Comparação',ciclo:'Ciclo',triangulo_retangulo:'Triângulo retângulo'};
+const DIAGRAMS={
+ fracao:'Fração em barra',pizza:'Fração em pizza',colecao:'Coleção de objetos',formas_geometricas:'Formas geométricas',relogio:'Relógio',
+ reta_numerica:'Reta numérica',plano_cartesiano:'Plano cartesiano',comparacao:'Comparação',venn:'Diagrama de Venn',
+ fluxo:'Fluxo',ciclo:'Ciclo',linha_do_tempo:'Linha do tempo',mapa_conceitual:'Mapa conceitual',triangulo_retangulo:'Triângulo retângulo',
+ celula:'Célula',atomo:'Átomo',sistema_solar:'Sistema solar',circuito_eletrico:'Circuito elétrico',forcas:'Diagrama de forças',onda:'Onda'
+};
 const declaration={name:'atualizar_lousa',description:'Escreve uma anotação curta, desenha um diagrama pedagógico ou estrutura química, resolve uma proporção ou destaca parte de um desenho. Retorna imediatamente quando a ação é aceita na fila; a apresentação acontece aos poucos junto ao áudio. Use antes de explicar cada conceito, sem transcrever toda a fala. Reutilize id para corrigir um bloco.',parameters:{type:'OBJECT',properties:{
  action:{type:'STRING',enum:['anotar','diagrama','molecula','destacar','estrutura','estequiometria','regra_de_tres']},
  a:{type:'NUMBER',description:'Regra de três: valor superior esquerdo.'},b:{type:'NUMBER',description:'Valor superior direito.'},c:{type:'NUMBER',description:'Valor inferior esquerdo; x fica à direita.'},
@@ -22,7 +27,7 @@ const declaration={name:'atualizar_lousa',description:'Escreve uma anotação cu
  kind:{type:'STRING',enum:Object.keys(KINDS)},
  diagram:{type:'STRING',enum:Object.keys(DIAGRAMS),description:'Diagrama pedagógico seguro e determinístico.'},
  labels:{type:'ARRAY',items:{type:'STRING'},description:'Rótulos curtos do diagrama. Em fluxo ou ciclo, use de 2 a 6 etapas.'},
- values:{type:'ARRAY',items:{type:'NUMBER'},description:'Valores do diagrama. Fração: [numerador,denominador]. Reta: [mínimo,máximo,pontos...]. Comparação: um valor por rótulo.'},
+    values:{type:'ARRAY',items:{type:'NUMBER'},description:'Valores do diagrama. Pizza ou fração: [numerador,denominador]. Coleção: [destacados,total]. Relógio: [hora,minuto]. Reta: [mínimo,máximo,pontos...]. Comparação: um valor por rótulo.'},
  molecule:{type:'STRING',enum:Object.keys(MOLECULES)},
  smiles:{type:'STRING',description:'SMILES da molécula real, até 1500 caracteres. Necessário em estrutura. Não use nomes como SMILES.'},
  title:{type:'STRING',description:'Nome da molécula ou título do exercício, até 100 caracteres.'},
@@ -63,12 +68,19 @@ function validate(args){
   if(args.values!==undefined&&!Array.isArray(args.values))throw Error('Valores do diagrama inválidos');
   const labels=(args.labels||[]).map(value=>String(value).trim());
   const values=args.values||[];
-  if(labels.length>6||labels.some(value=>!value||value.length>40))throw Error('Use até 6 rótulos de 1 a 40 caracteres');
-  if(values.length>8||values.some(value=>typeof value!=='number'||!Number.isFinite(value)||Math.abs(value)>1e9))throw Error('Valores do diagrama inválidos');
-  if(args.diagram==='fracao'&&!(values.length===2&&Number.isInteger(values[0])&&Number.isInteger(values[1])&&values[0]>=0&&values[1]>=1&&values[1]<=12&&values[0]<=values[1]))throw Error('Fração exige numerador e denominador inteiros, com denominador de 1 a 12');
+  if(labels.length>8||labels.some(value=>!value||value.length>40))throw Error('Use até 8 rótulos de 1 a 40 caracteres');
+  if(values.length>10||values.some(value=>typeof value!=='number'||!Number.isFinite(value)||Math.abs(value)>1e9))throw Error('Valores do diagrama inválidos');
+  if(['fracao','pizza'].includes(args.diagram)&&!(values.length===2&&Number.isInteger(values[0])&&Number.isInteger(values[1])&&values[0]>=0&&values[1]>=1&&values[1]<=12&&values[0]<=values[1]))throw Error('Fração exige numerador e denominador inteiros, com denominador de 1 a 12');
+  if(args.diagram==='colecao'&&!(values.length===2&&Number.isInteger(values[0])&&Number.isInteger(values[1])&&values[0]>=0&&values[1]>=1&&values[1]<=24&&values[0]<=values[1]))throw Error('Coleção exige destacados e total inteiros, com total de 1 a 24');
+  if(args.diagram==='relogio'&&!(values.length===2&&Number.isInteger(values[0])&&Number.isInteger(values[1])&&values[0]>=0&&values[0]<=23&&values[1]>=0&&values[1]<=59))throw Error('Relógio exige hora de 0 a 23 e minuto de 0 a 59');
   if(args.diagram==='reta_numerica'&&!(values.length>=2&&values[0]<values[1]&&values.slice(2).every(value=>value>=values[0]&&value<=values[1])))throw Error('Reta numérica exige mínimo, máximo e pontos dentro do intervalo');
   if(args.diagram==='comparacao'&&!(labels.length>=2&&labels.length<=4&&values.length===labels.length&&values.every(value=>value>=0)))throw Error('Comparação exige de 2 a 4 rótulos e um valor não negativo para cada um');
   if(['fluxo','ciclo'].includes(args.diagram)&&!(labels.length>=2&&labels.length<=6))throw Error('Fluxo ou ciclo exige de 2 a 6 etapas');
+  if(['venn','linha_do_tempo','mapa_conceitual'].includes(args.diagram)&&!(labels.length>=2&&labels.length<=6))throw Error('Esse diagrama exige de 2 a 6 rótulos');
+  if(args.diagram==='linha_do_tempo'&&values.length&&values.length!==labels.length)throw Error('Linha do tempo exige um valor por rótulo ou nenhum valor');
+  if(args.diagram==='plano_cartesiano'&&!(values.length>=2&&values.length<=8&&values.length%2===0))throw Error('Plano cartesiano exige pares x e y, até quatro pontos');
+  if(args.diagram==='atomo'&&values.length&&!(values.length===2&&values.every(value=>Number.isInteger(value)&&value>=0&&value<=18)))throw Error('Átomo aceita [prótons,elétrons], de 0 a 18');
+  if(args.diagram==='onda'&&values.length&&!(values.length===2&&values[0]>0&&values[0]<=5&&values[1]>=1&&values[1]<=4))throw Error('Onda aceita [amplitude,ciclos] dentro dos limites didáticos');
   if(args.diagram==='triangulo_retangulo'&&labels.length>3)throw Error('Triângulo aceita até 3 rótulos');
   return {action:args.action,id:args.id,diagram:args.diagram,title:args.title.trim(),labels,values};
  }
@@ -299,26 +311,76 @@ function drawDiagram(args){
  const make=(tag,attrs={},text)=>{const el=document.createElementNS(ns,tag);for(const [key,value]of Object.entries(attrs))el.setAttribute(key,String(value));if(text!==undefined)el.textContent=String(text);el.style.opacity='0';svg.appendChild(el);steps.push(el);return el};
  const text=(x,y,value,anchor='middle',cls='diagram-text')=>make('text',{x,y,'text-anchor':anchor,'dominant-baseline':'middle',class:cls},value);
  const line=(x1,y1,x2,y2,cls='diagram-line')=>make('line',{x1,y1,x2,y2,class:cls});
+ const path=(d,cls='diagram-line')=>make('path',{d,class:cls});
+ const polar=(cx,cy,r,angle)=>({x:cx+Math.cos(angle)*r,y:cy+Math.sin(angle)*r});
  const arrow=(x1,y1,x2,y2)=>{line(x1,y1,x2,y2,'diagram-line diagram-arrow');const angle=Math.atan2(y2-y1,x2-x1),size=11;line(x2,y2,x2-size*Math.cos(angle-.55),y2-size*Math.sin(angle-.55),'diagram-line');line(x2,y2,x2-size*Math.cos(angle+.55),y2-size*Math.sin(angle+.55),'diagram-line')};
  if(args.diagram==='fracao'){
   const [numerator,denominator]=args.values,width=440,height=115,startX=100,startY=90,cell=width/denominator;
   for(let index=0;index<denominator;index++){make('rect',{x:startX+index*cell,y:startY,width:cell,height,rx:5,class:index<numerator?'diagram-fill':'diagram-shape'});}
   text(320,238,`${numerator}/${denominator}`,'middle','diagram-equation');
+ }else if(args.diagram==='pizza'){
+  const [numerator,denominator]=args.values,cx=320,cy=138,r=105;
+  if(denominator===1)make('circle',{cx,cy,r,class:numerator?'diagram-pizza-full':'diagram-pizza-empty'});
+  else for(let index=0;index<denominator;index++){
+   const start=-Math.PI/2+index*2*Math.PI/denominator,end=-Math.PI/2+(index+1)*2*Math.PI/denominator,a=polar(cx,cy,r,start),b=polar(cx,cy,r,end),large=end-start>Math.PI?1:0;
+   path(`M ${cx} ${cy} L ${a.x} ${a.y} A ${r} ${r} 0 ${large} 1 ${b.x} ${b.y} Z`,index<numerator?'diagram-pizza-full':'diagram-pizza-empty');
+   if(index<numerator){const topping=polar(cx,cy,r*.56,(start+end)/2);make('circle',{cx:topping.x,cy:topping.y,r:7,class:'diagram-topping'});}
+  }
+  make('circle',{cx,cy,r,class:'diagram-crust'});text(320,270,`${numerator}/${denominator} da pizza`,'middle','diagram-equation');
+ }else if(args.diagram==='colecao'){
+  const [highlighted,total]=args.values,columns=Math.min(8,Math.ceil(Math.sqrt(total))),gapX=500/columns,rows=Math.ceil(total/columns),gapY=Math.min(72,155/Math.max(1,rows-1));
+  for(let index=0;index<total;index++){
+   const row=Math.floor(index/columns),column=index%columns,count=Math.min(columns,total-row*columns),offset=(columns-count)*gapX/2,x=70+offset+column*gapX+gapX/2,y=70+row*gapY;
+   make('circle',{cx:x,cy:y,r:22,class:index<highlighted?'diagram-object-active':'diagram-object'});path(`M ${x} ${y-22} Q ${x+10} ${y-38} ${x+22} ${y-28}`,'diagram-leaf');
+  }
+  text(320,260,`${highlighted} de ${total} ${args.labels[0]||'objetos'}`,'middle','diagram-equation');
+ }else if(args.diagram==='formas_geometricas'){
+  const labels=args.labels.length?args.labels:['círculo','triângulo','quadrado','hexágono'];
+  make('circle',{cx:105,cy:140,r:55,class:'diagram-color-a'});make('polygon',{points:'235,195 290,85 345,195',class:'diagram-color-b'});make('rect',{x:390,y:88,width:106,height:106,rx:5,class:'diagram-color-c'});make('polygon',{points:'545,86 590,112 590,166 545,192 500,166 500,112',class:'diagram-color-d'});
+  [105,290,443,545].forEach((x,index)=>text(x,235,labels[index]||['círculo','triângulo','quadrado','hexágono'][index]));
+ }else if(args.diagram==='relogio'){
+  const [hour,minute]=args.values,cx=320,cy=143,r=108;
+  make('circle',{cx,cy,r,class:'diagram-clock'});for(let value=1;value<=12;value++){const point=polar(cx,cy,r-22,-Math.PI/2+value*2*Math.PI/12);text(point.x,point.y,value)}
+  const minutePoint=polar(cx,cy,r-30,-Math.PI/2+minute*2*Math.PI/60),hourPoint=polar(cx,cy,r-55,-Math.PI/2+((hour%12)+minute/60)*2*Math.PI/12);
+  line(cx,cy,hourPoint.x,hourPoint.y,'diagram-hand diagram-hour');line(cx,cy,minutePoint.x,minutePoint.y,'diagram-hand diagram-minute');make('circle',{cx,cy,r:7,class:'diagram-point'});text(320,278,`${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}`,'middle','diagram-equation');
  }else if(args.diagram==='reta_numerica'){
   const [min,max,...marks]=args.values,startX=70,endX=570,y=152;arrow(startX,y,endX,y);
   const divisions=8;for(let index=0;index<=divisions;index++){const x=startX+(endX-startX)*index/divisions;line(x,y-10,x,y+10);if(index===0||index===divisions)text(x,y+31,index===0?min:max)}
   for(const value of marks){const x=startX+(value-min)/(max-min)*(endX-startX);make('circle',{cx:x,cy:y,r:9,class:'diagram-point'});text(x,y-28,value)}
+ }else if(args.diagram==='plano_cartesiano'){
+  const cx=320,cy=150;arrow(65,cy,585,cy);arrow(cx,265,cx,35);text(590,cy-16,'x');text(cx+18,28,'y');
+  for(let index=0;index<args.values.length;index+=2){const x=args.values[index],y=args.values[index+1],px=cx+x*42,py=cy-y*42;line(px,cy,px,py,'diagram-guide');line(cx,py,px,py,'diagram-guide');make('circle',{cx:px,cy:py,r:8,class:'diagram-point'});text(px+14,py-15,args.labels[index/2]||`(${x}, ${y})`,'start');}
  }else if(args.diagram==='comparacao'){
   const max=Math.max(...args.values,1),slot=500/args.values.length;
   args.values.forEach((value,index)=>{const height=150*value/max,x=75+index*slot,y=225-height;make('rect',{x,y,width:Math.min(78,slot-22),height,rx:7,class:'diagram-fill'});text(x+Math.min(78,slot-22)/2,y-16,value);text(x+Math.min(78,slot-22)/2,252,args.labels[index])});
+ }else if(args.diagram==='venn'){
+  const labels=args.labels,cx=labels.length===3?[260,380,320]:[270,370],cy=labels.length===3?[125,125,190]:[150,150];
+  labels.forEach((label,index)=>{make('circle',{cx:cx[index],cy:cy[index],r:90,class:`diagram-venn diagram-venn-${index+1}`});text(cx[index]+(index===0?-45:index===1?45:0),cy[index]+(index===2?48:-48),label);});
  }else if(args.diagram==='triangulo_retangulo'){
   line(135,230,500,230);line(135,230,135,55);line(135,55,500,230);line(135,205,160,205);line(160,205,160,230);
   text(300,252,args.labels[0]||'base');text(105,145,args.labels[1]||'altura');text(335,122,args.labels[2]||'hipotenusa');
  }else if(args.diagram==='fluxo'){
   const count=args.labels.length,gap=500/(count-1);args.labels.forEach((label,index)=>{const x=70+index*gap;if(index)arrow(x-gap+70,150,x-70,150);make('rect',{x:x-66,y:112,width:132,height:76,rx:14,class:'diagram-shape'});text(x,150,label)});
- }else{
+ }else if(args.diagram==='ciclo'){
   const count=args.labels.length,cx=320,cy=150,radius=102,points=args.labels.map((_,index)=>{const angle=-Math.PI/2+index*2*Math.PI/count;return {x:cx+Math.cos(angle)*radius,y:cy+Math.sin(angle)*radius}});
   points.forEach((point,index)=>{const next=points[(index+1)%count];arrow(point.x,point.y,next.x,next.y);make('circle',{cx:point.x,cy:point.y,r:38,class:'diagram-shape'});text(point.x,point.y,args.labels[index])});
+ }else if(args.diagram==='linha_do_tempo'){
+  const count=args.labels.length,startX=75,endX=565,y=150;line(startX,y,endX,y,'diagram-line timeline-line');args.labels.forEach((label,index)=>{const x=count===1?320:startX+index*(endX-startX)/(count-1);make('circle',{cx:x,cy:y,r:10,class:'diagram-point'});line(x,y-16,x,y+16);text(x,index%2?205:92,args.values[index]??label);if(args.values.length)text(x,index%2?235:62,label);});
+ }else if(args.diagram==='mapa_conceitual'){
+  const [center,...nodes]=args.labels,cx=320,cy=150,radius=108;make('ellipse',{cx,cy,rx:80,ry:42,class:'diagram-concept-center'});text(cx,cy,center);nodes.forEach((label,index)=>{const angle=-Math.PI/2+index*2*Math.PI/nodes.length,point=polar(cx,cy,radius,angle),edge=polar(cx,cy,70,angle);line(edge.x,edge.y,point.x,point.y,'diagram-line');make('ellipse',{cx:point.x,cy:point.y,rx:64,ry:31,class:'diagram-shape'});text(point.x,point.y,label);});
+ }else if(args.diagram==='celula'){
+  const labels=args.labels.length?args.labels:['membrana','citoplasma','núcleo','mitocôndria'];make('ellipse',{cx:320,cy:145,rx:220,ry:112,class:'diagram-cell'});make('circle',{cx:325,cy:142,r:48,class:'diagram-nucleus'});make('circle',{cx:325,cy:142,r:18,class:'diagram-nucleolus'});path('M 185 120 C 210 85 255 95 246 129 C 235 166 194 165 185 120 Z','diagram-organelle');path('M 395 176 C 423 139 472 151 461 187 C 448 220 407 214 395 176 Z','diagram-organelle');make('ellipse',{cx:415,cy:92,rx:24,ry:14,class:'diagram-vesicle'});
+  text(92,72,labels[0]||'membrana','start');line(178,82,112,76,'diagram-guide');text(92,245,labels[1]||'citoplasma','start');line(195,212,112,238,'diagram-guide');text(505,65,labels[2]||'núcleo','start');line(367,112,498,72,'diagram-guide');text(505,230,labels[3]||'mitocôndria','start');line(450,195,498,222,'diagram-guide');
+ }else if(args.diagram==='atomo'){
+  const protons=args.values[0]??6,electrons=args.values[1]??6,cx=320,cy=145;make('circle',{cx,cy,r:40,class:'diagram-nucleus'});text(cx,cy,`${protons} p⁺`);[0,60,-60].forEach(angle=>make('ellipse',{cx,cy,rx:155,ry:62,transform:`rotate(${angle} ${cx} ${cy})`,class:'diagram-orbit'}));for(let index=0;index<Math.min(electrons,12);index++){const angle=index*2*Math.PI/Math.min(electrons,12),point=polar(cx,cy,index%3===0?155:112,angle);make('circle',{cx:point.x,cy:point.y,r:8,class:'diagram-electron'});}text(320,276,`${protons} prótons · ${electrons} elétrons`,'middle','diagram-equation');
+ }else if(args.diagram==='sistema_solar'){
+  const labels=args.labels.length?args.labels:['Sol','Mercúrio','Vênus','Terra','Marte','Júpiter'],planetCount=labels.length-1;make('circle',{cx:82,cy:150,r:48,class:'diagram-sun'});text(82,220,labels[0]);const sizes=[8,12,13,10,24,20,18];for(let index=1;index<labels.length;index++){const x=planetCount===1?330:150+(index-1)*420/(planetCount-1);make('circle',{cx:x,cy:150,r:sizes[index]||10,class:`diagram-planet diagram-planet-${index}`});text(x,198,labels[index]);}
+ }else if(args.diagram==='circuito_eletrico'){
+  path('M 120 90 H 480 V 220 H 120 V 90','diagram-wire');line(105,125,105,185,'diagram-line');line(125,112,125,198,'diagram-line');text(82,155,args.labels[0]||'pilha','end');make('circle',{cx:480,cy:150,r:42,class:'diagram-lamp'});path('M 455 150 Q 480 118 505 150 Q 480 182 455 150','diagram-filament');line(245,220,295,190,'diagram-switch');line(295,220,345,220,'diagram-wire');text(292,258,args.labels[2]||'interruptor');text(535,150,args.labels[1]||'lâmpada','start');
+ }else if(args.diagram==='forcas'){
+  make('rect',{x:245,y:105,width:150,height:90,rx:10,class:'diagram-color-c'});text(320,150,'corpo');const labels=args.labels.length?args.labels:['normal','peso','força','atrito'];arrow(320,105,320,35);text(334,48,labels[0],'start');arrow(320,195,320,270);text(334,258,labels[1],'start');arrow(395,150,555,150);text(475,130,labels[2]);arrow(245,150,85,150);text(165,130,labels[3]);
+ }else if(args.diagram==='onda'){
+  const amplitude=(args.values[0]??2)*24,cycles=args.values[1]??2,startX=65,endX=575,mid=150,segments=cycles*2,width=(endX-startX)/segments;line(startX,mid,endX,mid,'diagram-guide');let d=`M ${startX} ${mid}`;for(let index=0;index<segments;index++){const x1=startX+index*width,x2=x1+width,peak=index%2===0?mid-amplitude:mid+amplitude;d+=` Q ${x1+width/2} ${peak} ${x2} ${mid}`;}path(d,'diagram-wave');arrow(110,mid,110,mid-amplitude);text(122,mid-amplitude/2,'amplitude','start');line(190,242,190+2*width,242,'diagram-line');text(190+width,265,'comprimento de onda');
  }
  return {svg,steps};
 }

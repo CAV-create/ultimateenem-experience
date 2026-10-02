@@ -35,9 +35,22 @@ test('decodes string, Blob, ArrayBuffer and typed-array Live frames', async () =
 test('locks tutoring to Brazilian Portuguese and exposes START and RISE teachers', () => {
   const live = loadModule();
   assert.match(live.systemInstruction(), /PORTUGUÊS DO BRASIL/);
-  assert.match(live.systemInstruction(), /Não afirme que desenhou sem chamar a ferramenta/);
+  assert.match(live.systemInstruction(), /nunca afirme que desenhou sem chamar a ferramenta/i);
+  assert.match(live.systemInstruction(), /pizza deve ser um círculo com fatias/);
   assert.equal(live.teachers.math.track, 'start');
   assert.equal(live.teachers.chem.track, 'rise');
+  assert.equal(Object.keys(live.teachers).length, 17);
+  assert.equal(JSON.stringify(Object.keys(live.areas)), JSON.stringify(['exatas', 'linguagens', 'natureza', 'humanas']));
+  const portraits = new Set();
+  for (const teacher of Object.values(live.teachers)) {
+    assert.match(teacher.teacher, /^Dr(a)?\./);
+    assert.match(teacher.specialty, /^Especialista em /);
+    assert.ok(live.areas[teacher.area]);
+    assert.match(teacher.portrait, /^\/assets\/vaibem\/specialists\/[a-z-]+\.webp$/);
+    assert.ok(fs.existsSync(path.join(__dirname, '../..', teacher.portrait.slice(1))));
+    portraits.add(teacher.portrait);
+  }
+  assert.equal(portraits.size, 17);
 });
 
 test('client sends PCM through realtimeInput.audio and never embeds a long-lived API key', () => {

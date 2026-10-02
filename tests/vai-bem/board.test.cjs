@@ -59,10 +59,25 @@ test('rule of three follows photo, paces fraction and arrows, replaces correctio
 });
 test('safe diagrams validate inputs and draw incrementally',()=>{
  const {board,advance}=fixture();
- assert.deepEqual(Object.keys(DIAGRAMS),['fracao','reta_numerica','fluxo','comparacao','ciclo','triangulo_retangulo']);
+ assert.deepEqual(Object.keys(DIAGRAMS),['fracao','pizza','colecao','formas_geometricas','relogio','reta_numerica','plano_cartesiano','comparacao','venn','fluxo','ciclo','linha_do_tempo','mapa_conceitual','triangulo_retangulo','celula','atomo','sistema_solar','circuito_eletrico','forcas','onda']);
  board.command({action:'diagrama',id:'fraction',diagram:'fracao',title:'Três quartos',values:[3,4],labels:[]},'diagram');
  const item=board.blocks.get('fraction');assert.equal(item.steps.length,5);assert.ok(item.steps.every(step=>step.style.opacity==='0'));
  advance(800);assert.ok(item.shown>0&&item.shown<item.steps.length);advance(3000);assert.equal(item.shown,item.steps.length);
  assert.throws(()=>validate({action:'diagrama',id:'bad',diagram:'fracao',title:'Erro',values:[5,4]}));
  assert.throws(()=>validate({action:'diagrama',id:'bad',diagram:'fluxo',title:'Erro',labels:'Dados'}));
+});
+
+test('visual toolkit draws concrete child-friendly and cross-subject illustrations',()=>{
+ const {board}=fixture();
+ const samples=[
+  {id:'pizza',diagram:'pizza',title:'Pizza',values:[3,4],labels:['3/4']},
+  {id:'objects',diagram:'colecao',title:'Frutas',values:[6,8],labels:['frutas']},
+  {id:'clock',diagram:'relogio',title:'Horário',values:[2,30],labels:[]},
+  {id:'cell',diagram:'celula',title:'Célula',values:[],labels:['membrana','citoplasma','núcleo','mitocôndria']},
+  {id:'atom',diagram:'atomo',title:'Átomo',values:[6,6],labels:['núcleo','elétrons']},
+  {id:'circuit',diagram:'circuito_eletrico',title:'Circuito',values:[],labels:['pilha','lâmpada','interruptor']},
+ ];
+ for(const sample of samples){board.command({action:'diagrama',...sample},sample.id);const item=board.blocks.get(sample.id);assert.ok(item.steps.length>=3);assert.ok(item.steps.every(step=>step.style.opacity==='0'));}
+ assert.throws(()=>validate({action:'diagrama',id:'bad-pizza',diagram:'pizza',title:'Pizza',values:[9,4],labels:[]}));
+ assert.throws(()=>validate({action:'diagrama',id:'bad-clock',diagram:'relogio',title:'Relógio',values:[10,75],labels:[]}));
 });

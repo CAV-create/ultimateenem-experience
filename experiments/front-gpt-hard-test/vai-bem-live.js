@@ -2,36 +2,30 @@
   "use strict";
 
   const teachers = Object.freeze({
-    math: {
-      id: "math",
-      track: "start",
-      teacher: "Profa. Lia",
-      avatar: "LI",
-      subject: "Matemática",
-      focus: "Frações, proporções e resolução guiada",
-      grade: "6º ano do Ensino Fundamental",
-      voice: "Aoede",
-    },
-    port: {
-      id: "port",
-      track: "rise",
-      teacher: "Prof. André",
-      avatar: "AN",
-      subject: "Língua Portuguesa",
-      focus: "Leitura, gramática e produção de texto",
-      grade: "1º ano do Ensino Médio",
-      voice: "Iapetus",
-    },
-    chem: {
-      id: "chem",
-      track: "rise",
-      teacher: "Prof. Rafael",
-      avatar: "RA",
-      subject: "Química",
-      focus: "Química orgânica e estequiometria",
-      grade: "2º ano do Ensino Médio",
-      voice: "Charon",
-    },
+    math: { id: "math", track: "start", area: "exatas", teacher: "Dra. Lia Nogueira", avatar: "LN", portrait: "/assets/vaibem/specialists/lia-nogueira.webp", subject: "Matemática", specialty: "Especialista em curar dúvidas de Matemática", focus: "Números, frações, geometria e resolução guiada", grade: "3º ao 8º ano", voice: "Aoede" },
+    port_start: { id: "port_start", track: "start", area: "linguagens", teacher: "Dr. Otávio Freitas", avatar: "OF", portrait: "/assets/vaibem/specialists/otavio-freitas.webp", subject: "Língua Portuguesa", specialty: "Especialista em cuidar da leitura e da escrita", focus: "Leitura, gramática, ortografia e produção de texto", grade: "3º ao 8º ano", voice: "Iapetus" },
+    english_start: { id: "english_start", track: "start", area: "linguagens", teacher: "Dra. Maya Torres", avatar: "MT", portrait: "/assets/vaibem/specialists/maya-torres.webp", subject: "Inglês", specialty: "Especialista em destravar a comunicação em Inglês", focus: "Vocabulário, leitura, escuta e conversação", grade: "3º ao 8º ano", voice: "Aoede" },
+    arts_start: { id: "arts_start", track: "start", area: "linguagens", teacher: "Dra. Nina Valente", avatar: "NV", portrait: "/assets/vaibem/specialists/nina-valente.webp", subject: "Arte", specialty: "Especialista em ampliar o olhar e a criatividade", focus: "Artes visuais, música, cultura e leitura de imagens", grade: "3º ao 8º ano", voice: "Aoede" },
+    science_start: { id: "science_start", track: "start", area: "natureza", teacher: "Dra. Clara Mendonça", avatar: "CM", portrait: "/assets/vaibem/specialists/clara-mendonca.webp", subject: "Ciências", specialty: "Especialista em investigar a vida e a natureza", focus: "Seres vivos, corpo humano, matéria, energia e ambiente", grade: "3º ao 8º ano", voice: "Aoede" },
+    history_start: { id: "history_start", track: "start", area: "humanas", teacher: "Dr. Bento Andrade", avatar: "BA", portrait: "/assets/vaibem/specialists/bento-andrade.webp", subject: "História", specialty: "Especialista em conectar tempos, povos e escolhas", focus: "Tempo histórico, sociedades, fontes e cidadania", grade: "3º ao 8º ano", voice: "Charon" },
+    geography_start: { id: "geography_start", track: "start", area: "humanas", teacher: "Dra. Marina Campos", avatar: "MC", portrait: "/assets/vaibem/specialists/marina-campos.webp", subject: "Geografia", specialty: "Especialista em ler mapas, lugares e paisagens", focus: "Cartografia, território, população e ambiente", grade: "3º ao 8º ano", voice: "Aoede" },
+    math_rise: { id: "math_rise", track: "rise", area: "exatas", teacher: "Dra. Sofia Prado", avatar: "SP", portrait: "/assets/vaibem/specialists/sofia-prado.webp", subject: "Matemática", specialty: "Especialista em diagnosticar e organizar raciocínios matemáticos", focus: "Álgebra, geometria, funções, estatística e probabilidade", grade: "9º ano ao 2º ano do Ensino Médio", voice: "Aoede" },
+    physics_rise: { id: "physics_rise", track: "rise", area: "exatas", teacher: "Dr. Caio Ventura", avatar: "CV", portrait: "/assets/vaibem/specialists/caio-ventura.webp", subject: "Física", specialty: "Especialista em tornar fenômenos e cálculos visíveis", focus: "Mecânica, energia, ondas, eletricidade e óptica", grade: "9º ano ao 2º ano do Ensino Médio", voice: "Iapetus" },
+    port_rise: { id: "port_rise", track: "rise", area: "linguagens", teacher: "Dr. André Tavares", avatar: "AT", portrait: "/assets/vaibem/specialists/andre-tavares.webp", subject: "Língua Portuguesa e Literatura", specialty: "Especialista em leitura, linguagem e literatura", focus: "Interpretação, gramática, gêneros e literatura", grade: "9º ano ao 2º ano do Ensino Médio", voice: "Iapetus" },
+    writing_rise: { id: "writing_rise", track: "rise", area: "linguagens", teacher: "Dra. Helena Prado", avatar: "HP", portrait: "/assets/vaibem/specialists/helena-prado.webp", subject: "Redação", specialty: "Especialista em cuidar do projeto argumentativo", focus: "Compreensão do tema, tese, repertório, coesão e reescrita", grade: "9º ano ao 2º ano do Ensino Médio", voice: "Aoede" },
+    english_rise: { id: "english_rise", track: "rise", area: "linguagens", teacher: "Dra. Maya Costa", avatar: "MC", portrait: "/assets/vaibem/specialists/maya-costa.webp", subject: "Inglês", specialty: "Especialista em leitura e comunicação em Inglês", focus: "Leitura, vocabulário, escuta e contexto", grade: "9º ano ao 2º ano do Ensino Médio", voice: "Aoede" },
+    biology_rise: { id: "biology_rise", track: "rise", area: "natureza", teacher: "Dra. Beatriz Mendonça", avatar: "BM", portrait: "/assets/vaibem/specialists/beatriz-mendonca.webp", subject: "Biologia", specialty: "Especialista em investigar os sistemas da vida", focus: "Citologia, genética, ecologia, fisiologia e evolução", grade: "9º ano ao 2º ano do Ensino Médio", voice: "Aoede" },
+    chem: { id: "chem", track: "rise", area: "natureza", teacher: "Dr. Rafael Azevedo", avatar: "RA", portrait: "/assets/vaibem/specialists/rafael-azevedo.webp", subject: "Química", specialty: "Especialista em tratar dúvidas de Química", focus: "Matéria, soluções, reações, orgânica e estequiometria", grade: "9º ano ao 2º ano do Ensino Médio", voice: "Charon" },
+    history_rise: { id: "history_rise", track: "rise", area: "humanas", teacher: "Dra. Alice Barros", avatar: "AB", portrait: "/assets/vaibem/specialists/alice-barros.webp", subject: "História", specialty: "Especialista em relacionar processos e contextos históricos", focus: "Brasil, mundo, política, cultura e cidadania", grade: "9º ano ao 2º ano do Ensino Médio", voice: "Aoede" },
+    geography_rise: { id: "geography_rise", track: "rise", area: "humanas", teacher: "Dr. Theo Martins", avatar: "TM", portrait: "/assets/vaibem/specialists/theo-martins.webp", subject: "Geografia", specialty: "Especialista em interpretar territórios e transformações", focus: "Geopolítica, cartografia, ambiente, economia e população", grade: "9º ano ao 2º ano do Ensino Médio", voice: "Iapetus" },
+    philosophy_rise: { id: "philosophy_rise", track: "rise", area: "humanas", teacher: "Dra. Aurora Lima", avatar: "AL", portrait: "/assets/vaibem/specialists/aurora-lima.webp", subject: "Filosofia e Sociologia", specialty: "Especialista em examinar ideias, relações e argumentos", focus: "Ética, conhecimento, política, cultura e sociedade", grade: "9º ano ao 2º ano do Ensino Médio", voice: "Aoede" },
+  });
+
+  const areas = Object.freeze({
+    exatas: "Exatas",
+    linguagens: "Linguagens",
+    natureza: "Natureza",
+    humanas: "Humanas",
   });
 
   const tracks = Object.freeze({
@@ -73,11 +67,13 @@
   const byId = (id) => document.getElementById(id);
   const teacher = () => teachers[mode] || teachers.math;
   const escape = (value) => context?.esc ? context.esc(value) : String(value || "");
+  const avatarMarkup = (item, large = false) => `<span class="vb-avatar${large ? " large" : ""}" aria-hidden="true"><span class="vb-avatar-fallback">${item.avatar}</span><img src="${item.portrait}" alt="" width="${large ? 88 : 60}" height="${large ? 88 : 60}" loading="${large ? "eager" : "lazy"}" decoding="async" onerror="this.remove()"></span>`;
 
   function ensureState(state) {
     state.vaibemTrack ||= "start";
-    const available = Object.values(teachers).filter((item) => item.track === state.vaibemTrack);
-    if (!teachers[state.vaibemTeacher] || teachers[state.vaibemTeacher].track !== state.vaibemTrack) {
+    state.vaibemArea = Object.hasOwn(areas, state.vaibemArea) ? state.vaibemArea : "exatas";
+    const available = Object.values(teachers).filter((item) => item.track === state.vaibemTrack && item.area === state.vaibemArea);
+    if (!teachers[state.vaibemTeacher] || teachers[state.vaibemTeacher].track !== state.vaibemTrack || teachers[state.vaibemTeacher].area !== state.vaibemArea) {
       state.vaibemTeacher = available[0]?.id || "math";
     }
     state.vaibemLiveNotebooks ||= [];
@@ -87,8 +83,8 @@
 
   function teacherOptions(state) {
     return Object.values(teachers)
-      .filter((item) => item.track === state.vaibemTrack)
-      .map((item) => `<button type="button" class="vb-teacher-option ${state.vaibemTeacher === item.id ? "selected" : ""}" data-vb-teacher="${item.id}" aria-pressed="${state.vaibemTeacher === item.id}"><span class="vb-avatar">${item.avatar}</span><span><strong>${item.teacher}</strong><small>${item.subject} · ${item.grade}</small></span><span aria-hidden="true">→</span></button>`)
+      .filter((item) => item.track === state.vaibemTrack && item.area === state.vaibemArea)
+      .map((item) => `<button type="button" class="vb-teacher-option ${state.vaibemTeacher === item.id ? "selected" : ""}" data-vb-teacher="${item.id}" aria-pressed="${state.vaibemTeacher === item.id}">${avatarMarkup(item)}<span><strong>${item.teacher}</strong><small>${item.subject} · ${item.grade}</small><em>${item.specialty}</em></span><span aria-hidden="true">→</span></button>`)
       .join("");
   }
 
@@ -102,9 +98,10 @@
         <div class="vb-track-switch" role="group" aria-label="Escolha a etapa escolar">
           ${Object.entries(tracks).map(([key, item]) => `<button type="button" data-vb-track="${key}" class="${state.vaibemTrack === key ? "selected" : ""}" aria-pressed="${state.vaibemTrack === key}"><strong>${item.label.replace("VaiBem ", "")}</strong><small>${item.range}</small></button>`).join("")}
         </div>
-        <div class="vb-home-copy"><span class="kicker">${activeTrack.label}</span><h2>${activeTrack.description}</h2><p>Escolha o professor e entre na sala. A conversa continua na mesma sessão; não é preciso reabrir o microfone a cada pergunta.</p></div>
+        <div class="vb-home-copy"><span class="kicker">${activeTrack.label}</span><h2>${activeTrack.description}</h2><p>Escolha a área e o especialista. A conversa continua na mesma sessão; não é preciso reabrir o microfone a cada pergunta.</p></div>
+        <div class="vb-area-switch" role="group" aria-label="Escolha a área do conhecimento">${Object.entries(areas).map(([key, label]) => `<button type="button" data-vb-area="${key}" class="${state.vaibemArea === key ? "selected" : ""}" aria-pressed="${state.vaibemArea === key}">${label}</button>`).join("")}</div>
         <div class="vb-teacher-list">${teacherOptions(state)}</div>
-        <div class="vb-next-step"><div><span class="kicker">Seu próximo passo</span><strong>${activeTeacher.teacher} · ${activeTeacher.subject}</strong><small>${activeTeacher.focus}</small></div><button type="button" class="btn goldbtn" id="vb-enter-room">Entrar na aula →</button></div>
+        <div class="vb-next-step"><div><span class="kicker">Seu próximo passo</span><strong>${activeTeacher.teacher} · ${activeTeacher.subject}</strong><small>${activeTeacher.specialty}<br>${activeTeacher.focus}</small></div><button type="button" class="btn goldbtn" id="vb-enter-room">Entrar na aula →</button></div>
       </section>
       ${ctx.row("Meu caderno", `${sessions} ${sessions === 1 ? "aula salva" : "aulas salvas"} para retomar.`, "vaibem/caderno", "book")}
       ${ctx.row("O que estou aprendendo", "Evidências acumuladas e próxima explicação sugerida.", "vaibem/evolucao", "chart")}`, "hoje", "vaibem");
@@ -119,7 +116,7 @@
       <header class="vb-live-header"><button type="button" class="textbtn" id="vb-back-home">← Voltar</button><div><strong>VaiBem · AULA PARTICULAR</strong><small>${tracks[item.track].label} · ${item.subject}</small></div><span id="vb-live-state" class="vb-live-off">DESCONECTADO</span></header>
       <main class="vb-live-grid" id="main">
         <section class="vb-live-teacher" aria-label="Conversa com o professor virtual">
-          <div class="vb-live-person"><span class="vb-avatar large">${item.avatar}</span><div><span class="kicker">Professor virtual</span><h1>${item.teacher}</h1><p>${item.subject} · ${item.grade}</p></div></div>
+          <div class="vb-live-person">${avatarMarkup(item, true)}<div><span class="kicker">Especialista de plantão</span><h1>${item.teacher}</h1><p>${item.specialty}<br>${item.subject} · ${item.grade}</p></div></div>
           <div class="vb-live-bubble" id="vb-bubble">Quando estiver pronto, comece a aula. Depois, converse normalmente.</div>
           <div class="vb-live-primary"><button type="button" class="btn goldbtn" id="vb-connect">Começar aula</button><button type="button" class="iconbtn" id="vb-mute" disabled aria-label="Silenciar microfone" title="Silenciar microfone">M</button><button type="button" class="iconbtn" id="vb-interrupt" disabled aria-label="Interromper professor" title="Interromper professor">■</button><button type="button" class="textbtn" id="vb-disconnect" disabled>Encerrar</button></div>
           <div class="vb-meter" aria-hidden="true"><i id="vb-meter-bar"></i></div>
@@ -127,7 +124,7 @@
           <div class="vb-live-status" id="vb-status" role="status">Aguardando o início da aula.</div>
           <div class="vb-messages" id="vb-messages" aria-live="polite"><div class="vb-message professor">${item.teacher}: Estou pronto para ouvir sua dúvida.</div></div>
           <form id="vb-text-form" class="vb-text-form"><label for="vb-text-question">Também pode escrever</label><div><input id="vb-text-question" maxlength="500" placeholder="Digite uma pergunta para o professor"><button type="submit" class="iconbtn" aria-label="Enviar pergunta">→</button></div></form>
-          ${audit ? `<details class="vb-diagnostics"><summary>Diagnóstico da lousa</summary><p>Disponível somente na auditoria interna.</p><div><button type="button" data-vb-demo="fracao">Fração</button><button type="button" data-vb-demo="reta">Reta</button><button type="button" data-vb-demo="fluxo">Fluxo</button><button type="button" data-vb-demo="ciclo">Ciclo</button><button type="button" data-vb-demo="triangulo">Triângulo</button></div><div class="vb-phases"><span id="vb-token">TOKEN</span><span id="vb-ws">WEBSOCKET</span><span id="vb-setup">SETUP</span><span id="vb-mic">MICROFONE</span></div></details>` : ""}
+          ${audit ? `<details class="vb-diagnostics"><summary>Diagnóstico da lousa</summary><p>Disponível somente na auditoria interna.</p><div><button type="button" data-vb-demo="pizza">Pizza</button><button type="button" data-vb-demo="colecao">Coleção</button><button type="button" data-vb-demo="relogio">Relógio</button><button type="button" data-vb-demo="fracao">Barra</button><button type="button" data-vb-demo="reta">Reta</button><button type="button" data-vb-demo="celula">Célula</button><button type="button" data-vb-demo="atomo">Átomo</button><button type="button" data-vb-demo="circuito">Circuito</button><button type="button" data-vb-demo="forcas">Forças</button><button type="button" data-vb-demo="venn">Venn</button><button type="button" data-vb-demo="fluxo">Fluxo</button><button type="button" data-vb-demo="ciclo">Ciclo</button><button type="button" data-vb-demo="triangulo">Triângulo</button></div><div class="vb-phases"><span id="vb-token">TOKEN</span><span id="vb-ws">WEBSOCKET</span><span id="vb-setup">SETUP</span><span id="vb-mic">MICROFONE</span></div></details>` : ""}
         </section>
         <section class="vb-live-board" aria-label="Quadro construído durante a aula">
           <div class="vb-board-head"><div><span class="kicker">Caderno da sessão</span><strong>Explicação construída com o aluno</strong></div><span id="vb-write-status">Aguardando conversa</span></div>
@@ -300,10 +297,11 @@
       ? "Use linguagem concreta. Organize cálculos como: o que eu tenho, o que preciso descobrir e qual é o primeiro passo. Faça uma pergunta curta por vez."
       : "Conduza com autonomia crescente: explique o primeiro passo, peça que o aluno proponha o seguinte e intervenha quando houver impasse.";
     return `RESPONDA INCONFUNDIVELMENTE EM PORTUGUÊS DO BRASIL. Você nunca deve responder em espanhol, inglês ou outro idioma, salvo se o aluno pedir explicitamente uma aula de língua estrangeira. Se a fala estiver pouco clara, peça ao aluno que repita em português em vez de adivinhar palavras de outro idioma.
-Você é ${item.teacher}, professor particular virtual do ${track.label}. Disciplina: ${item.subject}. Turma de referência: ${item.grade}. ${ageRule}
+Você é ${item.teacher}, ${item.specialty}, especialista do Hospital CAVMED no ${track.label}. Disciplina: ${item.subject}. Turma de referência: ${item.grade}. ${ageRule}
 Converse como um professor atento sentado ao lado do aluno. Escute até o fim, identifique exatamente onde ele travou e responda apenas o necessário. Fale em blocos curtos, com naturalidade e pausas. Se o aluno interromper, pare imediatamente e escute. Termine cada ideia importante com uma pergunta curta de verificação.
 Você possui uma lousa pela ferramenta atualizar_lousa. Use-a antes ou durante a explicação para registrar conceitos curtos e revisados. Não transcreva toda a fala. Reutilize o mesmo id para corrigir um bloco.
-Quando uma representação visual ajudar, use action=diagrama. Para frações use diagram=fracao e values=[numerador,denominador]. Para reta numérica use diagram=reta_numerica e values=[mínimo,máximo,pontos...]. Para sequências use diagram=fluxo; para processos recorrentes use diagram=ciclo; para comparar valores use diagram=comparacao; para Pitágoras use diagram=triangulo_retangulo. Use títulos e rótulos curtos. Não afirme que desenhou sem chamar a ferramenta.
+REGRA VISUAL OBRIGATÓRIA: quando o aluno disser que é visual, pedir para ver, desenhar, mostrar, ilustrar ou apontar uma imagem, chame a ferramenta antes de explicar. Nunca responda apenas "imagine" e nunca afirme que desenhou sem chamar a ferramenta. Respeite o objeto pedido: pizza deve ser um círculo com fatias, não um retângulo. Para crianças, prefira uma imagem concreta sempre que ela puder substituir abstração verbal.
+Use action=diagrama com o desenho adequado. Fração em pizza: diagram=pizza e values=[numerador,denominador]. Objetos contáveis: diagram=colecao e values=[destacados,total]. Relógio: diagram=relogio e values=[hora,minuto]. Fração em barra: diagram=fracao. Também estão disponíveis formas_geometricas, venn, linha_do_tempo, mapa_conceitual, celula, atomo, sistema_solar, circuito_eletrico, forcas, onda, plano_cartesiano, reta_numerica, fluxo, ciclo, comparacao e triangulo_retangulo. Use títulos e rótulos curtos e escolha o desenho que corresponda à disciplina e à idade.
 Em qualquer matéria com cálculo, mostre dados, pedido, conversão necessária, fórmula, isolamento, substituição, fração vertical, cortes válidos, cálculo e resposta interpretada. Não faça contas diretamente com vírgula: converta o decimal para inteiro multiplicado por potência de dez. Não repita unidades em todas as linhas intermediárias, salvo quando forem essenciais em Física. Use subscritos e sobrescritos corretos; equilíbrio químico usa ⇌.
 Para proporções use action=regra_de_tres. Classifique antes como direta ou inversa, mantenha grandezas correspondentes na mesma coluna e prefira o fator de escala quando ele for evidente. A ferramenta calcula e desenha; use o resultado retornado.
 Para estequiometria use action=estequiometria e stage=preparar; depois apresente uma etapa por vez na ordem: reacao, balanceamento, proporcao, massa_molar, regra_de_tres e resultado. Nunca invente coeficientes ou massas.
@@ -627,11 +625,19 @@ A ferramenta confirma apenas o enfileiramento. Continue falando enquanto o quadr
 
   function demoDiagram(type) {
     const demos = {
+      pizza: { action: "diagrama", id: "demo-pizza", diagram: "pizza", title: "Pizza: três de quatro fatias", values: [3, 4], labels: ["3/4"] },
+      colecao: { action: "diagrama", id: "demo-colecao", diagram: "colecao", title: "Seis de oito frutas", values: [6, 8], labels: ["frutas"] },
+      relogio: { action: "diagrama", id: "demo-relogio", diagram: "relogio", title: "Duas horas e trinta minutos", values: [2, 30], labels: [] },
       fracao: { action: "diagrama", id: "demo-fracao", diagram: "fracao", title: "Três quartos do inteiro", values: [3, 4], labels: [] },
       reta: { action: "diagrama", id: "demo-reta", diagram: "reta_numerica", title: "Localizando valores", values: [0, 10, 2, 5, 8], labels: [] },
       fluxo: { action: "diagrama", id: "demo-fluxo", diagram: "fluxo", title: "Como resolver", labels: ["Dados", "Pedido", "Estratégia", "Resposta"], values: [] },
       ciclo: { action: "diagrama", id: "demo-ciclo", diagram: "ciclo", title: "Ciclo da água", labels: ["Evaporação", "Condensação", "Precipitação", "Infiltração"], values: [] },
       triangulo: { action: "diagrama", id: "demo-triangulo", diagram: "triangulo_retangulo", title: "Teorema de Pitágoras", labels: ["cateto a", "cateto b", "hipotenusa c"], values: [] },
+      celula: { action: "diagrama", id: "demo-celula", diagram: "celula", title: "Célula animal", labels: ["membrana", "citoplasma", "núcleo", "mitocôndria"], values: [] },
+      atomo: { action: "diagrama", id: "demo-atomo", diagram: "atomo", title: "Modelo didático do átomo", labels: ["núcleo", "elétrons"], values: [6, 6] },
+      circuito: { action: "diagrama", id: "demo-circuito", diagram: "circuito_eletrico", title: "Circuito simples", labels: ["pilha", "lâmpada", "interruptor"], values: [] },
+      forcas: { action: "diagrama", id: "demo-forcas", diagram: "forcas", title: "Forças sobre o bloco", labels: ["normal", "peso", "força", "atrito"], values: [] },
+      venn: { action: "diagrama", id: "demo-venn", diagram: "venn", title: "Comparando conjuntos", labels: ["Mamíferos", "Aquáticos"], values: [] },
     };
     board.command(demos[type], `demo-${type}-${Date.now()}`);
     board.finish();
@@ -644,6 +650,12 @@ A ferramenta confirma apenas o enfileiramento. Continue falando enquanto o quadr
     if (route === "vaibem") {
       document.querySelectorAll("[data-vb-track]").forEach((button) => button.addEventListener("click", () => {
         ctx.state.vaibemTrack = button.dataset.vbTrack;
+        ensureState(ctx.state);
+        ctx.save();
+        ctx.render(false);
+      }));
+      document.querySelectorAll("[data-vb-area]").forEach((button) => button.addEventListener("click", () => {
+        ctx.state.vaibemArea = button.dataset.vbArea;
         ensureState(ctx.state);
         ctx.save();
         ctx.render(false);
@@ -711,6 +723,7 @@ A ferramenta confirma apenas o enfileiramento. Continue falando enquanto o quadr
   window.CAV_VAIBEM_LIVE = {
     teachers,
     tracks,
+    areas,
     ensureState,
     renderHome,
     renderRoom,

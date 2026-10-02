@@ -35,12 +35,15 @@
 .vb-home-copy .kicker { color: #d2b275; }
 .vb-home-copy h2 { margin-top: 9px; font-size: 27px; letter-spacing: 0; }
 .vb-home-copy p { margin-top: 12px; color: #b9c6ba; font-size: 14px; }
+.vb-area-switch { display: flex; gap: 7px; flex-wrap: wrap; margin: 0 0 16px; }
+.vb-area-switch button { border: 1px solid #46554a; border-radius: 999px; background: transparent; color: #c3cdc2; padding: 8px 13px; min-height: 38px; font-size: 11px; font-weight: 700; }
+.vb-area-switch button:hover, .vb-area-switch button.selected { border-color: #d2b275; background: #f0dfb7; color: #24281f; }
 .vb-teacher-list { display: grid; gap: 8px; }
 
 .vb-teacher-option {
   width: 100%;
   display: grid;
-  grid-template-columns: 50px minmax(0, 1fr) auto;
+  grid-template-columns: 64px minmax(0, 1fr) auto;
   align-items: center;
   gap: 14px;
   padding: 13px;
@@ -52,22 +55,30 @@
 }
 
 .vb-teacher-option:hover, .vb-teacher-option.selected { border-color: #d2b275; background: #20291f; }
-.vb-teacher-option strong, .vb-teacher-option small { display: block; min-width: 0; }
+.vb-teacher-option strong, .vb-teacher-option small, .vb-teacher-option em { display: block; min-width: 0; }
 .vb-teacher-option small { color: #aeb9ad; margin-top: 4px; font-size: 11px; }
+.vb-teacher-option em { color: #d2b275; margin-top: 5px; font-size: 10px; font-style: normal; line-height: 1.35; }
 
 .vb-avatar {
-  width: 46px;
-  height: 46px;
+  width: 60px;
+  height: 60px;
   display: grid;
   place-items: center;
-  border: 1px solid #d2b275;
+  position: relative;
+  overflow: hidden;
+  border: 2px solid #d2b275;
   border-radius: 50%;
+  background: #18271f;
   color: #f1d899;
   font: 700 13px Arial, sans-serif;
   flex: 0 0 auto;
+  box-shadow: 0 5px 16px rgba(0, 0, 0, .2);
 }
 
-.vb-avatar.large { width: 68px; height: 68px; font-size: 18px; }
+.vb-avatar-fallback { position: absolute; inset: 0; display: grid; place-items: center; }
+.vb-avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+.vb-avatar.large { width: 88px; height: 88px; font-size: 18px; }
+.vb-teacher-option:hover .vb-avatar, .vb-teacher-option.selected .vb-avatar { box-shadow: 0 0 0 3px rgba(210, 178, 117, .2), 0 7px 18px rgba(0, 0, 0, .25); }
 
 .vb-next-step {
   display: flex;
@@ -239,6 +250,45 @@
 .vb-paper .board-diagram .diagram-point, .vb-saved-paper .board-diagram .diagram-point { fill: #d2b275; stroke: #6e562c; stroke-width: 2; }
 .vb-paper .board-diagram text, .vb-saved-paper .board-diagram text { font: 17px Arial, sans-serif; fill: #203b54; }
 .vb-paper .board-diagram .diagram-equation, .vb-saved-paper .board-diagram .diagram-equation { font: 700 25px Georgia, serif; }
+.vb-paper .board-diagram .diagram-pizza-full, .vb-saved-paper .board-diagram .diagram-pizza-full { fill: #f3c458; stroke: #9f671f; stroke-width: 3; }
+.vb-paper .board-diagram .diagram-pizza-empty, .vb-saved-paper .board-diagram .diagram-pizza-empty { fill: #fff3cf; stroke: #9f671f; stroke-width: 3; }
+.vb-paper .board-diagram .diagram-crust, .vb-saved-paper .board-diagram .diagram-crust { fill: none; stroke: #b8792f; stroke-width: 11; }
+.vb-paper .board-diagram .diagram-topping, .vb-saved-paper .board-diagram .diagram-topping { fill: #cf5544; stroke: #8d3028; stroke-width: 2; }
+.vb-paper .board-diagram .diagram-object, .vb-saved-paper .board-diagram .diagram-object { fill: #eef1e8; stroke: #82907e; stroke-width: 2; }
+.vb-paper .board-diagram .diagram-object-active, .vb-saved-paper .board-diagram .diagram-object-active { fill: #e96f5d; stroke: #a43f35; stroke-width: 2; }
+.vb-paper .board-diagram .diagram-leaf, .vb-saved-paper .board-diagram .diagram-leaf { fill: none; stroke: #4d8151; stroke-width: 4; }
+.vb-paper .board-diagram .diagram-color-a, .vb-saved-paper .board-diagram .diagram-color-a { fill: #6ec8d9; stroke: #2b7085; stroke-width: 3; }
+.vb-paper .board-diagram .diagram-color-b, .vb-saved-paper .board-diagram .diagram-color-b { fill: #f7cf65; stroke: #9b7321; stroke-width: 3; }
+.vb-paper .board-diagram .diagram-color-c, .vb-saved-paper .board-diagram .diagram-color-c { fill: #9bcf82; stroke: #49733d; stroke-width: 3; }
+.vb-paper .board-diagram .diagram-color-d, .vb-saved-paper .board-diagram .diagram-color-d { fill: #d4a0dc; stroke: #76527e; stroke-width: 3; }
+.vb-paper .board-diagram .diagram-clock, .vb-saved-paper .board-diagram .diagram-clock { fill: #fffdf5; stroke: #244f78; stroke-width: 6; }
+.vb-paper .board-diagram .diagram-hand, .vb-saved-paper .board-diagram .diagram-hand { stroke: #273e59; stroke-linecap: round; }
+.vb-paper .board-diagram .diagram-hour, .vb-saved-paper .board-diagram .diagram-hour { stroke-width: 9; }
+.vb-paper .board-diagram .diagram-minute, .vb-saved-paper .board-diagram .diagram-minute { stroke: #c05b48; stroke-width: 6; }
+.vb-paper .board-diagram .diagram-guide, .vb-saved-paper .board-diagram .diagram-guide { stroke: #9aabbb; stroke-width: 2; stroke-dasharray: 6 6; fill: none; }
+.vb-paper .board-diagram .diagram-venn, .vb-saved-paper .board-diagram .diagram-venn { stroke-width: 3; fill-opacity: .5; }
+.vb-paper .board-diagram .diagram-venn-1, .vb-saved-paper .board-diagram .diagram-venn-1 { fill: #76bee8; stroke: #3478a2; }
+.vb-paper .board-diagram .diagram-venn-2, .vb-saved-paper .board-diagram .diagram-venn-2 { fill: #f1bf5b; stroke: #9b6c19; }
+.vb-paper .board-diagram .diagram-venn-3, .vb-saved-paper .board-diagram .diagram-venn-3 { fill: #a9d990; stroke: #507c3d; }
+.vb-paper .board-diagram .diagram-concept-center, .vb-saved-paper .board-diagram .diagram-concept-center { fill: #f1d994; stroke: #8f6b22; stroke-width: 3; }
+.vb-paper .board-diagram .diagram-cell, .vb-saved-paper .board-diagram .diagram-cell { fill: #d7eef2; stroke: #2a7182; stroke-width: 5; }
+.vb-paper .board-diagram .diagram-nucleus, .vb-saved-paper .board-diagram .diagram-nucleus { fill: #c7a1db; stroke: #704e86; stroke-width: 4; }
+.vb-paper .board-diagram .diagram-nucleolus, .vb-saved-paper .board-diagram .diagram-nucleolus { fill: #77518f; stroke: #4f3560; stroke-width: 2; }
+.vb-paper .board-diagram .diagram-organelle, .vb-saved-paper .board-diagram .diagram-organelle { fill: #f29a83; stroke: #a34f3f; stroke-width: 3; }
+.vb-paper .board-diagram .diagram-vesicle, .vb-saved-paper .board-diagram .diagram-vesicle { fill: #f4cf66; stroke: #96701f; stroke-width: 2; }
+.vb-paper .board-diagram .diagram-orbit, .vb-saved-paper .board-diagram .diagram-orbit { fill: none; stroke: #7691af; stroke-width: 2; }
+.vb-paper .board-diagram .diagram-electron, .vb-saved-paper .board-diagram .diagram-electron { fill: #2f78c1; stroke: #174c82; stroke-width: 2; }
+.vb-paper .board-diagram .diagram-sun, .vb-saved-paper .board-diagram .diagram-sun { fill: #f7c84e; stroke: #d18424; stroke-width: 5; }
+.vb-paper .board-diagram .diagram-planet, .vb-saved-paper .board-diagram .diagram-planet { fill: #7ebed7; stroke: #315f81; stroke-width: 2; }
+.vb-paper .board-diagram .diagram-planet-2, .vb-saved-paper .board-diagram .diagram-planet-2 { fill: #e2a56b; }
+.vb-paper .board-diagram .diagram-planet-3, .vb-saved-paper .board-diagram .diagram-planet-3 { fill: #68a9dd; }
+.vb-paper .board-diagram .diagram-planet-4, .vb-saved-paper .board-diagram .diagram-planet-4 { fill: #d97558; }
+.vb-paper .board-diagram .diagram-wire, .vb-saved-paper .board-diagram .diagram-wire { fill: none; stroke: #263f5d; stroke-width: 5; }
+.vb-paper .board-diagram .diagram-lamp, .vb-saved-paper .board-diagram .diagram-lamp { fill: #fff1a8; stroke: #9b7522; stroke-width: 4; }
+.vb-paper .board-diagram .diagram-filament, .vb-saved-paper .board-diagram .diagram-filament { fill: none; stroke: #db7c25; stroke-width: 4; }
+.vb-paper .board-diagram .diagram-switch, .vb-saved-paper .board-diagram .diagram-switch { stroke: #c35d45; stroke-width: 7; }
+.vb-paper .board-diagram .diagram-wave, .vb-saved-paper .board-diagram .diagram-wave { fill: none; stroke: #267ab2; stroke-width: 6; }
+.vb-paper .board-diagram .timeline-line, .vb-saved-paper .board-diagram .timeline-line { stroke-width: 5; }
 
 .molecule-dialog { width: min(95vw, 950px); max-height: 90vh; background: #fff; color: #163975; border: 1px solid #9aaec7; border-radius: 8px; padding: 18px; }
 .molecule-dialog::backdrop { background: #000b; }
