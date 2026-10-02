@@ -191,7 +191,7 @@ async function requestOpenAI({ apiKey, model, instructions, content, maxOutputTo
 }
 
 async function requestGemini({ apiKey, model, instructions, content, maxOutputTokens = 12000 }) {
-  const cleanModel = String(model || "gemini-2.5-flash").replace(/^models\//, "");
+  const cleanModel = String(model || "gemini-3.8-flash").replace(/^models\//, "");
   if (!/^[a-z0-9._-]+$/i.test(cleanModel)) throw new Error("gemini_model_invalid");
   const parts = [{ text: instructions }];
   for (const item of content) {
@@ -238,7 +238,7 @@ export default async function handler(req, res) {
   }
 
   const geminiKey = process.env.GEMINI_API_KEY;
-  const geminiModel = process.env.GEMINI_VISION_MODEL || process.env.GEMINI_MODEL || "gemini-2.5-flash";
+  const geminiModel = process.env.GEMINI_VISION_MODEL || "gemini-3.8-flash";
   const openAIKey = process.env.OPENAI_API_KEY;
   const openAIModel = process.env.OPENAI_VISION_MODEL || process.env.OPENAI_MODEL;
   if (!geminiKey && (!openAIKey || !openAIModel)) {
