@@ -230,11 +230,20 @@ async function requestStructured({ geminiKey, geminiModel, openAIKey, openAIMode
   if (geminiKey) {
     const models = Array.from(new Set([geminiModel, "gemini-3.6-flash", "gemini-3.5-flash"]));
     for (const model of models) {
-      try {
-        return await requestGemini({ apiKey: geminiKey, model, instructions, content, maxOutputTokens });
-      } catch (error) {
-        lastError = error;
-        if (!/^gemini_(404|429|503)_/.test(String(error?.message || ""))) break;
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        try {
+          return await requestGemini({ apiKey: geminiKey, model, instructions, content, maxOutputTokens });
+        } catch (error) {
+          lastError = error;
+          const message = String(error?.message || "");
+          const transient = /^gemini_(429|503)_/.test(message);
+          if (transient && attempt === 0) {
+            await new Promise((resolve) => setTimeout(resolve, 700));
+            continue;
+          }
+          if (!transient && !/^gemini_404_/.test(message)) throw error;
+          break;
+        }
       }
     }
   }
