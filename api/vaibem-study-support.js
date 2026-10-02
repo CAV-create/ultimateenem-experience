@@ -218,8 +218,20 @@ async function requestGemini({ apiKey, model, instructions, content, maxOutputTo
 }
 
 async function requestStructured({ geminiKey, geminiModel, openAIKey, openAIModel, instructions, content, maxOutputTokens }) {
-  if (geminiKey) return requestGemini({ apiKey: geminiKey, model: geminiModel, instructions, content, maxOutputTokens });
-  return requestOpenAI({ apiKey: openAIKey, model: openAIModel, instructions, content, maxOutputTokens });
+  let lastError = null;
+  if (geminiKey) {
+    const models = Array.from(new Set([geminiModel, "gemini-3.6-flash", "gemini-3.5-flash"]));
+    for (const model of models) {
+      try {
+        return await requestGemini({ apiKey: geminiKey, model, instructions, content, maxOutputTokens });
+      } catch (error) {
+        lastError = error;
+        if (!/^gemini_(404|429|503)_/.test(String(error?.message || ""))) break;
+      }
+    }
+  }
+  if (openAIKey && openAIModel) return requestOpenAI({ apiKey: openAIKey, model: openAIModel, instructions, content, maxOutputTokens });
+  throw lastError || new Error("study_provider_unavailable");
 }
 
 function commonContext(body) {
