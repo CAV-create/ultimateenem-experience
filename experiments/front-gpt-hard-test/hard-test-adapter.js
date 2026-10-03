@@ -1549,6 +1549,16 @@
   };
   render = routeRenderer;
 
+  function applyRailBrand() {
+    const image = document.querySelector(".brandbox img");
+    const file = officialPortalLogos[currentProduct];
+    if (!image || !file) return;
+    const src = `/assets/cavprime/five-logos-20260926/portal-official-png-v2/${file}`;
+    if (!image.src.endsWith(src)) image.src = src;
+    image.className = currentProduct;
+    image.alt = `${products[currentProduct]?.name || "CAVPRIME"} - marca oficial`;
+  }
+
   function applyRailSignature() {
     const rail = document.querySelector(".rail-foot");
     if (!rail) return;
@@ -1661,6 +1671,7 @@
   }
 
   function applyExperienceCohesion() {
+    applyRailBrand();
     applyRailSignature();
     const route = location.hash.replace(/^#\/?/, "") || "hoje";
     document.body.dataset.experienceRoute = route.replace(/[^a-z0-9-]+/gi, "-");
