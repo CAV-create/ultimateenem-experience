@@ -327,6 +327,8 @@
 .vb-paper .proportion-horizontal .proportion-factor-right, .vb-saved-paper .proportion-horizontal .proportion-factor-right { top: auto; bottom: 0; flex-direction: column-reverse; }
 
 .vb-paper .board-diagram .diagram-line, .vb-saved-paper .board-diagram .diagram-line { stroke: #244f78; stroke-width: 3; fill: none; }
+.vb-paper .board-diagram .diagram-angle, .vb-saved-paper .board-diagram .diagram-angle { stroke: #b48222; stroke-width: 4; fill: none; stroke-linecap: round; }
+.vb-paper .board-diagram .diagram-angle-label, .vb-saved-paper .board-diagram .diagram-angle-label { fill: #765715; font-weight: 800; paint-order: stroke; stroke: #fffef9; stroke-width: 5px; stroke-linejoin: round; }
 .vb-paper .board-diagram .diagram-shape, .vb-saved-paper .board-diagram .diagram-shape { stroke: #244f78; stroke-width: 2; fill: #fffef9; }
 .vb-paper .board-diagram .diagram-fill, .vb-saved-paper .board-diagram .diagram-fill { fill: #d7e6ad; stroke: #365845; stroke-width: 2; }
 .vb-paper .board-diagram .diagram-point, .vb-saved-paper .board-diagram .diagram-point { fill: #d2b275; stroke: #6e562c; stroke-width: 2; }
@@ -373,6 +375,9 @@
 .vb-paper .board-diagram .timeline-line, .vb-saved-paper .board-diagram .timeline-line { stroke-width: 5; }
 .vb-paper .board-sketch [class*="sketch-color-"], .vb-saved-paper .board-sketch [class*="sketch-color-"] { fill: none; stroke: var(--sketch-stroke); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; transition: opacity .3s; }
 .vb-paper .board-sketch .sketch-filled, .vb-saved-paper .board-sketch .sketch-filled { fill: var(--sketch-fill); }
+.vb-paper .board-sketch .sketch-dashed, .vb-saved-paper .board-sketch .sketch-dashed { stroke-dasharray: 10 8; }
+.vb-paper .board-sketch .sketch-angle-arc, .vb-saved-paper .board-sketch .sketch-angle-arc { stroke-width: 5; }
+.vb-paper .board-sketch .sketch-angle-label, .vb-saved-paper .board-sketch .sketch-angle-label { paint-order: stroke; stroke: #fffef9; stroke-width: 6px; stroke-linejoin: round; font-size: 20px; }
 .board-sketch .sketch-color-azul { --sketch-stroke: #2f78a8; --sketch-fill: #bfe3f4; }
 .board-sketch .sketch-color-verde { --sketch-stroke: #4b8651; --sketch-fill: #cce7c5; }
 .board-sketch .sketch-color-amarelo { --sketch-stroke: #a97818; --sketch-fill: #ffe08a; }

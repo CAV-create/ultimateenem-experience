@@ -12,7 +12,7 @@ const MOLECULES={
 };
 const KINDS={titulo:'Conceito',definicao:'Definição',formula:'Fórmula',etapa:'Passo',exemplo:'Exemplo'};
 const COLORS=['azul','verde','amarelo','vermelho','roxo','laranja','turquesa','cinza'];
-const DRAW_KINDS=['circle','ellipse','rect','line','arrow','triangle','polygon','text'];
+const DRAW_KINDS=['circle','ellipse','rect','line','arrow','triangle','polygon','angle','text'];
 const ACTIONS=['anotar','diagrama','tabela','mapa_mental','infografico','resumo','desenho','molecula','destacar','estrutura','estequiometria','regra_de_tres'];
 const DIAGRAMS={
  fracao:'Fração em barra',pizza:'Fração em pizza',colecao:'Coleção de objetos',formas_geometricas:'Formas geométricas',relogio:'Relógio',
@@ -32,7 +32,7 @@ const declaration={name:'atualizar_lousa',description:'Escreve uma anotação cu
  palette:{type:'STRING',enum:COLORS,description:'Cor principal opcional da tabela ou mapa mental.'},
  diagram:{type:'STRING',enum:Object.keys(DIAGRAMS),description:'Diagrama pedagógico seguro e determinístico.'},
  labels:{type:'ARRAY',items:{type:'STRING'},description:'Rótulos curtos do diagrama. Em fluxo ou ciclo, use de 2 a 6 etapas.'},
-    values:{type:'ARRAY',items:{type:'NUMBER'},description:'Valores do diagrama. Pizza ou fração: [numerador,denominador]. Coleção: [destacados,total]. Relógio: [hora,minuto]. Reta: [mínimo,máximo,pontos...]. Comparação: um valor por rótulo.'},
+    values:{type:'ARRAY',items:{type:'NUMBER'},description:'Valores do diagrama. Pizza ou fração: [numerador,denominador]. Coleção: [destacados,total]. Relógio: [hora,minuto]. Reta: [mínimo,máximo,pontos...]. Comparação: um valor por rótulo. Triângulo retângulo: opcionalmente [90,ângulo agudo,ângulo agudo], somando 180.'},
  molecule:{type:'STRING',enum:Object.keys(MOLECULES)},
  smiles:{type:'STRING',description:'SMILES da molécula real, até 1500 caracteres. Necessário em estrutura. Não use nomes como SMILES.'},
  title:{type:'STRING',description:'Nome da molécula ou título do exercício, até 100 caracteres.'},
@@ -47,7 +47,7 @@ panels:{type:'ARRAY',items:{type:'OBJECT',properties:{title:{type:'STRING'},deta
  bullets:{type:'ARRAY',items:{type:'STRING'},description:'Microresumo: de 2 a 6 ideias essenciais, cada uma com até 140 caracteres.'},
  keyPhrase:{type:'STRING',description:'Microresumo: frase-chave final, com até 180 caracteres.'},
  recallQuestion:{type:'STRING',description:'Microresumo: pergunta curta de recuperação ativa, com até 140 caracteres.'},
-elements:{type:'ARRAY',items:{type:'OBJECT',properties:{kind:{type:'STRING',enum:DRAW_KINDS},x:{type:'NUMBER'},y:{type:'NUMBER'},x2:{type:'NUMBER'},y2:{type:'NUMBER'},width:{type:'NUMBER'},height:{type:'NUMBER'},radius:{type:'NUMBER'},points:{type:'ARRAY',items:{type:'NUMBER'}},text:{type:'STRING'},color:{type:'STRING',enum:COLORS},filled:{type:'BOOLEAN'}},required:['kind']},description:'Desenho seguro: até 36 formas com coordenadas percentuais de 0 a 100. circle usa x,y,radius; ellipse e rect usam x,y,width,height; line e arrow usam x,y,x2,y2; triangle e polygon usam points; text usa x,y,text.'},
+elements:{type:'ARRAY',items:{type:'OBJECT',properties:{kind:{type:'STRING',enum:DRAW_KINDS},x:{type:'NUMBER'},y:{type:'NUMBER'},x2:{type:'NUMBER'},y2:{type:'NUMBER'},x3:{type:'NUMBER'},y3:{type:'NUMBER'},width:{type:'NUMBER'},height:{type:'NUMBER'},radius:{type:'NUMBER'},points:{type:'ARRAY',items:{type:'NUMBER'}},text:{type:'STRING'},color:{type:'STRING',enum:COLORS},filled:{type:'BOOLEAN'},dashed:{type:'BOOLEAN'}},required:['kind']},description:'Desenho seguro: até 36 formas com coordenadas percentuais de 0 a 100. circle usa x,y,radius; ellipse e rect usam x,y,width,height; line e arrow usam x,y,x2,y2; triangle e polygon usam points; angle usa x,y como vértice, x2,y2 e x3,y3 como pontos das duas semirretas, radius opcional e text opcional; o motor desenha o arco e posiciona o rótulo na bissetriz. text usa x,y,text. Em sólidos, dashed=true identifica aresta oculta.'},
  reactants:{type:'ARRAY',items:{type:'STRING'},description:'Fórmulas dos reagentes, sem coeficientes ou estados físicos. Ex.: [C2H6,O2]'},
  products:{type:'ARRAY',items:{type:'STRING'},description:'Fórmulas dos produtos. Ex.: [CO2,H2O]'},
  given:{type:'STRING',description:'Fórmula da espécie cuja quantidade é conhecida.'},
@@ -98,7 +98,10 @@ function validate(args){
   if(args.diagram==='plano_cartesiano'&&!(values.length>=2&&values.length<=8&&values.length%2===0))throw Error('Plano cartesiano exige pares x e y, até quatro pontos');
   if(args.diagram==='atomo'&&values.length&&!(values.length===2&&values.every(value=>Number.isInteger(value)&&value>=0&&value<=18)))throw Error('Átomo aceita [prótons,elétrons], de 0 a 18');
   if(args.diagram==='onda'&&values.length&&!(values.length===2&&values[0]>0&&values[0]<=5&&values[1]>=1&&values[1]<=4))throw Error('Onda aceita [amplitude,ciclos] dentro dos limites didáticos');
-  if(args.diagram==='triangulo_retangulo'&&labels.length>3)throw Error('Triângulo aceita até 3 rótulos');
+  if(args.diagram==='triangulo_retangulo'){
+   if(labels.length>3)throw Error('Triângulo aceita até 3 rótulos');
+   if(values.length&&!(values.length===3&&values.every(value=>value>0&&value<180)&&Math.abs(values.reduce((sum,value)=>sum+value,0)-180)<.01&&Math.abs(values[0]-90)<.01))throw Error('Triângulo retângulo aceita três ângulos: 90° no primeiro vértice e dois agudos, somando 180°');
+  }
   return {action:args.action,id:args.id,diagram:args.diagram,title:args.title.trim(),labels,values};
  }
  if(args.action==='tabela'){
@@ -163,7 +166,7 @@ function validate(args){
   const elements=args.elements.map(element=>{
    if(!element||typeof element!=='object'||!DRAW_KINDS.includes(element.kind))throw Error('Forma de desenho inválida');
    if(element.color!==undefined&&!COLORS.includes(element.color))throw Error('Cor de forma inválida');
-   const base={kind:element.kind,color:element.color||'azul',filled:Boolean(element.filled)};
+   const base={kind:element.kind,color:element.color||'azul',filled:Boolean(element.filled),dashed:Boolean(element.dashed)};
    if(element.kind==='circle')return {...base,x:number(element,'x'),y:number(element,'y'),radius:number(element,'radius')||1};
    if(['ellipse','rect'].includes(element.kind))return {...base,x:number(element,'x'),y:number(element,'y'),width:number(element,'width')||1,height:number(element,'height')||1};
    if(['line','arrow'].includes(element.kind))return {...base,x:number(element,'x'),y:number(element,'y'),x2:number(element,'x2'),y2:number(element,'y2')};
@@ -172,8 +175,21 @@ function validate(args){
     if(element.kind==='triangle'&&element.points.length!==6)throw Error('Triângulo exige três pontos');
     return {...base,points:[...element.points]};
    }
+   if(element.kind==='angle'){
+    const x=number(element,'x'),y=number(element,'y'),x2=number(element,'x2'),y2=number(element,'y2'),x3=number(element,'x3'),y3=number(element,'y3');
+    if(Math.hypot(x2-x,y2-y)<1||Math.hypot(x3-x,y3-y)<1)throw Error('O arco de ângulo exige duas semirretas diferentes a partir do vértice');
+    const first=Math.atan2((y2-y)*3.6,(x2-x)*6.4),second=Math.atan2((y3-y)*3.6,(x3-x)*6.4),opening=Math.min((second-first+Math.PI*2)%(Math.PI*2),(first-second+Math.PI*2)%(Math.PI*2));
+    if(opening<Math.PI/180)throw Error('As duas semirretas do ângulo não podem ocupar a mesma direção');
+    const radius=number(element,'radius',false)??6;
+    if(radius<2||radius>18)throw Error('Use raio de 2 a 18 para o marcador de ângulo');
+    const label=element.text===undefined?'':String(element.text).trim();
+    if(label.length>12)throw Error('Rótulo de ângulo muito longo');
+    return {...base,x,y,x2,y2,x3,y3,radius,text:label};
+   }
    if(typeof element.text!=='string'||!element.text.trim()||element.text.length>50)throw Error('Texto do desenho inválido');
-   return {...base,x:number(element,'x'),y:number(element,'y'),text:element.text.trim()};
+   const value=element.text.trim();
+   if(/(?:\d+(?:[.,]\d+)?|[A-Za-zα-ωΑ-Ω])\s*°$/u.test(value))throw Error('Rótulos de ângulo devem usar kind=angle para permanecer ligados ao vértice e ao arco');
+   return {...base,x:number(element,'x'),y:number(element,'y'),text:value};
   });
   return {action:args.action,id:args.id,title:args.title.trim(),elements};
  }
@@ -445,6 +461,20 @@ function drawMolecule(name){
  }
  return {svg,steps};
 }
+function angleGeometry(vertex,rayA,rayB,radius,labelGap=18){
+ const tau=Math.PI*2;
+ let start=Math.atan2(rayA.y-vertex.y,rayA.x-vertex.x),end=Math.atan2(rayB.y-vertex.y,rayB.x-vertex.x),sweep=(end-start+tau)%tau;
+ if(sweep>Math.PI){const previous=start;start=end;end=previous;sweep=tau-sweep}
+ const startPoint={x:vertex.x+Math.cos(start)*radius,y:vertex.y+Math.sin(start)*radius};
+ const endPoint={x:vertex.x+Math.cos(end)*radius,y:vertex.y+Math.sin(end)*radius};
+ const bisector=start+sweep/2,labelRadius=radius+labelGap;
+ return {
+  d:`M ${startPoint.x} ${startPoint.y} A ${radius} ${radius} 0 ${sweep>Math.PI?1:0} 1 ${endPoint.x} ${endPoint.y}`,
+  labelX:vertex.x+Math.cos(bisector)*labelRadius,
+  labelY:vertex.y+Math.sin(bisector)*labelRadius,
+  degrees:sweep*180/Math.PI
+ };
+}
 function drawDiagram(args){
  const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg'),steps=[];
  svg.setAttribute('viewBox','0 0 640 300');svg.setAttribute('role','img');svg.setAttribute('aria-label',args.title);
@@ -497,8 +527,13 @@ function drawDiagram(args){
   const labels=args.labels,cx=labels.length===3?[260,380,320]:[270,370],cy=labels.length===3?[125,125,190]:[150,150];
   labels.forEach((label,index)=>{make('circle',{cx:cx[index],cy:cy[index],r:90,class:`diagram-venn diagram-venn-${index+1}`});text(cx[index]+(index===0?-45:index===1?45:0),cy[index]+(index===2?48:-48),label);});
  }else if(args.diagram==='triangulo_retangulo'){
-  line(135,230,500,230);line(135,230,135,55);line(135,55,500,230);line(135,205,160,205);line(160,205,160,230);
-  text(300,252,args.labels[0]||'base');text(105,145,args.labels[1]||'altura');text(335,122,args.labels[2]||'hipotenusa');
+  const a={x:150,y:230},b={x:150,y:50},c={x:150+180*Math.sqrt(3),y:230};
+  line(a.x,a.y,c.x,c.y);line(a.x,a.y,b.x,b.y);line(b.x,b.y,c.x,c.y);
+  const mark=(vertex,rayA,rayB,label,radius)=>{const geometry=angleGeometry(vertex,rayA,rayB,radius,18);path(geometry.d,'diagram-angle');text(geometry.labelX,geometry.labelY,label,'middle','diagram-angle-label')};
+  const values=args.values.length?args.values:[90];
+  mark(a,b,c,`${values[0]}°`,30);
+  if(values.length===3){mark(b,c,a,`${values[1]}°`,32);mark(c,a,b,`${values[2]}°`,38)}
+  text((a.x+c.x)/2,252,args.labels[0]||'base');text(116,(a.y+b.y)/2,args.labels[1]||'altura');text((b.x+c.x)/2+18,(b.y+c.y)/2-18,args.labels[2]||'hipotenusa');
  }else if(args.diagram==='fluxo'){
   const count=args.labels.length,gap=500/(count-1);args.labels.forEach((label,index)=>{const x=70+index*gap;if(index)arrow(x-gap+70,150,x-70,150);make('rect',{x:x-66,y:112,width:132,height:76,rx:14,class:'diagram-shape'});text(x,150,label)});
  }else if(args.diagram==='ciclo'){
@@ -531,13 +566,20 @@ function drawSketch(args){
  const make=(tag,attrs={},text)=>{const el=document.createElementNS(ns,tag);for(const [key,value]of Object.entries(attrs))el.setAttribute(key,String(value));if(text!==undefined)el.textContent=String(text);el.style.opacity='0';svg.appendChild(el);steps.push(el);return el};
  const arrow=(element,cls)=>{const x1=scaleX(element.x),y1=scaleY(element.y),x2=scaleX(element.x2),y2=scaleY(element.y2);make('line',{x1,y1,x2,y2,class:cls});const angle=Math.atan2(y2-y1,x2-x1),size=13;make('line',{x1:x2,y1:y2,x2:x2-size*Math.cos(angle-.55),y2:y2-size*Math.sin(angle-.55),class:cls});make('line',{x1:x2,y1:y2,x2:x2-size*Math.cos(angle+.55),y2:y2-size*Math.sin(angle+.55),class:cls})};
  for(const element of args.elements){
-  const cls=`sketch-color-${element.color}${element.filled?' sketch-filled':''}`;
+  const cls=`sketch-color-${element.color}${element.filled?' sketch-filled':''}${element.dashed?' sketch-dashed':''}`;
   if(element.kind==='circle')make('circle',{cx:scaleX(element.x),cy:scaleY(element.y),r:Math.min(scaleX(element.radius),scaleY(element.radius)),class:cls});
   else if(element.kind==='ellipse')make('ellipse',{cx:scaleX(element.x),cy:scaleY(element.y),rx:scaleX(element.width)/2,ry:scaleY(element.height)/2,class:cls});
   else if(element.kind==='rect')make('rect',{x:scaleX(element.x),y:scaleY(element.y),width:scaleX(element.width),height:scaleY(element.height),rx:7,class:cls});
   else if(element.kind==='line')make('line',{x1:scaleX(element.x),y1:scaleY(element.y),x2:scaleX(element.x2),y2:scaleY(element.y2),class:cls});
   else if(element.kind==='arrow')arrow(element,cls);
   else if(['triangle','polygon'].includes(element.kind)){const points=[];for(let index=0;index<element.points.length;index+=2)points.push(`${scaleX(element.points[index])},${scaleY(element.points[index+1])}`);make('polygon',{points:points.join(' '),class:cls})}
+  else if(element.kind==='angle'){
+   const vertex={x:scaleX(element.x),y:scaleY(element.y)},rayA={x:scaleX(element.x2),y:scaleY(element.y2)},rayB={x:scaleX(element.x3),y:scaleY(element.y3)};
+   const requested=Math.min(scaleX(element.radius),scaleY(element.radius)),limit=Math.min(Math.hypot(rayA.x-vertex.x,rayA.y-vertex.y),Math.hypot(rayB.x-vertex.x,rayB.y-vertex.y))*.42;
+   const geometry=angleGeometry(vertex,rayA,rayB,Math.max(8,Math.min(requested,limit)),15),label=element.text||`${Math.round(geometry.degrees)}°`;
+   make('path',{d:geometry.d,class:`${cls} sketch-angle-arc`});
+   make('text',{x:geometry.labelX,y:geometry.labelY,'text-anchor':'middle','dominant-baseline':'middle',class:`sketch-text sketch-angle-label sketch-color-${element.color}`},label);
+  }
   else make('text',{x:scaleX(element.x),y:scaleY(element.y),'text-anchor':'middle','dominant-baseline':'middle',class:`sketch-text sketch-color-${element.color}`},element.text);
  }
  return {svg,steps};
