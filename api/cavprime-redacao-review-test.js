@@ -291,7 +291,7 @@ async function requestEvaluation({ providers, instructions, input, manuscript, t
             await new Promise((resolve) => setTimeout(resolve, 700));
             continue;
           }
-          if (status !== 404) return Promise.reject(error);
+          if (![404, 429, 503].includes(status)) return Promise.reject(error);
           break;
         }
       }
