@@ -57,6 +57,14 @@
     ]),
   });
 
+  const approaches = Object.freeze({
+    adaptive: { label: "Professor decide", short: "Adapte pelo que eu demonstrar", instruction: "Comece pelo caminho mais claro para a dúvida e mude a representação conforme minhas respostas, sem me rotular." },
+    visual: { label: "Quero ver", short: "Desenho, mapa ou tabela", instruction: "Comece tornando a ideia visível na lousa com o recurso mais adequado e confirme se a representação ajudou." },
+    oral: { label: "Quero ouvir", short: "Explicação curta e conversa", instruction: "Comece com uma explicação oral curta, uma comparação concreta e uma pergunta de recuperação." },
+    action: { label: "Quero fazer", short: "Resolva comigo", instruction: "Comece propondo uma ação guiada, classificação, montagem ou primeiro passo que eu possa executar com segurança." },
+    multisensory: { label: "Misture tudo", short: "Fala, lousa e prática", instruction: "Combine fala curta, lousa e uma ação do aluno, usando somente o necessário para não sobrecarregar." },
+  });
+
   let context = null;
   let mode = "math";
   let ws = null;
@@ -96,6 +104,7 @@
     }
     state.vaibemLiveNotebooks ||= [];
     state.vaibemLiveNotebookId ||= "";
+    if (!Object.hasOwn(approaches, state.vaibemApproach)) state.vaibemApproach = "adaptive";
     window.CAV_VAIBEM_STUDY?.ensureState?.(state);
     return state;
   }
@@ -140,6 +149,7 @@
       <main class="vb-live-grid" id="main">
         <section class="vb-live-teacher" aria-label="Conversa com o professor virtual">
           <div class="vb-live-person">${avatarMarkup(item, true)}<div><span class="kicker">Especialista de plantão</span><h1>${item.teacher}</h1><p>${item.specialty}<br>${item.subject} · ${item.grade}</p></div></div>
+          <fieldset class="vb-approach-picker"><legend>Como quer começar?</legend><div>${Object.entries(approaches).map(([key, option]) => `<button type="button" data-vb-approach="${key}" class="${state.vaibemApproach === key ? "selected" : ""}" aria-pressed="${state.vaibemApproach === key}"><strong>${option.label}</strong><small>${option.short}</small></button>`).join("")}</div></fieldset>
           <div class="vb-live-bubble" id="vb-bubble">Quando estiver pronto, comece a aula. Depois, converse normalmente.</div>
           <div class="vb-live-primary"><button type="button" class="btn goldbtn" id="vb-connect">Começar aula</button><button type="button" class="iconbtn" id="vb-mute" disabled aria-label="Silenciar microfone" title="Silenciar microfone">M</button><button type="button" class="iconbtn" id="vb-interrupt" disabled aria-label="Interromper professor" title="Interromper professor">■</button><button type="button" class="textbtn" id="vb-disconnect" disabled>Encerrar</button></div>
           <div class="vb-meter" aria-hidden="true"><i id="vb-meter-bar"></i></div>
@@ -147,7 +157,7 @@
           <div class="vb-live-status" id="vb-status" role="status">Aguardando o início da aula.</div>
           <div class="vb-messages" id="vb-messages" aria-live="polite"><div class="vb-message professor">${item.teacher}: Estou pronto para ouvir sua dúvida.</div></div>
           <form id="vb-text-form" class="vb-text-form"><label for="vb-text-question">Também pode escrever</label><div><input id="vb-text-question" maxlength="500" placeholder="Digite uma pergunta para o professor"><button type="submit" class="iconbtn" aria-label="Enviar pergunta">→</button></div></form>
-          ${audit ? `<details class="vb-diagnostics"><summary>Diagnóstico da lousa</summary><p>Disponível somente na auditoria interna.</p><div><button type="button" data-vb-demo="pizza">Pizza 5/12</button><button type="button" data-vb-demo="colecao">Coleção</button><button type="button" data-vb-demo="relogio">Relógio</button><button type="button" data-vb-demo="fracao">Barra</button><button type="button" data-vb-demo="reta">Reta</button><button type="button" data-vb-demo="celula">Célula</button><button type="button" data-vb-demo="atomo">Átomo</button><button type="button" data-vb-demo="circuito">Circuito</button><button type="button" data-vb-demo="forcas">Forças</button><button type="button" data-vb-demo="venn">Venn</button><button type="button" data-vb-demo="fluxo">Fluxo</button><button type="button" data-vb-demo="ciclo">Ciclo</button><button type="button" data-vb-demo="triangulo">Triângulo</button><button type="button" data-vb-demo="tabela">Tabela verbal</button><button type="button" data-vb-demo="mapa">Mapa mental rico</button><button type="button" data-vb-demo="infografico">Infográfico</button><button type="button" data-vb-demo="desenho">Desenho livre</button></div><div class="vb-phases"><span id="vb-token">TOKEN</span><span id="vb-ws">WEBSOCKET</span><span id="vb-setup">SETUP</span><span id="vb-mic">MICROFONE</span></div></details>` : ""}
+          ${audit ? `<details class="vb-diagnostics"><summary>Diagnóstico da lousa</summary><p>Disponível somente na auditoria interna.</p><div><button type="button" data-vb-demo="pizza">Pizza 5/12</button><button type="button" data-vb-demo="colecao">Coleção</button><button type="button" data-vb-demo="relogio">Relógio</button><button type="button" data-vb-demo="fracao">Barra</button><button type="button" data-vb-demo="reta">Reta</button><button type="button" data-vb-demo="celula">Célula</button><button type="button" data-vb-demo="atomo">Átomo</button><button type="button" data-vb-demo="circuito">Circuito</button><button type="button" data-vb-demo="forcas">Forças</button><button type="button" data-vb-demo="venn">Venn</button><button type="button" data-vb-demo="fluxo">Fluxo</button><button type="button" data-vb-demo="ciclo">Ciclo</button><button type="button" data-vb-demo="triangulo">Triângulo</button><button type="button" data-vb-demo="tabela">Tabela verbal</button><button type="button" data-vb-demo="mapa">Mapa mental rico</button><button type="button" data-vb-demo="infografico">Infográfico</button><button type="button" data-vb-demo="resumo">Microresumo</button><button type="button" data-vb-demo="desenho">Desenho livre</button></div><div class="vb-phases"><span id="vb-token">TOKEN</span><span id="vb-ws">WEBSOCKET</span><span id="vb-setup">SETUP</span><span id="vb-mic">MICROFONE</span></div></details>` : ""}
         </section>
         <section class="vb-live-board" aria-label="Quadro construído durante a aula">
           <div class="vb-board-head"><div><span class="kicker">Caderno da sessão</span><strong>Explicação construída com o aluno</strong></div><span id="vb-write-status">Aguardando conversa</span></div>
@@ -316,18 +326,21 @@
   function systemInstruction() {
     const item = teacher();
     const track = tracks[item.track];
+    const approach = approaches[context?.state?.vaibemApproach] || approaches.adaptive;
     const ageRule = item.track === "start"
       ? "Use linguagem concreta. Organize cálculos como: o que eu tenho, o que preciso descobrir e qual é o primeiro passo. Faça uma pergunta curta por vez."
       : "Conduza com autonomia crescente: explique o primeiro passo, peça que o aluno proponha o seguinte e intervenha quando houver impasse.";
     const preparedLesson = context?.state ? window.CAV_VAIBEM_STUDY?.planBriefing?.(context.state, item.id, context.state.vaibemGrade) : "";
     return `RESPONDA INCONFUNDIVELMENTE EM PORTUGUÊS DO BRASIL. Você nunca deve responder em espanhol, inglês ou outro idioma, salvo se o aluno pedir explicitamente uma aula de língua estrangeira. Se a fala estiver pouco clara, peça ao aluno que repita em português em vez de adivinhar palavras de outro idioma.
-Você é ${item.teacher}, ${item.specialty}, especialista do Hospital CAVMED no ${track.label}. Disciplina: ${item.subject}. Turma de referência: ${item.grade}. ${ageRule}
-${preparedLesson ? `${preparedLesson}\nComece pela abertura diagnóstica do plano, ajuste a aula conforme as respostas reais do aluno e não conte que recebeu um briefing interno.` : ""}
-Converse como um professor atento sentado ao lado do aluno. Escute até o fim, identifique exatamente onde ele travou e responda apenas o necessário. Fale em blocos curtos, com naturalidade e pausas. Se o aluno interromper, pare imediatamente e escute. Termine cada ideia importante com uma pergunta curta de verificação.
-Você possui uma lousa pela ferramenta atualizar_lousa. Use-a antes ou durante a explicação para registrar conceitos curtos e revisados. Não transcreva toda a fala. Reutilize o mesmo id para corrigir um bloco.
+	Você é ${item.teacher}, ${item.specialty}, especialista do Hospital CAVMED no ${track.label}. Disciplina: ${item.subject}. Turma de referência: ${item.grade}. ${ageRule}
+	${preparedLesson ? `${preparedLesson}\nComece pela abertura diagnóstica do plano, ajuste a aula conforme as respostas reais do aluno e não conte que recebeu um briefing interno.` : ""}
+	PORTA DE ENTRADA ESCOLHIDA PARA O INÍCIO: ${approach.label}. ${approach.instruction} Isso define somente o começo, não um rótulo permanente. Observe a compreensão e troque de estratégia quando necessário.
+	Converse como um professor atento sentado ao lado do aluno. Escute até o fim, identifique exatamente onde ele travou e responda apenas o necessário. Fale em blocos curtos, com naturalidade e pausas. Se o aluno interromper, pare imediatamente e escute. Termine cada ideia importante com uma pergunta curta de verificação.
+	PROTOCOLO ADAPTATIVO: em cada conceito importante, escolha entre conversar e escutar, tornar visível, propor uma ação curta e pedir recuperação ativa. Não precisa usar os quatro movimentos sempre. Se o aluno não compreender, mude o meio de representação em vez de repetir a mesma frase. Nunca diga que ele "é visual", "é auditivo" ou "é cinestésico".
+	Você possui uma lousa pela ferramenta atualizar_lousa. Use-a antes ou durante a explicação para registrar conceitos curtos e revisados. Não transcreva toda a fala. Reutilize o mesmo id para corrigir um bloco.
 	REGRA VISUAL OBRIGATÓRIA: quando o aluno disser que é visual, pedir para ver, desenhar, mostrar, ilustrar ou apontar uma imagem, chame a ferramenta antes de explicar. Nunca responda apenas "imagine" e nunca afirme que desenhou sem chamar a ferramenta. Respeite o objeto pedido: pizza deve ser um círculo com fatias, não um retângulo. Para crianças, prefira uma imagem concreta sempre que ela puder substituir abstração verbal.
 	Use action=diagrama com o desenho adequado. Fração em pizza: diagram=pizza e values=[numerador,denominador]. Objetos contáveis: diagram=colecao e values=[destacados,total]. Relógio: diagram=relogio e values=[hora,minuto]. Fração em barra: diagram=fracao. Também estão disponíveis formas_geometricas, venn, linha_do_tempo, mapa_conceitual, celula, atomo, sistema_solar, circuito_eletrico, forcas, onda, plano_cartesiano, reta_numerica, fluxo, ciclo, comparacao e triangulo_retangulo. Use títulos e rótulos curtos e escolha o desenho que corresponda à disciplina e à idade.
-	FERRAMENTAS VISUAIS PARA TODAS AS DISCIPLINAS: use action=tabela para conjugações, comparações, classificações, cronologias e dados organizados; forneça columns e rows. Use action=mapa_mental quando o aluno pedir mapa mental ou quando um assunto tiver tema central e ramos. Monte de 2 a 8 ramos principais e de 1 a 5 subgalhos em cada ramo, com títulos curtos, conexões conceituais reais e cores funcionais. Quando o conteúdo comportar, prefira pelo menos 4 ramos e 2 subgalhos por ramo; nunca entregue apenas caixas soltas. Use action=infografico para revisões rápidas, processos, causa e consequência, comparações, linhas do tempo e camadas; escolha layout adequado e forneça de 2 a 8 painéis. Use action=desenho para esquemas que não tenham diagrama pronto; monte apenas formas simples com coordenadas de 0 a 100. Use cores diferentes para separar funções, etapas ou categorias, nunca apenas para decorar. Prefira diagramas prontos quando existirem, pois são mais precisos.
+		FERRAMENTAS VISUAIS PARA TODAS AS DISCIPLINAS: use action=tabela para conjugações, comparações, classificações, cronologias e dados organizados; forneça columns e rows. Use action=mapa_mental quando o aluno pedir mapa mental ou quando um assunto tiver tema central e ramos. Monte de 2 a 8 ramos principais e de 1 a 5 subgalhos em cada ramo, com títulos curtos, conexões conceituais reais e cores funcionais. Quando o conteúdo comportar, prefira pelo menos 4 ramos e 2 subgalhos por ramo; nunca entregue apenas caixas soltas. Use action=infografico para revisões rápidas, processos, causa e consequência, comparações, linhas do tempo e camadas; escolha layout adequado e forneça de 2 a 8 painéis. Use action=resumo para um microresumo de 2 a 6 ideias, uma frase-chave e uma pergunta curta de recuperação. Use action=desenho para esquemas que não tenham diagrama pronto; monte apenas formas simples com coordenadas de 0 a 100. Use cores diferentes para separar funções, etapas ou categorias, nunca apenas para decorar. Prefira diagramas prontos quando existirem, pois são mais precisos.
 	A lousa visual vale para Matemática, Língua Portuguesa, Literatura, Redação, Inglês, História, Geografia, Filosofia, Sociologia, Ciências, Biologia, Física e Química. Em aula de linguagem, uma tabela deve realmente aparecer quando solicitada. Em Ciências e Humanidades, mapas, ciclos, linhas do tempo e mapas mentais devem ser mostrados, não apenas descritos oralmente.
 Em qualquer matéria com cálculo, mostre dados, pedido, conversão necessária, fórmula, isolamento, substituição, fração vertical, cortes válidos, cálculo e resposta interpretada. Não faça contas diretamente com vírgula: converta o decimal para inteiro multiplicado por potência de dez. Não repita unidades em todas as linhas intermediárias, salvo quando forem essenciais em Física. Use subscritos e sobrescritos corretos; equilíbrio químico usa ⇌.
 Para proporções use action=regra_de_tres. Classifique antes como direta ou inversa, mantenha grandezas correspondentes na mesma coluna e prefira o fator de escala quando ele for evidente. A ferramenta calcula e desenha; use o resultado retornado.
@@ -672,6 +685,7 @@ A ferramenta confirma apenas o enfileiramento. Continue falando enquanto o quadr
       tabela: { action: "tabela", id: "demo-tabela", title: "Tempos verbais em contexto", columns: ["Tempo", "Exemplo", "O que indica"], rows: [["Presente", "Eu estudo hoje.", "ação atual ou habitual"], ["Pretérito perfeito", "Eu estudei ontem.", "ação concluída"], ["Futuro do presente", "Eu estudarei amanhã.", "ação posterior"]], highlightRows: [2], palette: "turquesa" },
       mapa: { action: "mapa_mental", id: "demo-mapa", title: "Ciclo da água", palette: "amarelo", branches: [{ title: "Evaporação", details: ["água líquida recebe calor", "moléculas ganham energia", "passagem ao estado gasoso"], color: "laranja" }, { title: "Transpiração", details: ["plantas liberam vapor", "estômatos regulam a saída", "participa da evapotranspiração"], color: "turquesa" }, { title: "Condensação", details: ["vapor perde calor", "formam-se gotículas", "nuvens ganham volume"], color: "azul" }, { title: "Precipitação", details: ["gotas ficam pesadas", "chuva, neve ou granizo", "água retorna à superfície"], color: "roxo" }, { title: "Infiltração", details: ["água entra no solo", "abastece aquíferos", "depende da permeabilidade"], color: "verde" }, { title: "Escoamento", details: ["água percorre a superfície", "alimenta rios e lagos", "retorna aos oceanos"], color: "vermelho" }] },
       infografico: { action: "infografico", id: "demo-infografico", title: "Como uma ideia vira resposta", subtitle: "Uma revisão visual para organizar o raciocínio antes de responder.", layout: "fluxo", panels: [{ title: "Observe", detail: "Localize palavras, dados ou sinais que orientam a leitura.", cue: "O que chama atenção?", color: "azul" }, { title: "Relacione", detail: "Ligue cada pista ao conceito estudado e descarte o que não serve.", cue: "Qual conceito explica?", color: "turquesa" }, { title: "Resolva", detail: "Aplique o conceito em passos curtos, sem esconder o raciocínio.", cue: "Um passo por vez", color: "amarelo" }, { title: "Confira", detail: "Volte ao pedido e veja se sua resposta realmente o atende.", cue: "Respondeu ao comando?", color: "verde" }] },
+      resumo: { action: "resumo", id: "demo-resumo", title: "Ciclo da água em quatro ideias", bullets: ["O Sol fornece energia para a evaporação.", "O vapor perde calor e se condensa em gotículas.", "A precipitação devolve água à superfície.", "Infiltração e escoamento alimentam o ciclo novamente."], keyPhrase: "A água muda de lugar e de estado, mas continua circulando.", recallQuestion: "Qual transformação forma as nuvens?", palette: "turquesa" },
       desenho: { action: "desenho", id: "demo-desenho", title: "Casa, árvore e caminho", elements: [{ kind: "rect", x: 12, y: 42, width: 30, height: 38, color: "amarelo", filled: true }, { kind: "triangle", points: [9, 42, 27, 20, 45, 42], color: "vermelho", filled: true }, { kind: "rect", x: 24, y: 60, width: 8, height: 20, color: "azul", filled: true }, { kind: "line", x: 27, y: 80, x2: 60, y2: 96, color: "cinza" }, { kind: "rect", x: 72, y: 52, width: 7, height: 28, color: "laranja", filled: true }, { kind: "circle", x: 75, y: 38, radius: 16, color: "verde", filled: true }, { kind: "text", x: 50, y: 10, text: "Um cenário explicado por formas", color: "azul" }] },
     };
     board.command(demos[type], `demo-${type}-${Date.now()}`);
@@ -747,6 +761,21 @@ A ferramenta confirma apenas o enfileiramento. Continue falando enquanto o quadr
     byId("vb-disconnect")?.addEventListener("click", disconnect);
     byId("vb-clear")?.addEventListener("click", () => { board.clear(); outputTranscript = ""; });
     byId("vb-save")?.addEventListener("click", () => saveSession(false));
+    document.querySelectorAll("[data-vb-approach]").forEach((button) => button.addEventListener("click", () => {
+      const key = button.dataset.vbApproach;
+      if (!Object.hasOwn(approaches, key)) return;
+      ctx.state.vaibemApproach = key;
+      ctx.save();
+      document.querySelectorAll("[data-vb-approach]").forEach((item) => {
+        const selected = item.dataset.vbApproach === key;
+        item.classList.toggle("selected", selected);
+        item.setAttribute("aria-pressed", String(selected));
+      });
+      setBubble(`${approaches[key].label}: ${approaches[key].short}.`);
+      if (connected && setupReady && ws?.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ clientContent: { turns: [{ role: "user", parts: [{ text: `Ajuste a partir de agora a porta de entrada da explicação: ${approaches[key].instruction} Não me rotule e continue adaptando conforme minha compreensão.` }] }], turnComplete: true } }));
+      }
+    }));
     byId("vb-text-form")?.addEventListener("submit", (event) => {
       event.preventDefault();
       const field = byId("vb-text-question");

@@ -698,7 +698,7 @@
 
   const workedExamples = Object.freeze({
     fisica: {
-      title: "Modelo resolvido: densidade",
+      title: "Primeiros socorros: densidade",
       prompt: "Uma amostra de 180 g ocupa 60 cm³. Qual é sua densidade?",
       formula: "d = [[frac|m|V]]",
       steps: [["1. Dados e pedido", "m = 180 g; V = 60 cm^{3}; determinar d."], ["2. Unidades", "As grandezas já estão em unidades compatíveis para g · cm^{-3}."], ["3. Fórmula isolada", "d = [[frac|m|V]]."], ["4. Substituição", "d = [[frac|180 g|60 cm^{3}]]."], ["5. Cálculo e unidade", "180 dividido por 60 resulta em 3; d = 3 g · cm^{-3}."]],
@@ -706,7 +706,7 @@
       mirror: "Na primeira questão, mantenha as quatro linhas e troque somente os valores.",
     },
     circuitos: {
-      title: "Modelo resolvido: resistores em série",
+      title: "Primeiros socorros: resistores em série",
       prompt: "Dois resistores de 3 Ω e 5 Ω estão ligados em série. Qual é a resistência equivalente?",
       formula: "Rₑq = R₁ + R₂",
       steps: [["1. Diagnóstico", "A ligação é em série."], ["2. Dados", "R₁ = 3 Ω e R₂ = 5 Ω"], ["3. Substituição", "Rₑq = 3 + 5"], ["4. Resultado", "Rₑq = 8 Ω"]],
@@ -714,7 +714,7 @@
       mirror: "Na primeira questão, copie a mesma soma e troque 3 e 5 por 2 e 4.",
     },
     quimica: {
-      title: "Modelo resolvido: comparação de pH",
+      title: "Primeiros socorros: comparação de pH",
       prompt: "Uma solução tem pH 3 e outra pH 5. Quantas vezes a primeira tem mais H⁺?",
       formula: "fator = 10^{Delta pH}",
       steps: [["1. Dados e pedido", "pH_{1} = 3; pH_{2} = 5; determinar o fator de concentração de H^{+}."], ["2. Diferença", "ΔpH = 5 − 3 = 2."], ["3. Potência", "fator = 10^{Delta pH} = 10^{+2}."], ["4. Cálculo", "10^{+2} = 100."], ["5. Sentido", "pH 3 é menor, então apresenta maior concentração de H^{+}."]],
@@ -722,7 +722,7 @@
       mirror: "Na primeira questão, repita as quatro linhas usando pH 2 e pH 4.",
     },
     estequiometria: {
-      title: "Modelo resolvido: relação direta em duas linhas",
+      title: "Primeiros socorros: relação direta em duas linhas",
       prompt: "Na reação 2 H_{2}(g) + O_{2}(g) -> 2 H_{2}O(l), qual massa de água é formada por 0,50 mol de O_{2}?",
       formula: "1 mol de O_{2} corresponde a 2 · 18 g de H_{2}O",
       steps: [["1. Equação", "A equação já está balanceada: 2 H_{2} + O_{2} -> 2 H_{2}O."], ["2. Ponte direta", "1 mol de O_{2} corresponde a 2 mol de H_{2}O, isto é, 2 · 18 g."], ["3. Sem vírgula", "0,50 = 5 · 10^{-1}."], ["4. Mesmo fator", "De 1 para 0,50, dividimos por 2; de 36 para x, também dividimos por 2."], ["5. Resultado", "x = 36 ÷ 2 = 18; recupere a unidade na resposta."]],
@@ -744,7 +744,7 @@
       mirror: "Balanceie, escolha a ponte entre o dado e o pedido e repita o mesmo fator nas duas colunas.",
     },
     porcentagem: {
-      title: "Modelo resolvido: desconto",
+      title: "Primeiros socorros: desconto",
       prompt: "Um produto de R$ 80 recebe desconto de 15%. Qual é o preço final?",
       formula: "D = [[frac|valor · taxa|100]]",
       steps: [["1. Dados e pedido", "Valor inicial = R$ 80; taxa = 15%; determinar o preço final."], ["2. Taxa sem decimal", "15% = [[frac|15|100]]."], ["3. Desconto", "D = [[frac|80 · 15|100]] = 12."], ["4. Valor final", "80 − 12 = 68."], ["5. Resposta", "O produto custa R$ 68."]],
@@ -752,7 +752,7 @@
       mirror: "Na primeira questão, copie o roteiro usando R$ 60 e 10%.",
     },
     funcao_linear: {
-      title: "Modelo resolvido: taxa fixa mais consumo",
+      title: "Primeiros socorros: taxa fixa mais consumo",
       prompt: "Uma corrida custa R$ 8 fixos mais R$ 2 por quilômetro. Quanto custa percorrer 5 km?",
       formula: "V = 8 + 2 · k",
       steps: [["1. Dados e pedido", "Taxa fixa = R$ 8; taxa variável = R$ 2 · km^{-1}; distância = 5 km."], ["2. Modelo", "V = fixo + taxa · distância."], ["3. Substituição", "V = 8 + 2 · 5."], ["4. Cálculo", "V = 8 + 10."], ["5. Resultado", "V = R$ 18."]],
@@ -760,7 +760,7 @@
       mirror: "Na primeira questão, mantenha o modelo e troque os valores por 5, 3 e 4.",
     },
     escala: {
-      title: "Modelo resolvido: distância no mapa",
+      title: "Primeiros socorros: distância no mapa",
       prompt: "Na escala 1:100 000, uma distância mede 3 cm no mapa. Qual é a distância real?",
       formula: "D_{real} = D_{mapa} · escala",
       steps: [["1. Dados e pedido", "D_{mapa} = 3 cm; escala = 1:100 000; determinar D_{real}."], ["2. Potência", "100 000 = 10^{+5}."], ["3. Multiplicação limpa", "D_{real} = 3 · 10^{+5}."], ["4. Conversão", "1 km = 10^{+5} cm."], ["5. Resultado", "A distância real é 3 km."]],
@@ -768,7 +768,7 @@
       mirror: "Na primeira questão, repita o roteiro usando 2 cm na mesma escala.",
     },
     probabilidade: {
-      title: "Modelo resolvido: evento simples",
+      title: "Primeiros socorros: evento simples",
       prompt: "Uma caixa tem 3 fichas verdes e 2 douradas. Qual é a chance de retirar uma verde?",
       formula: "P = [[frac|favoráveis|possíveis]]",
       steps: [["1. Dados e pedido", "3 fichas verdes; 2 douradas; determinar P(verde)."], ["2. Possíveis", "3 + 2 = 5 fichas."], ["3. Favoráveis", "3 fichas verdes."], ["4. Fração", "P(verde) = [[frac|3|5]]."], ["5. Resultado", "A chance é [[frac|3|5]], equivalente a 60%. "]],
@@ -776,7 +776,7 @@
       mirror: "Na primeira questão, conte novamente os casos possíveis e favoráveis antes de dividir.",
     },
     estatistica: {
-      title: "Modelo resolvido: média aritmética",
+      title: "Primeiros socorros: média aritmética",
       prompt: "Qual é a média entre 6 e 8?",
       formula: "média = [[frac|soma|quantidade]]",
       steps: [["1. Dados e pedido", "Valores 6 e 8; determinar a média aritmética."], ["2. Soma", "6 + 8 = 14."], ["3. Quantidade", "Há 2 valores."], ["4. Fração", "média = [[frac|14|2]] = 7."], ["5. Resultado", "A média dos dois valores é 7."]],
@@ -784,7 +784,7 @@
       mirror: "Na primeira questão, copie o roteiro usando os valores 4 e 6.",
     },
     proporcionalidade: {
-      title: "Modelo resolvido: proporção direta",
+      title: "Primeiros socorros: proporção direta",
       prompt: "Uma caixa contém 2 frascos. Quantos frascos há em 70 caixas iguais?",
       formula: "1 caixa -> 2 frascos",
       steps: [["1. Dados e pedido", "1 caixa corresponde a 2 frascos; determinar quantos frascos há em 70 caixas."], ["2. Relação", "Mais caixas significam mais frascos na mesma razão: relação direta."], ["3. Duas linhas", "Coloque caixas na primeira coluna e frascos na segunda; a relação conhecida fica acima do caso pedido."], ["4. Mesmo fator", "De 1 para 70, multiplique por 70. Faça o mesmo de 2 para x."], ["5. Resultado", "x = 2 · 70 = 140 frascos."]],
@@ -806,7 +806,7 @@
       mirror: "Organize duas linhas, descubra o fator e repita a mesma operação na outra coluna.",
     },
     geometria: {
-      title: "Modelo resolvido: área do retângulo",
+      title: "Primeiros socorros: área do retângulo",
       prompt: "Um retângulo mede 5 cm de base e 2 cm de altura. Qual é sua área?",
       formula: "A = b · h",
       steps: [["1. Dados e pedido", "b = 5 cm; h = 2 cm; determinar A."], ["2. Fórmula isolada", "A = b · h."], ["3. Substituição numérica", "A = 5 · 2."], ["4. Cálculo", "5 · 2 = 10."], ["5. Resultado", "A = 10 cm^{2}."]],
@@ -817,7 +817,7 @@
 
   const mediumWorkedExamples = Object.freeze({
     fisica: {
-      title: "Modelo médio: velocidade com conversão de tempo",
+      title: "Plantão de consolidação: velocidade com conversão de tempo",
       prompt: "Um móvel percorre 900 m em 3 min. Determine a velocidade média em m · s^{-1}.",
       formula: "v = [[frac|Delta s|Delta t]]",
       steps: [["1. Dados e pedido", "Δs = 900 m; Δt = 3 min; determinar v em m · s^{-1}."], ["2. Conversão", "3 min = 3 · 6 · 10^{+1} s = 18 · 10^{+1} s."], ["3. Substituição limpa", "v = [[frac|900|18 · 10^{+1}]]."], ["4. Simplificação", "900 = 9 · 10^{+2}; corte a potência comum e divida 9 por 18."], ["5. Resultado", "v = 5 m · s^{-1}."]],
@@ -825,7 +825,7 @@
       mirror: "Converta primeiro o tempo e só depois substitua na relação de velocidade.",
     },
     circuitos: {
-      title: "Modelo médio: três resistores em série",
+      title: "Plantão de consolidação: três resistores em série",
       prompt: "Resistores de 4 Ω, 6 Ω e 3 Ω estão em série. Determine a resistência equivalente.",
       formula: "R_{eq} = R_{1} + R_{2} + R_{3}",
       steps: [["1. Diagnóstico", "A corrente percorre um único caminho: associação em série."], ["2. Dados", "R_{1} = 4 Ω; R_{2} = 6 Ω; R_{3} = 3 Ω."], ["3. Substituição limpa", "R_{eq} = 4 + 6 + 3."], ["4. Cálculo", "R_{eq} = 13."], ["5. Resultado", "Recupere Ω na resposta final."]],
@@ -833,7 +833,7 @@
       mirror: "Confirme a associação e some todos os resistores uma única vez.",
     },
     quimica: {
-      title: "Modelo médio: comparação logarítmica",
+      title: "Plantão de consolidação: comparação logarítmica",
       prompt: "Compare uma solução de pH 4 com outra de pH 7 quanto à concentração de H^{+}.",
       formula: "fator = 10^{Delta pH}",
       steps: [["1. Dados e pedido", "pH_{1} = 4; pH_{2} = 7; determinar o fator de concentração."], ["2. Diferença", "ΔpH = 7 − 4 = 3."], ["3. Potência", "fator = 10^{+3}."], ["4. Cálculo", "10^{+3} = 1 000."], ["5. Sentido", "A solução de pH 4 possui maior concentração de H^{+}."]],
@@ -841,7 +841,7 @@
       mirror: "Calcule a diferença e só depois interprete qual solução é mais ácida.",
     },
     estequiometria: {
-      title: "Modelo médio: mol para número de moléculas",
+      title: "Plantão de consolidação: mol para número de moléculas",
       prompt: "Determine o número de moléculas existente em 0,25 mol de CO_{2}.",
       formula: "1 mol corresponde a 6,02 · 10^{23} moléculas",
       steps: [["1. Dados e pedido", "0,25 mol de CO_{2}; determinar o número de moléculas."], ["2. Sem vírgula", "0,25 = 25 · 10^{-2}."], ["3. Relação direta", "1 mol corresponde a 6,02 · 10^{23}; 0,25 mol corresponde a x."], ["4. Fator", "De 1 para 0,25, dividimos por 4; aplique o mesmo fator ao número de moléculas."], ["5. Resultado", "x = 1,505 · 10^{23} moléculas."]],
@@ -863,7 +863,7 @@
       mirror: "Escolha a ponte do mol que corresponde exatamente ao pedido.",
     },
     porcentagem: {
-      title: "Modelo médio: acréscimo em duas etapas",
+      title: "Plantão de consolidação: acréscimo em duas etapas",
       prompt: "Uma mensalidade de R$ 250 recebe acréscimo de 12%. Determine o novo valor.",
       formula: "A = [[frac|valor · taxa|100]]",
       steps: [["1. Dados e pedido", "Valor inicial = 250; taxa = 12%; determinar o total após o acréscimo."], ["2. Parte percentual", "A = [[frac|250 · 12|100]]."], ["3. Simplificação", "Corte fatores comuns antes de multiplicar."], ["4. Acréscimo", "A = 30."], ["5. Valor final", "250 + 30 = 280; recupere R$ na resposta."]],
@@ -871,7 +871,7 @@
       mirror: "Calcule primeiro a parte percentual e somente depois some ao valor inicial.",
     },
     funcao_linear: {
-      title: "Modelo médio: tarifa fixa e três unidades",
+      title: "Plantão de consolidação: tarifa fixa e três unidades",
       prompt: "Um serviço cobra R$ 6 fixos e R$ 4 por unidade. Determine o total para 3 unidades.",
       formula: "V = 6 + 4 · q",
       steps: [["1. Dados", "Parcela fixa = 6; taxa = 4; q = 3."], ["2. Modelo", "V = fixo + taxa · quantidade."], ["3. Substituição", "V = 6 + 4 · 3."], ["4. Cálculo", "V = 6 + 12 = 18."], ["5. Resultado", "Recupere R$ na resposta final."]],
@@ -879,7 +879,7 @@
       mirror: "Mantenha separadas a parcela fixa e a parte que varia.",
     },
     escala: {
-      title: "Modelo médio: escala com conversão final",
+      title: "Plantão de consolidação: escala com conversão final",
       prompt: "Na escala 1:50 000, uma estrada mede 4 cm no mapa. Determine a distância real em quilômetros.",
       formula: "D_{real} = D_{mapa} · escala",
       steps: [["1. Dados e pedido", "Medida no mapa = 4 cm; escala = 1:50 000; determinar quilômetros reais."], ["2. Potência", "50 000 = 5 · 10^{+4}."], ["3. Multiplicação", "4 · 5 · 10^{+4} = 2 · 10^{+5}."], ["4. Conversão", "1 km corresponde a 10^{+5} cm."], ["5. Resultado", "A distância real é 2 km."]],
@@ -887,7 +887,7 @@
       mirror: "Resolva primeiro na unidade do mapa e converta somente no final.",
     },
     probabilidade: {
-      title: "Modelo médio: evento em um conjunto maior",
+      title: "Plantão de consolidação: evento em um conjunto maior",
       prompt: "Uma urna possui 5 fichas vermelhas e 3 azuis. Determine a probabilidade de retirar uma vermelha.",
       formula: "P = [[frac|favoráveis|possíveis]]",
       steps: [["1. Possíveis", "5 + 3 = 8 fichas."], ["2. Favoráveis", "Há 5 fichas vermelhas."], ["3. Fração", "P = [[frac|5|8]]."], ["4. Conferência", "O resultado deve estar entre 0 e 1."], ["5. Interpretação", "Cinco dos oito resultados simples são favoráveis."]],
@@ -895,7 +895,7 @@
       mirror: "Conte o total antes de separar os casos favoráveis.",
     },
     estatistica: {
-      title: "Modelo médio: média de quatro valores",
+      title: "Plantão de consolidação: média de quatro valores",
       prompt: "Determine a média dos valores 3, 5, 7 e 9.",
       formula: "média = [[frac|soma|quantidade]]",
       steps: [["1. Dados", "Valores: 3, 5, 7 e 9."], ["2. Soma", "3 + 5 + 7 + 9 = 24."], ["3. Quantidade", "Há 4 valores."], ["4. Divisão", "média = [[frac|24|4]] = 6."], ["5. Interpretação", "6 representa o centro aritmético do conjunto."]],
@@ -903,7 +903,7 @@
       mirror: "Some todos os valores e divida exatamente pela quantidade de dados.",
     },
     proporcionalidade: {
-      title: "Modelo médio: proporção inversa",
+      title: "Plantão de consolidação: proporção inversa",
       prompt: "Se 4 trabalhadores concluem uma tarefa em 6 dias, em quantos dias 8 trabalhadores, com o mesmo ritmo, concluem a tarefa?",
       formula: "trabalhadores · dias = constante",
       steps: [["1. Dados e pedido", "4 trabalhadores correspondem a 6 dias; 8 trabalhadores correspondem a x."], ["2. Diagnóstico", "Mais trabalhadores exigem menos dias: relação inversamente proporcional."], ["3. Fatores", "De 4 para 8, multiplique por 2; na coluna dos dias, divida por 2."], ["4. Cálculo", "x = 6 ÷ 2 = 3."], ["5. Resultado", "A equipe conclui a tarefa em 3 dias."]],
@@ -925,7 +925,7 @@
       mirror: "Em relações inversas, aplique operações opostas nas duas colunas.",
     },
     geometria: {
-      title: "Modelo médio: área do triângulo",
+      title: "Plantão de consolidação: área do triângulo",
       prompt: "Determine a área de um triângulo de base 10 cm e altura 6 cm.",
       formula: "A = [[frac|b · h|2]]",
       steps: [["1. Dados e pedido", "b = 10 cm; h = 6 cm; determinar A."], ["2. Fórmula", "A = [[frac|b · h|2]]."], ["3. Substituição limpa", "A = [[frac|10 · 6|2]]."], ["4. Corte", "Simplifique 10 com 2 antes de multiplicar."], ["5. Resultado", "A = 30 cm^{2}."]],
@@ -1030,7 +1030,7 @@
     const [secondTitle, secondDetail] = second;
     return {
       level,
-      title: `${level === "Fácil" ? "Modelo fácil" : "Modelo médio"}: ${pack.title}`,
+      title: `${level === "Fácil" ? "Primeiros socorros" : "Plantão de consolidação"}: ${pack.title}`,
       prompt: level === "Fácil" ? `Explique o papel de ${firstTitle} neste assunto.` : `Relacione ${firstTitle} e ${secondTitle} neste assunto.`,
       formula: "comando -> evidência -> relação -> resposta",
       steps: [

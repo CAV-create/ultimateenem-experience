@@ -6,6 +6,8 @@
   const sourceFiles = new Map();
   let selectedFile = null;
   let selectedUrl = "";
+  let pdfJsPromise = null;
+  let pdfLibPromise = null;
 
   const byId = (id) => document.getElementById(id);
   const live = () => window.CAV_VAIBEM_LIVE;
@@ -15,7 +17,38 @@
     state.vaibemActivities = Array.isArray(state.vaibemActivities) ? state.vaibemActivities : [];
     state.vaibemLessonPlans = state.vaibemLessonPlans && typeof state.vaibemLessonPlans === "object" ? state.vaibemLessonPlans : {};
     state.vaibemInk = state.vaibemInk && typeof state.vaibemInk === "object" ? state.vaibemInk : {};
+    state.vaibemActivities.forEach(upgradeStoredReview);
     return state;
+  }
+
+  function upgradeStoredReview(review) {
+    if (!review || typeof review !== "object") return review;
+    review.overview = review.overview && typeof review.overview === "object" ? review.overview : {};
+    const overview = review.overview;
+    const legacyEqualWeight = overview.scoringVersion !== "cavmed-v2" && !/identificados|impressos|pesos próprios|valor original|pontuação própria/i.test(String(overview.gradingBasis || ""));
+    if (legacyEqualWeight) {
+      const correct = Number(overview.correctCount) || 0;
+      const partial = Number(overview.partialCount) || 0;
+      const total = Number(overview.totalQuestions) || (review.annotations || []).length || correct + partial + (Number(overview.errorCount) || 0);
+      overview.possiblePoints = total;
+      overview.earnedPoints = correct + partial * 0.5;
+      overview.grade = total ? Math.round((overview.earnedPoints / total) * 100) / 10 : 0;
+      overview.gradingBasis = "Na ausência de pesos impressos, todas as questões principais receberam o mesmo peso.";
+    }
+    const grade = reviewGrade(review);
+    if (!Number.isFinite(Number(overview.earnedPoints))) overview.earnedPoints = grade.earned;
+    if (!Number.isFinite(Number(overview.possiblePoints)) || Number(overview.possiblePoints) <= 0) overview.possiblePoints = grade.possible;
+    if (overview.grade === null || overview.grade === undefined || overview.grade === "" || !Number.isFinite(Number(overview.grade))) overview.grade = grade.grade;
+    if (!Number.isFinite(Number(overview.gradeScale)) || Number(overview.gradeScale) <= 0) overview.gradeScale = 10;
+    if (!overview.gradingBasis) overview.gradingBasis = grade.basis;
+    overview.blindReviewApplied = overview.blindReviewApplied !== false;
+    overview.scoringVersion ||= "cavmed-v2";
+    return review;
+  }
+
+  function workedExampleLabel(index, level = "") {
+    const normalized = String(level || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    return normalized.includes("medio") || index > 0 ? "Plantão de consolidação" : "Primeiros socorros do raciocínio";
   }
 
   function activeTeacher(state) {
@@ -41,7 +74,8 @@
     const plan = currentPlan(state, teacherId, gradeId);
     if (!plan) return "";
     const sequence = (plan.sequence || []).map((step) => `${step.stage}: ${step.title} — ${step.instruction}`).join(" | ");
-    return `AULA PREPARADA PELO ALUNO. Conteúdos: ${plan.topics}. Título: ${plan.topicTitle}. Objetivos: ${(plan.objectives || []).join("; ")}. Abertura diagnóstica: ${plan.openingQuestion}. Sequência: ${sequence}. Orientação reservada ao professor: ${plan.teacherBriefing}`.slice(0, 5000);
+    const routes = (plan.adaptationRoutes || []).map((route) => `${route.mode}: ${route.strategy}; recurso: ${route.resource}; verificação: ${route.check}`).join(" | ");
+    return `AULA PREPARADA PELO ALUNO. Conteúdos: ${plan.topics}. Título: ${plan.topicTitle}. Objetivos: ${(plan.objectives || []).join("; ")}. Abertura diagnóstica: ${plan.openingQuestion}. Sequência: ${sequence}. Portas de entrada disponíveis, sem rotular o aluno: ${routes}. Orientação reservada ao professor: ${plan.teacherBriefing}`.slice(0, 6500);
   }
 
   function homeRows(ctx) {
@@ -97,10 +131,10 @@
     const possible = Number.isFinite(storedPossible) && storedPossible > 0 ? storedPossible : total;
     const earned = Number.isFinite(storedEarned) ? storedEarned : correct + partial * 0.5;
     const calculatedGrade = possible ? Math.round((earned / possible) * 100) / 10 : 0;
-    const storedGrade = Number(overview.grade);
+    const storedGrade = overview.grade === null || overview.grade === undefined || overview.grade === "" ? NaN : Number(overview.grade);
     const grade = Number.isFinite(storedGrade) ? storedGrade : calculatedGrade;
     const scale = Number(overview.gradeScale) || 10;
-    const weighted = /identificados|pesos próprios|valor original|pontuação própria/i.test(String(overview.gradingBasis || ""));
+    const weighted = /identificados|impressos|pesos próprios|valor original|pontuação própria/i.test(String(overview.gradingBasis || ""));
     return {
       grade,
       scale,
@@ -127,19 +161,116 @@
     </div>`;
   }
 
-  function automaticInk(ctx, review) {
+  function automaticInkPlacement(items, item, index) {
+    return {
+      x: Number.isFinite(Number(item.position?.x)) ? Number(item.position.x) : (index % 2 ? 15 : 85),
+      y: Number.isFinite(Number(item.position?.y)) ? Number(item.position.y) : Math.min(92, 10 + index * (80 / Math.max(items.length, 1))),
+    };
+  }
+
+  function automaticInk(ctx, review, page = 1) {
     const glyph = { correct: "✓", partial: "½", incorrect: "×", attention: "?" };
-    return (review.annotations || []).filter((item) => item.position).map((item, index) => `<button type="button" class="vb-auto-ink status-${item.status}" style="left:${item.position.x}%;top:${item.position.y}%" data-vb-annotation-link="${esc(ctx, item.id)}" aria-label="Abrir comentário da questão ${item.questionNumber}"><b>${glyph[item.status] || "•"}</b><span>${index + 1}</span></button>`).join("");
+    const items = (review.annotations || []).filter((item) => Number(item.page || 1) === Number(page));
+    return items.map((item, index) => {
+      const { x, y } = automaticInkPlacement(items, item, index);
+      const points = Number.isFinite(Number(item.pointsEarned)) && Number.isFinite(Number(item.pointsPossible))
+        ? `${formatScore(item.pointsEarned)}/${formatScore(item.pointsPossible)}`
+        : "";
+      return `<button type="button" class="vb-auto-ink status-${item.status}" style="left:${x}%;top:${y}%" data-vb-annotation-link="${esc(ctx, item.id)}" aria-label="Abrir comentário da questão ${item.questionNumber}" title="${esc(ctx, item.scoreReason || item.comment || "Correção CAVMED")}"><b>${glyph[item.status] || "•"}</b><span>Q${esc(ctx, item.questionNumber)}</span>${points ? `<em>${points}</em>` : ""}</button>`;
+    }).join("");
+  }
+
+  function bindAnnotationLinks() {
+    document.querySelectorAll("[data-vb-annotation-link]").forEach((button) => {
+      if (button.dataset.vbBound === "1") return;
+      button.dataset.vbBound = "1";
+      button.addEventListener("click", () => byId(button.dataset.vbAnnotationLink)?.scrollIntoView({ behavior: "smooth", block: "center" }));
+    });
+  }
+
+  function loadPdfJs() {
+    if (!pdfJsPromise) {
+      pdfJsPromise = import("/vendor/pdfjs/pdf.min.mjs?v=20261002-1").then((pdfjs) => {
+        pdfjs.GlobalWorkerOptions.workerSrc = "/vendor/pdfjs/pdf.worker.min.mjs?v=20261002-1";
+        return pdfjs;
+      });
+    }
+    return pdfJsPromise;
+  }
+
+  function loadPdfLib() {
+    if (window.PDFLib) return Promise.resolve(window.PDFLib);
+    if (!pdfLibPromise) {
+      pdfLibPromise = new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = "/vendor/pdf-lib/pdf-lib.min.js?v=20261002-1";
+        script.async = true;
+        script.onload = () => window.PDFLib ? resolve(window.PDFLib) : reject(new Error("Biblioteca de comentários indisponível."));
+        script.onerror = () => reject(new Error("Não foi possível preparar o PDF comentado."));
+        document.head.appendChild(script);
+      });
+    }
+    return pdfLibPromise;
+  }
+
+  async function renderPdfReview(ctx, review) {
+    const source = sourceFiles.get(review.id);
+    const holder = document.querySelector(`[data-vb-pdf-pages][data-review-id="${CSS.escape(review.id)}"]`);
+    if (!source?.file || !holder) return;
+    try {
+      const pdfjs = await loadPdfJs();
+      const bytes = new Uint8Array(await source.file.arrayBuffer());
+      const pdf = await pdfjs.getDocument({ data: bytes }).promise;
+      if (!document.body.contains(holder)) return;
+      holder.replaceChildren();
+      for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+        const page = await pdf.getPage(pageNumber);
+        if (!document.body.contains(holder)) return;
+        const base = page.getViewport({ scale: 1 });
+        const cssWidth = Math.max(280, Math.min(base.width, holder.clientWidth || base.width));
+        const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+        const viewport = page.getViewport({ scale: (cssWidth / base.width) * pixelRatio });
+        const surface = document.createElement("article");
+        surface.className = "vb-document-review-surface vb-pdf-page";
+        surface.dataset.vbInkSurface = "";
+        surface.dataset.page = String(pageNumber);
+        surface.dataset.reviewId = review.id;
+        const pageCanvas = document.createElement("canvas");
+        pageCanvas.className = "vb-pdf-page-render";
+        pageCanvas.width = Math.max(1, Math.floor(viewport.width));
+        pageCanvas.height = Math.max(1, Math.floor(viewport.height));
+        pageCanvas.style.width = `${Math.floor(viewport.width / pixelRatio)}px`;
+        pageCanvas.style.height = `${Math.floor(viewport.height / pixelRatio)}px`;
+        const badge = document.createElement("span");
+        badge.className = "vb-pdf-page-number";
+        badge.textContent = `Página ${pageNumber}`;
+        const inkCanvas = document.createElement("canvas");
+        inkCanvas.className = "vb-ink-canvas";
+        inkCanvas.setAttribute("aria-label", `Camada CAVMED de anotações coloridas da página ${pageNumber}`);
+        surface.append(pageCanvas, badge);
+        surface.insertAdjacentHTML("beforeend", automaticInk(ctx, review, pageNumber));
+        surface.appendChild(inkCanvas);
+        holder.appendChild(surface);
+        await page.render({ canvasContext: pageCanvas.getContext("2d", { alpha: false }), viewport }).promise;
+      }
+      bindAnnotationLinks();
+      mountInkLayer(ctx, review);
+    } catch (error) {
+      holder.innerHTML = `<div class="vb-source-missing"><strong>Não foi possível montar a caneta sobre este PDF.</strong><p>${esc(ctx, error.message || "Abra o original e tente novamente.")}</p></div>`;
+    }
   }
 
   function reviewSource(ctx, review) {
     const source = sourceFiles.get(review.id);
     if (!source) return `<div class="vb-source-missing"><strong>O documento original não está mais carregado neste navegador.</strong><p>A correção e a recuperação continuam disponíveis. Para rever a folha lado a lado, envie o arquivo novamente.</p></div>`;
+    const blindNote = review.overview?.priorCorrectionDetected
+      ? "A folha já continha marcas ou notas. Elas foram preservadas no original, mas desconsideradas na resolução e na pontuação CAVMED."
+      : "O especialista resolveu a atividade às cegas, sem usar marcas ou notas anteriores.";
     const original = review.mimeType === "application/pdf"
-      ? `<div class="vb-pdf-frame"><object data="${source.url}" type="application/pdf" aria-label="PDF original enviado"><p><a href="${source.url}" target="_blank" rel="noopener">Abrir o PDF original</a></p></object></div>`
-      : `<div class="vb-image-review"><img src="${source.url}" alt="Atividade original enviada pelo aluno"></div>`;
-    const sourceClass = review.mimeType === "application/pdf" ? "is-pdf" : "is-image";
-    return `<div class="vb-document-review-shell">${inkToolbar(ctx)}<div class="vb-document-review-surface ${sourceClass}" data-vb-ink-surface data-review-id="${esc(ctx, review.id)}">${original}${automaticInk(ctx, review)}<canvas class="vb-ink-canvas" aria-label="Camada CAVMED de anotações coloridas"></canvas></div><small class="vb-ink-preserved">Camada CAVMED sobreposta. O documento e as correções originais permanecem preservados.</small></div><a class="textbtn under" href="${source.url}" target="_blank" rel="noopener">Abrir original em outra aba</a>`;
+      ? `<div class="vb-pdf-pages" data-vb-pdf-pages data-review-id="${esc(ctx, review.id)}"><div class="vb-pdf-loading">Preparando as páginas para receber a caneta CAVMED…</div></div>`
+      : `<div class="vb-document-review-surface is-image" data-vb-ink-surface data-page="1" data-review-id="${esc(ctx, review.id)}"><div class="vb-image-review"><img src="${source.url}" alt="Atividade original enviada pelo aluno"></div>${automaticInk(ctx, review, 1)}<canvas class="vb-ink-canvas" aria-label="Camada CAVMED de anotações coloridas"></canvas></div>`;
+    const exportButton = review.mimeType === "application/pdf" ? `<button type="button" class="textbtn under" data-vb-export-annotated>Baixar PDF comentado</button>` : "";
+    return `<div class="vb-blind-review"><strong>Correção independente</strong><span>${blindNote}</span></div><div class="vb-document-review-shell">${inkToolbar(ctx)}${original}<small class="vb-ink-preserved">Camada CAVMED sobreposta. O documento e as correções originais permanecem preservados.</small></div><div class="vb-source-actions"><a class="textbtn under" href="${source.url}" target="_blank" rel="noopener">Abrir original em outra aba</a>${exportButton}</div>`;
   }
 
   function annotationCards(ctx, annotations) {
@@ -147,7 +278,7 @@
       <header><span>${index + 1}</span><div><strong>${esc(ctx, item.anchor || `Questão ${item.questionNumber}`)}</strong><small>Página ${item.page} · ${statusLabel(item.status)}${Number.isFinite(Number(item.pointsEarned)) ? ` · ${formatScore(item.pointsEarned)}/${formatScore(item.pointsPossible || 1)} ponto(s)` : ""}</small></div></header>
       ${item.studentAnswer ? `<p><b>Resposta encontrada:</b> ${esc(ctx, item.studentAnswer)}</p>` : ""}
       ${item.expectedAnswer ? `<p><b>Resposta esperada:</b> ${esc(ctx, item.expectedAnswer)}</p>` : ""}
-      <p>${esc(ctx, item.comment)}</p><p class="vb-annotation-why">${esc(ctx, item.why)}</p>
+      <p>${esc(ctx, item.comment)}</p>${item.subitems?.length ? `<div class="vb-subitem-score">${item.subitems.map((part) => `<span><b>${esc(ctx, part.label)}</b>${statusLabel(part.status)} · ${formatScore(part.pointsEarned)}/${formatScore(part.pointsPossible)}</span>`).join("")}</div>` : ""}<p class="vb-annotation-why">${esc(ctx, item.why)}</p>
       <footer>${[item.topic, item.skill].filter(Boolean).map((label) => `<span>${esc(ctx, label)}</span>`).join("")}</footer>
     </article>`).join("");
   }
@@ -155,7 +286,7 @@
   function errorReport(ctx, review) {
     if (!review.needsRecovery || !review.recovery) return `<section class="vb-no-recovery"><span class="kicker">Conduta</span><h2>Não foi necessário abrir uma recuperação completa.</h2><p>Os comentários pontuais acima são suficientes para orientar a revisão desta atividade.</p></section>`;
     const report = review.errorReport.map((item) => `<tr><td><strong>${esc(ctx, item.topic)}</strong><small>${esc(ctx, item.skill)}</small></td><td>${esc(ctx, item.evidence)}</td><td><span class="vb-priority ${item.priority}">${esc(ctx, item.priority)}</span><br>${esc(ctx, item.nextStep)}</td></tr>`).join("");
-    const examples = (review.recovery.workedExamples || []).map((example, index) => `<article class="vb-worked-example"><span class="kicker">Exemplo resolvido ${index + 1}</span><h3>${esc(ctx, example.title)}</h3><p>${esc(ctx, example.problem)}</p><ol>${(example.steps || []).map((step) => `<li>${esc(ctx, step)}</li>`).join("")}</ol><strong>${esc(ctx, example.answer)}</strong></article>`).join("");
+    const examples = (review.recovery.workedExamples || []).map((example, index) => `<article class="vb-worked-example"><span class="kicker">${workedExampleLabel(index, example.level)}</span><h3>${esc(ctx, example.title)}</h3><p>${esc(ctx, example.problem)}</p><ol>${(example.steps || []).map((step) => `<li>${esc(ctx, step)}</li>`).join("")}</ol><strong>${esc(ctx, example.answer)}</strong></article>`).join("");
     const exercises = (review.recovery.exercises || []).map((exercise) => `<article class="vb-print-question"><strong>${exercise.number}.</strong><div><p>${esc(ctx, exercise.statement)}</p>${exercise.support ? `<small>${esc(ctx, exercise.support)}</small>` : ""}<div class="vb-answer-lines" aria-hidden="true"></div></div></article>`).join("");
     const answers = (review.recovery.exercises || []).map((exercise) => `<li><strong>${exercise.number}.</strong> ${esc(ctx, exercise.answer)}${exercise.comment ? `<br><small>${esc(ctx, exercise.comment)}</small>` : ""}</li>`).join("");
     return `<section class="vb-error-report"><div class="kicker">Relatório dos erros</div><h2>${esc(ctx, review.recovery.title)}</h2><p>${esc(ctx, review.recovery.reason)}</p><div class="vb-table-scroll"><table><thead><tr><th>Conteúdo e habilidade</th><th>Evidência</th><th>Próxima conduta</th></tr></thead><tbody>${report}</tbody></table></div></section>
@@ -200,10 +331,12 @@
     if (!plan) return renderPreparation(ctx);
     const sequence = (plan.sequence || []).map((step, index) => `<article><span>${String(index + 1).padStart(2, "0")}</span><div><small>${esc(ctx, step.stage)}</small><h3>${esc(ctx, step.title)}</h3><p>${esc(ctx, step.instruction)}</p><em>${esc(ctx, step.visualTool)}</em><strong>${esc(ctx, step.check)}</strong></div></article>`).join("");
     const examples = (plan.guidedExamples || []).map((example) => `<details><summary>${esc(ctx, example.title)}</summary><p>${esc(ctx, example.prompt)}</p><ol>${(example.steps || []).map((step) => `<li>${esc(ctx, step)}</li>`).join("")}</ol><strong>${esc(ctx, example.answer)}</strong></details>`).join("");
+    const routes = (plan.adaptationRoutes || []).map((route) => `<article data-mode="${esc(ctx, route.mode)}"><small>${esc(ctx, route.title)}</small><p>${esc(ctx, route.strategy)}</p><strong>${esc(ctx, route.resource)}</strong><span>${esc(ctx, route.check)}</span></article>`).join("");
     return ctx.shell(`${ctx.pageHead("Aula preparada", esc(ctx, plan.topicTitle), `${esc(ctx, teacher.teacher)} já recebeu o plano para ${esc(ctx, plan.grade)}.`)}
       <section class="vb-prepared-hero"><span class="kicker">Tudo pronto</span><p>${esc(ctx, plan.summary)}</p><blockquote>${esc(ctx, plan.openingQuestion)}</blockquote><a class="btn goldbtn" href="#/vaibem/sala">Entrar na aula preparada →</a></section>
       <section class="vb-lesson-objectives"><div><span class="kicker">Objetivos da aula</span><ul>${(plan.objectives || []).map((item) => `<li>${esc(ctx, item)}</li>`).join("")}</ul></div><div><span class="kicker">Vocabulário-chave</span><p>${(plan.vocabulary || []).map((item) => `<span>${esc(ctx, item)}</span>`).join("")}</p></div></section>
       <section class="vb-lesson-sequence"><div class="kicker">Como a aula foi organizada</div>${sequence}</section>
+      ${routes ? `<section class="vb-adaptation-routes"><div><span class="kicker">Portas de entrada da explicação</span><h2>O professor muda o caminho sem rotular o aluno.</h2></div><div>${routes}</div></section>` : ""}
       ${examples ? `<section class="vb-prepared-examples"><div class="kicker">Exemplos reservados para a explicação</div>${examples}</section>` : ""}
       <div class="vb-review-actions"><a class="textbtn under" href="#/vaibem/preparar">Alterar conteúdos</a><button type="button" class="btn" id="vb-print-lesson">Imprimir plano</button></div>`, "hoje", "vaibem");
   }
@@ -225,61 +358,106 @@
   }
 
   function mountInkLayer(ctx, review) {
-    const surface = document.querySelector("[data-vb-ink-surface]");
-    const canvas = surface?.querySelector(".vb-ink-canvas");
+    const surfaces = [...document.querySelectorAll(`[data-vb-ink-surface][data-review-id="${CSS.escape(review.id)}"]`)];
     const toolbar = document.querySelector("[data-vb-ink-toolbar]");
-    if (!surface || !canvas || !toolbar) return;
+    if (!surfaces.length || !toolbar || toolbar.dataset.vbBound === "1") return;
+    toolbar.dataset.vbBound = "1";
     const state = ensureState(ctx.state);
-    const ink = state.vaibemInk[review.id] ||= { strokes: [] };
+    const ink = state.vaibemInk[review.id] ||= { pages: {} };
+    if (!ink.pages || typeof ink.pages !== "object") {
+      ink.pages = { "1": { strokes: Array.isArray(ink.strokes) ? ink.strokes : [] } };
+      delete ink.strokes;
+    }
     let tool = "navigate";
     let color = "#b43e35";
-    let drawing = false;
-    let currentStroke = null;
+    const controllers = [];
 
-    const setupContext = () => {
-      const rect = surface.getBoundingClientRect();
-      const ratio = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = Math.max(1, Math.round(rect.width * ratio));
-      canvas.height = Math.max(1, Math.round(rect.height * ratio));
-      canvas.style.width = `${rect.width}px`;
-      canvas.style.height = `${rect.height}px`;
-      const context = canvas.getContext("2d");
-      context.setTransform(ratio, 0, 0, ratio, 0, 0);
-      return { context, rect };
-    };
-
-    const drawStroke = (context, rect, stroke) => {
+    const drawStroke = (drawingContext, width, height, stroke) => {
       if (!stroke?.points?.length) return;
-      context.save();
-      context.globalCompositeOperation = stroke.tool === "eraser" ? "destination-out" : "source-over";
-      context.globalAlpha = stroke.tool === "highlighter" ? 0.28 : 1;
-      context.strokeStyle = stroke.color || color;
-      context.lineWidth = stroke.tool === "eraser" ? 28 : stroke.tool === "highlighter" ? 18 : 3.5;
-      context.lineCap = "round";
-      context.lineJoin = "round";
-      context.beginPath();
+      drawingContext.save();
+      drawingContext.globalCompositeOperation = stroke.tool === "eraser" ? "destination-out" : "source-over";
+      drawingContext.globalAlpha = stroke.tool === "highlighter" ? 0.28 : 1;
+      drawingContext.strokeStyle = stroke.color || color;
+      drawingContext.lineWidth = stroke.tool === "eraser" ? Math.max(20, width * 0.035) : stroke.tool === "highlighter" ? Math.max(12, width * 0.022) : Math.max(2.5, width * 0.0045);
+      drawingContext.lineCap = "round";
+      drawingContext.lineJoin = "round";
+      drawingContext.beginPath();
       stroke.points.forEach((point, index) => {
-        const x = point.x * rect.width;
-        const y = point.y * rect.height;
-        if (index === 0) context.moveTo(x, y);
-        else context.lineTo(x, y);
+        const x = point.x * width;
+        const y = point.y * height;
+        if (index === 0) drawingContext.moveTo(x, y);
+        else drawingContext.lineTo(x, y);
       });
-      if (stroke.points.length === 1) context.lineTo(stroke.points[0].x * rect.width + 0.01, stroke.points[0].y * rect.height + 0.01);
-      context.stroke();
-      context.restore();
+      if (stroke.points.length === 1) drawingContext.lineTo(stroke.points[0].x * width + 0.01, stroke.points[0].y * height + 0.01);
+      drawingContext.stroke();
+      drawingContext.restore();
     };
 
-    const redraw = () => {
-      const { context, rect } = setupContext();
-      context.clearRect(0, 0, rect.width, rect.height);
-      [...ink.strokes, ...(currentStroke ? [currentStroke] : [])].forEach((stroke) => drawStroke(context, rect, stroke));
-    };
+    surfaces.forEach((surface) => {
+      const canvas = surface.querySelector(".vb-ink-canvas");
+      if (!canvas) return;
+      const page = String(surface.dataset.page || "1");
+      const pageInk = ink.pages[page] ||= { strokes: [] };
+      let drawing = false;
+      let currentStroke = null;
+      const setupContext = () => {
+        const rect = surface.getBoundingClientRect();
+        const ratio = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.max(1, Math.round(rect.width * ratio));
+        canvas.height = Math.max(1, Math.round(rect.height * ratio));
+        canvas.style.width = `${rect.width}px`;
+        canvas.style.height = `${rect.height}px`;
+        const drawingContext = canvas.getContext("2d");
+        drawingContext.setTransform(ratio, 0, 0, ratio, 0, 0);
+        return { drawingContext, rect };
+      };
+      const redraw = () => {
+        const { drawingContext, rect } = setupContext();
+        drawingContext.clearRect(0, 0, rect.width, rect.height);
+        [...pageInk.strokes, ...(currentStroke ? [currentStroke] : [])].forEach((stroke) => drawStroke(drawingContext, rect.width, rect.height, stroke));
+      };
+      const pointFromEvent = (event) => {
+        const rect = canvas.getBoundingClientRect();
+        return { x: Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width)), y: Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height)) };
+      };
+      canvas.addEventListener("pointerdown", (event) => {
+        if (tool === "navigate") return;
+        drawing = true;
+        canvas.setPointerCapture(event.pointerId);
+        currentStroke = { tool, color, points: [pointFromEvent(event)] };
+        redraw();
+      });
+      canvas.addEventListener("pointermove", (event) => {
+        if (!drawing || !currentStroke) return;
+        currentStroke.points.push(pointFromEvent(event));
+        redraw();
+      });
+      const finishStroke = () => {
+        if (!drawing || !currentStroke) return;
+        drawing = false;
+        pageInk.strokes.push(currentStroke);
+        currentStroke = null;
+        ctx.save();
+        redraw();
+      };
+      canvas.addEventListener("pointerup", finishStroke);
+      canvas.addEventListener("pointercancel", finishStroke);
+      const observer = new ResizeObserver(() => {
+        if (!document.body.contains(surface)) return observer.disconnect();
+        redraw();
+      });
+      observer.observe(surface);
+      controllers.push({ canvas, surface, redraw });
+      redraw();
+    });
 
     const selectTool = (nextTool) => {
       tool = nextTool;
       toolbar.querySelectorAll("[data-vb-ink-tool]").forEach((button) => button.classList.toggle("is-active", button.dataset.vbInkTool === tool));
-      canvas.classList.toggle("is-active", tool !== "navigate");
-      surface.dataset.inkTool = tool;
+      controllers.forEach(({ canvas, surface }) => {
+        canvas.classList.toggle("is-active", tool !== "navigate");
+        surface.dataset.inkTool = tool;
+      });
     };
 
     toolbar.querySelectorAll("[data-vb-ink-tool]").forEach((button) => button.addEventListener("click", () => selectTool(button.dataset.vbInkTool)));
@@ -289,44 +467,93 @@
       if (tool === "navigate" || tool === "eraser") selectTool("pen");
     }));
     toolbar.querySelector("[data-vb-ink-clear]")?.addEventListener("click", () => {
-      if (!ink.strokes.length || !window.confirm("Limpar somente as anotações da camada CAVMED? O documento original será preservado.")) return;
-      ink.strokes = [];
+      const hasInk = Object.values(ink.pages).some((page) => page?.strokes?.length);
+      if (!hasInk || !window.confirm("Limpar somente as anotações da camada CAVMED? O documento original será preservado.")) return;
+      Object.values(ink.pages).forEach((page) => { page.strokes = []; });
       ctx.save();
-      redraw();
+      controllers.forEach(({ redraw }) => redraw());
     });
+    selectTool("navigate");
+  }
 
-    const pointFromEvent = (event) => {
-      const rect = canvas.getBoundingClientRect();
-      return { x: Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width)), y: Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height)) };
-    };
-    canvas.addEventListener("pointerdown", (event) => {
-      if (tool === "navigate") return;
-      drawing = true;
-      canvas.setPointerCapture(event.pointerId);
-      currentStroke = { tool, color, points: [pointFromEvent(event)] };
-      redraw();
+  function annotationColor(status, rgb) {
+    if (status === "correct") return rgb(0.22, 0.44, 0.27);
+    if (status === "partial") return rgb(0.63, 0.42, 0.05);
+    if (status === "incorrect") return rgb(0.70, 0.22, 0.19);
+    return rgb(0.18, 0.37, 0.49);
+  }
+
+  function manualInkPng(strokes, width, height) {
+    if (!strokes?.length) return "";
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(width));
+    canvas.height = Math.max(1, Math.round(height));
+    const drawingContext = canvas.getContext("2d");
+    strokes.forEach((stroke) => {
+      if (!stroke?.points?.length) return;
+      drawingContext.save();
+      drawingContext.globalCompositeOperation = stroke.tool === "eraser" ? "destination-out" : "source-over";
+      drawingContext.globalAlpha = stroke.tool === "highlighter" ? 0.28 : 1;
+      drawingContext.strokeStyle = stroke.color || "#b43e35";
+      drawingContext.lineWidth = stroke.tool === "eraser" ? Math.max(22, width * 0.035) : stroke.tool === "highlighter" ? Math.max(14, width * 0.022) : Math.max(3, width * 0.0045);
+      drawingContext.lineCap = "round";
+      drawingContext.lineJoin = "round";
+      drawingContext.beginPath();
+      stroke.points.forEach((point, index) => {
+        const x = point.x * width;
+        const y = point.y * height;
+        if (index === 0) drawingContext.moveTo(x, y);
+        else drawingContext.lineTo(x, y);
+      });
+      drawingContext.stroke();
+      drawingContext.restore();
     });
-    canvas.addEventListener("pointermove", (event) => {
-      if (!drawing || !currentStroke) return;
-      currentStroke.points.push(pointFromEvent(event));
-      redraw();
-    });
-    const finishStroke = () => {
-      if (!drawing || !currentStroke) return;
-      drawing = false;
-      ink.strokes.push(currentStroke);
-      currentStroke = null;
-      ctx.save();
-      redraw();
-    };
-    canvas.addEventListener("pointerup", finishStroke);
-    canvas.addEventListener("pointercancel", finishStroke);
-    const observer = new ResizeObserver(() => {
-      if (!document.body.contains(surface)) return observer.disconnect();
-      redraw();
-    });
-    observer.observe(surface);
-    redraw();
+    return canvas.toDataURL("image/png");
+  }
+
+  async function exportAnnotatedPdf(ctx, review) {
+    const source = sourceFiles.get(review.id);
+    if (!source?.file) throw new Error("Envie novamente o PDF original para gerar a versão comentada.");
+    const PDFLib = await loadPdfLib();
+    const pdf = await PDFLib.PDFDocument.load(await source.file.arrayBuffer());
+    const font = await pdf.embedFont(PDFLib.StandardFonts.HelveticaBold);
+    const ink = ensureState(ctx.state).vaibemInk[review.id];
+    const pages = pdf.getPages();
+    for (let pageIndex = 0; pageIndex < pages.length; pageIndex += 1) {
+      const page = pages[pageIndex];
+      const pageNumber = pageIndex + 1;
+      const { width, height } = page.getSize();
+      const items = (review.annotations || []).filter((item) => Number(item.page || 1) === pageNumber);
+      items.forEach((item, index) => {
+        const placement = automaticInkPlacement(items, item, index);
+        const color = annotationColor(item.status, PDFLib.rgb);
+        const points = Number.isFinite(Number(item.pointsEarned)) && Number.isFinite(Number(item.pointsPossible))
+          ? ` ${formatScore(item.pointsEarned)}/${formatScore(item.pointsPossible)}`
+          : "";
+        const status = { correct: "OK", partial: "PARCIAL", incorrect: "REVER", attention: "CONFIRMAR" }[item.status] || "ANALISE";
+        const label = `Q${item.questionNumber} ${status}${points}`;
+        const boxWidth = Math.min(118, Math.max(58, font.widthOfTextAtSize(label, 7.5) + 13));
+        const x = Math.max(4, Math.min(width - boxWidth - 4, width * placement.x / 100 - boxWidth / 2));
+        const y = Math.max(4, Math.min(height - 22, height - height * placement.y / 100 - 10));
+        page.drawRectangle({ x, y, width: boxWidth, height: 19, color: PDFLib.rgb(1, 1, 1), opacity: 0.88, borderColor: color, borderWidth: 1.5, borderOpacity: 0.95 });
+        page.drawText(label, { x: x + 6, y: y + 6, size: 7.5, font, color });
+      });
+      const strokes = ink?.pages?.[String(pageNumber)]?.strokes || [];
+      const pngDataUrl = manualInkPng(strokes, 1200, Math.max(1, Math.round(1200 * height / width)));
+      if (pngDataUrl) {
+        const pngBytes = Uint8Array.from(atob(pngDataUrl.split(",")[1]), (char) => char.charCodeAt(0));
+        const inkImage = await pdf.embedPng(pngBytes);
+        page.drawImage(inkImage, { x: 0, y: 0, width, height });
+      }
+      page.drawText("Correcao independente CAVMED", { x: 12, y: 7, size: 6, font, color: PDFLib.rgb(0.25, 0.35, 0.28), opacity: 0.72 });
+    }
+    const bytes = await pdf.save();
+    const url = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `${String(review.fileName || "atividade").replace(/\.pdf$/i, "").replace(/[^a-z0-9_-]+/gi, "_")}_comentado_CAVMED.pdf`;
+    anchor.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
   }
 
   async function submitActivity(event, ctx) {
@@ -413,11 +640,27 @@
       return;
     }
     if (route.startsWith("vaibem/atividade/")) {
-      document.querySelectorAll("[data-vb-annotation-link]").forEach((button) => button.addEventListener("click", () => byId(button.dataset.vbAnnotationLink)?.scrollIntoView({ behavior: "smooth", block: "center" })));
+      bindAnnotationLinks();
       byId("vb-print-review")?.addEventListener("click", () => window.print());
       const id = decodeURIComponent(route.slice("vaibem/atividade/".length));
       const review = ctx.state.vaibemActivities.find((item) => item.id === id);
-      if (review) mountInkLayer(ctx, review);
+      if (review?.mimeType === "application/pdf") renderPdfReview(ctx, review);
+      else if (review) mountInkLayer(ctx, review);
+      document.querySelector("[data-vb-export-annotated]")?.addEventListener("click", async (event) => {
+        const button = event.currentTarget;
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = "Preparando PDF…";
+        try {
+          await exportAnnotatedPdf(ctx, review);
+          ctx.toast("PDF comentado pronto para baixar.");
+        } catch (error) {
+          ctx.toast(error.message || "Não foi possível gerar o PDF comentado.");
+        } finally {
+          button.disabled = false;
+          button.textContent = originalText;
+        }
+      });
       return;
     }
     if (route === "vaibem/preparar") {

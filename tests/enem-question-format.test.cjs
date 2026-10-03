@@ -34,7 +34,8 @@ test('student-facing recovery uses medical memory prescription and separated con
 test('recovery renders a connected mind tree and a review infographic', () => {
   assert.match(adapterCode, /mind-map-trunk/);
   assert.match(adapterCode, /mind-map-limb/);
-  assert.match(adapterCode, /RAMOS E SUBGALHOS CONECTADOS/);
+  assert.match(adapterCode, /mind-map-variant/);
+  assert.match(adapterCode, /recovery-map-next/);
   assert.match(adapterCode, /review-infographic/);
   assert.match(adapterCode, /Infográfico de revisão/);
 });

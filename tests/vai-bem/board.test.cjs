@@ -89,7 +89,7 @@ test('pizza supports twelve slices and rejects a thirteenth slice',()=>{
  assert.throws(()=>validate({action:'diagrama',id:'pizza-13',diagram:'pizza',title:'Treze partes',values:[5,13],labels:[]}));
 });
 
-test('tables, connected mind maps and infographics reveal by meaningful blocks',()=>{
+test('tables, connected mind maps, infographics and summaries reveal by meaningful blocks',()=>{
  const {board}=fixture();
  board.command({action:'tabela',id:'verbs',title:'Tempos verbais',columns:['Tempo','Exemplo','Uso'],rows:[['Presente','Eu estudo.','Agora'],['Futuro','Eu estudarei.','Depois']],highlightRows:[2],palette:'turquesa'},'table');
  assert.equal(board.blocks.get('verbs').steps.length,3);
@@ -98,10 +98,13 @@ test('tables, connected mind maps and infographics reveal by meaningful blocks',
  assert.equal(board.blocks.get('water').steps.length,9);
  board.command({action:'infografico',id:'review',title:'Revisão em quatro passos',subtitle:'Do conceito à resposta.',layout:'fluxo',panels:[{title:'Observe',detail:'Localize as pistas.',cue:'Leia com atenção',color:'azul'},{title:'Relacione',detail:'Conecte ao conteúdo.',cue:'Ative a memória',color:'turquesa'},{title:'Resolva',detail:'Aplique em etapas.',cue:'Um passo por vez',color:'amarelo'},{title:'Confira',detail:'Volte ao comando.',cue:'Responda ao pedido',color:'verde'}]},'info');
  assert.equal(board.blocks.get('review').steps.length,4);
+ board.command({action:'resumo',id:'summary',title:'Ciclo da água',bullets:['Evaporação transfere água para a atmosfera.','Condensação forma gotículas.','Precipitação devolve água à superfície.'],keyPhrase:'A água circula e muda de estado.',recallQuestion:'Qual mudança forma as nuvens?',palette:'turquesa'},'summary');
+ assert.equal(board.blocks.get('summary').steps.length,5);
  assert.throws(()=>validate({action:'tabela',id:'bad-table',title:'Erro',columns:['A','B'],rows:[['uma célula']]}));
  assert.throws(()=>validate({action:'mapa_mental',id:'bad-map',title:'Erro',branches:[{title:'Único',details:['Só um ramo']}]}));
  assert.throws(()=>validate({action:'mapa_mental',id:'too-many',title:'Erro',branches:[...branches,{title:'Ramo 9',details:['Excesso']}]}));
  assert.throws(()=>validate({action:'infografico',id:'bad-info',title:'Erro',panels:[{title:'Único',detail:'Só um painel'}]}));
+ assert.throws(()=>validate({action:'resumo',id:'bad-summary',title:'Erro',bullets:['Só uma ideia'],keyPhrase:'Frase.',recallQuestion:'Pergunta?'}));
  assert.deepEqual(COLORS,['azul','verde','amarelo','vermelho','roxo','laranja','turquesa','cinza']);
 });
 
