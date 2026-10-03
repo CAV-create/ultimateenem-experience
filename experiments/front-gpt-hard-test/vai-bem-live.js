@@ -123,7 +123,7 @@
     const activeGrade = grades[state.vaibemTrack].find((item) => item.id === state.vaibemGrade) || grades[state.vaibemTrack][0];
     const activePlan = window.CAV_VAIBEM_STUDY?.currentPlan?.(state);
     const sessions = state.vaibemLiveNotebooks.length;
-    return ctx.shell(`<div class="home-intro"><div class="kicker">Aula particular VaiBem</div><h1>Converse. Veja. Faça junto.</h1><p>O professor escuta sua dúvida, explica em voz natural e constrói o quadro durante a conversa.</p></div>
+    return ctx.shell(`<div class="home-intro"><div class="kicker">Hospital CAVMED · Aula particular VaiBem</div><h1>Sua dúvida entra no plantão.<br>O domínio recebe alta.</h1><p>O especialista escuta, investiga onde o raciocínio travou e constrói a solução no quadro com você, em voz natural e sem pular etapas.</p></div>
       <section class="vb-home-band">
         <div class="vb-track-switch" role="group" aria-label="Escolha a etapa escolar">
           ${Object.entries(tracks).map(([key, item]) => `<button type="button" data-vb-track="${key}" class="${state.vaibemTrack === key ? "selected" : ""}" aria-pressed="${state.vaibemTrack === key}"><strong>${item.label.replace("VaiBem ", "")}</strong><small>${item.range}</small></button>`).join("")}
