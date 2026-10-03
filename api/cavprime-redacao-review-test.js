@@ -1,14 +1,15 @@
-import {
-  ENEM_REDACTION_PROTOCOL_VERSION,
-  buildBoardInstructions,
-  buildEvaluatorInstructions,
-  buildFinalFromPair,
-  chooseClosestPair,
-  compareEvaluations,
-  sanitizeEvaluation,
-} from "./_lib/enem-redaction-2026.mjs";
-
 export const config = { maxDuration: 60 };
+
+let enemProtocolPromise;
+
+function loadEnemProtocol() {
+  if (!enemProtocolPromise) {
+    // Vercel empacota este endpoint como CommonJS. O import dinamico preserva
+    // a compatibilidade com o modulo ESM sem converter a carga em require().
+    enemProtocolPromise = import("./_lib/enem-redaction-2026.mjs");
+  }
+  return enemProtocolPromise;
+}
 
 const MAX_ESSAY_LENGTH = 16000;
 const MAX_FILE_BYTES = 4 * 1024 * 1024;
@@ -219,7 +220,32 @@ function publicDiscrepancy(comparison) {
 }
 
 export default async function handler(req, res) {
+  const startedAt = Date.now();
   res.setHeader("Cache-Control", "no-store, max-age=0");
+  let protocol;
+  try {
+    protocol = await loadEnemProtocol();
+  } catch (error) {
+    console.error(JSON.stringify({
+      level: "error",
+      message: "CAVPRIME_REDACTION_PROTOCOL_LOAD_FAILED",
+      error: error?.message || String(error),
+      durationMs: Date.now() - startedAt,
+    }));
+    return res.status(500).json({
+      error: "review_protocol_unavailable",
+      message: "O protocolo da banca nao foi carregado. Nenhuma nota foi registrada.",
+    });
+  }
+  const {
+    ENEM_REDACTION_PROTOCOL_VERSION,
+    buildBoardInstructions,
+    buildEvaluatorInstructions,
+    buildFinalFromPair,
+    chooseClosestPair,
+    compareEvaluations,
+    sanitizeEvaluation,
+  } = protocol;
   const apiKey = process.env.OPENAI_API_KEY;
   const model = process.env.OPENAI_REDACTION_MODEL || process.env.OPENAI_MODEL;
   if (req.method === "GET") {
