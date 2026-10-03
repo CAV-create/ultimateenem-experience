@@ -128,6 +128,9 @@
   let manuscriptFile = null;
   let manuscriptObjectUrl = "";
   let activeRecognition = null;
+  let essayReviewRetryTimer = null;
+  let essayReviewRetryCount = 0;
+  let staleEssayReviewStateNormalized = false;
 
   function normalizedText(value) {
     return String(value || "")
@@ -236,6 +239,11 @@
     state.essay.inputMode ||= "type";
     state.essay.manuscriptFileName ||= "";
     state.essay.manuscriptMimeType ||= "";
+    if (!staleEssayReviewStateNormalized && ["loading", "waiting"].includes(state.essay.reviewStatus)) {
+      state.essay.reviewStatus = "idle";
+      state.essay.reviewMessage = "";
+    }
+    staleEssayReviewStateNormalized = true;
     if (state.essay.aiReview && state.essay.aiReview.protocolVersion !== redactionProtocolVersion) {
       state.essay.aiReview = null;
       state.essay.reviewStatus = "idle";
@@ -1096,8 +1104,11 @@
     return `<details class="library-row correction-process space" ${process.discrepancy?.detected ? "open" : ""}><summary>Prontuário da dupla correção ${icon("chevron")}</summary><div class="process-intro"><span class="process-icon">${icon(process.discrepancy?.detected ? "book" : "check")}</span><div><h3>${resolutionCopy.title}</h3><p>${resolutionCopy.text}</p></div></div>${discrepancy}<div class="reader-grid">${evaluatorCards}</div><p class="note"><strong>Regra ENEM 2026:</strong> cada médico corretor usa apenas 0, 40, 80, 120, 160 ou 200 por competência. A média das duas leituras selecionadas pode gerar uma nota final em intervalos de 20 pontos.</p></details>`;
   }
 
-  function dualReviewWaitingMarkup() {
-    return `<div class="callout green correction-waiting"><strong>O corpo clínico de Redação já iniciou o atendimento.</strong><br>As duas leituras são independentes e automáticas. Você não precisa chamar o segundo corretor.</div><div class="correction-route" aria-label="Etapas automáticas da correção"><div class="active"><span>1</span><div><strong>1º médico corretor</strong><small>Leitura independente em andamento</small></div></div><div class="active"><span>2</span><div><strong>2º médico corretor</strong><small>Leitura independente em andamento</small></div></div><div><span>3</span><div><strong>Terceira banca</strong><small>Entra automaticamente somente se houver discrepância oficial</small></div></div></div><p class="note">Se a terceira leitura ainda não resolver a divergência, a Junta Médica CAVMED assume o caso antes da liberação da nota.</p>`;
+  function dualReviewWaitingMarkup(queued = false) {
+    const message = queued
+      ? "A capacidade do plantão ficou momentaneamente ocupada. Seu prontuário foi preservado e uma nova tentativa já está agendada; não é necessário reenviar o texto."
+      : "As duas leituras são independentes e automáticas. Você não precisa chamar o segundo corretor.";
+    return `<div class="callout green correction-waiting"><strong>O corpo clínico de Redação está em atendimento.</strong><br>${message}</div><div class="correction-route" aria-label="Etapas automáticas da correção"><div class="active"><span>1</span><div><strong>1º médico corretor</strong><small>Leitura independente em andamento</small></div></div><div class="active"><span>2</span><div><strong>2º médico corretor</strong><small>Leitura independente em andamento</small></div></div><div><span>3</span><div><strong>Terceira banca</strong><small>Entra automaticamente somente se houver discrepância oficial</small></div></div></div><p class="note">Se a terceira leitura ainda não resolver a divergência, a Junta Médica CAVMED assume o caso antes da liberação da nota.</p>`;
   }
 
   function reviewResult(review) {
@@ -1148,14 +1159,14 @@
       ? manualScores.reduce((sum, value) => sum + value, 0)
       : null;
     const status = essay.reviewStatus;
-    const statusMessage = status === "loading"
-      ? dualReviewWaitingMarkup()
+    const statusMessage = status === "loading" || status === "waiting"
+      ? dualReviewWaitingMarkup(status === "waiting")
       : status === "unavailable"
         ? `<div class="callout error"><strong>A leitura não foi concluída agora.</strong><br>${esc(essay.reviewMessage || "Seu texto foi preservado e nenhuma nota foi criada como substituta.")}</div>`
         : "";
     const primary = essay.aiReview
       ? `${reviewResult(essay.aiReview)}<div class="compare-actions space">${btn("Comparar texto e projeto " + icon("arrow"), "open-compare-tabs", "btn outline")}${link("Ver lado a lado nesta tela", "redacao/comparar", "textbtn under")}</div>`
-      : `${statusMessage}<section class="card specialist-card"><div><div class="kicker muted">Coordenação do prontuário</div><h2 class="space-sm">${esc(specialist.name)}</h2><p><strong>${esc(specialist.residency)}</strong><br>${esc(specialist.focus)}</p></div><div><div class="kicker muted">Dupla correção automática</div><h2 class="space-sm">Nenhuma nota foi atribuída.</h2><p>${hasSubmission ? "Seu texto está pronto para duas leituras independentes. Se houver discrepância oficial, a terceira banca entra sem um novo pedido." : essay.inputMode === "upload" ? "Envie o PDF ou a foto do manuscrito antes de iniciar a dupla leitura." : "Escreva ao menos 80 palavras antes de iniciar a dupla leitura."}</p><div class="space-sm">${btn(status === "loading" ? "Corpo clínico em atendimento…" : "Enviar ao corpo clínico de Redação " + icon("arrow"), "essay-review-ai", "btn", status === "loading" || !hasSubmission ? "disabled" : "")}</div></div></section>`;
+      : `${statusMessage}<section class="card specialist-card"><div><div class="kicker muted">Coordenação do prontuário</div><h2 class="space-sm">${esc(specialist.name)}</h2><p><strong>${esc(specialist.residency)}</strong><br>${esc(specialist.focus)}</p></div><div><div class="kicker muted">Dupla correção automática</div><h2 class="space-sm">Nenhuma nota foi atribuída.</h2><p>${hasSubmission ? "Seu texto está pronto para duas leituras independentes. Se houver discrepância oficial, a terceira banca entra sem um novo pedido." : essay.inputMode === "upload" ? "Envie o PDF ou a foto do manuscrito antes de iniciar a dupla leitura." : "Escreva ao menos 80 palavras antes de iniciar a dupla leitura."}</p><div class="space-sm">${btn(status === "loading" || status === "waiting" ? "Corpo clínico em atendimento…" : "Enviar ao corpo clínico de Redação " + icon("arrow"), "essay-review-ai", "btn", status === "loading" || status === "waiting" || !hasSubmission ? "disabled" : "")}</div></div></section>`;
     const manual = `<details class="library-row space"><summary>Registrar uma correção recebida fora do nosso hospital ${icon("chevron")}</summary><p>Use somente quando um professor ou outra banca já tiver informado a <strong>nota final consolidada</strong>. Ela pode variar de 20 em 20 pela média dos avaliadores; a nota bruta de um único avaliador varia de 40 em 40.</p><form id="manual-assessment-form">${labels.map((label, index) => `<div class="rubric-row"><strong>C${index + 1}</strong><label for="manual-score-${index}">${label}</label><select id="manual-score-${index}" data-manual-score="${index}" required><option value="">Selecione</option>${Array.from({ length: 11 }, (_, value) => value * 20).map((scoreValue) => `<option value="${scoreValue}" ${manualScores[index] === scoreValue && essay.evaluationSource === "manual" ? "selected" : ""}>${scoreValue}</option>`).join("")}</select></div>`).join("")}<div class="rubric-score" id="manual-rubric-total">${manualTotal === null || essay.evaluationSource !== "manual" ? "—" : manualTotal} <span class="small muted">/ 1000</span></div><button type="submit" class="btn">Salvar correção recebida ${icon("check")}</button></form></details>`;
     return shell(`${pageHead("Correção da Redação", "A nota só aparece<br>depois da leitura.", "O checklist anterior foi sua revisão pessoal. Esta é a etapa de avaliação por competência.")}${primary}${manual}<div class="space-sm">${link("Voltar ao texto", "redacao/escrever", "textbtn under")}</div>`, "redacao");
   };
@@ -1199,11 +1210,16 @@
     return shell(`<div class="stepper">${stages.map((_, index) => `<span class="${index < stageIndex ? "done" : index === stageIndex ? "active" : ""}"></span>`).join("")}</div>${body}`, "redacao");
   };
 
-  async function requestEssayReview() {
+  async function requestEssayReview(automaticRetry = false) {
     const essay = state.essay;
     const hasTypedText = wordCount(essay.text) >= 80;
     const hasManuscript = essay.inputMode === "upload" && Boolean(manuscriptFile);
     if ((!hasTypedText && !hasManuscript) || essay.reviewStatus === "loading") return;
+    if (!automaticRetry) essayReviewRetryCount = 0;
+    if (essayReviewRetryTimer) {
+      clearTimeout(essayReviewRetryTimer);
+      essayReviewRetryTimer = null;
+    }
     essay.reviewStatus = "loading";
     essay.reviewMessage = "";
     essay.aiReview = null;
@@ -1246,6 +1262,7 @@
         const requestError = new Error(payload.message || "review_unavailable");
         requestError.code = payload.error || "review_unavailable";
         requestError.status = response.status;
+        requestError.retryAfterSeconds = Number(payload.retryAfterSeconds) || 0;
         throw requestError;
       }
       const scores = payload.review.competencies.map((item) => Number(item.score));
@@ -1256,7 +1273,18 @@
       essay.evaluationSource = "ai";
       essay.reviewStatus = "complete";
       essay.reviewMessage = "";
+      essayReviewRetryCount = 0;
     } catch (error) {
+      if (error?.code === "review_busy" && essayReviewRetryCount < 2) {
+        essayReviewRetryCount += 1;
+        const retryDelay = Math.max(20, Math.min(Number(error.retryAfterSeconds) || 45, 90));
+        essay.reviewStatus = "waiting";
+        essay.reviewMessage = "Seu prontuário foi preservado e uma nova tentativa automática já está agendada.";
+        originalSave();
+        render(false);
+        essayReviewRetryTimer = setTimeout(() => requestEssayReview(true), retryDelay * 1000);
+        return;
+      }
       essay.reviewStatus = "unavailable";
       const query = new URLSearchParams(location.search);
       const auditMode = query.get("auditReview") === "1" || query.get("diagnostics") === "1";
@@ -1264,6 +1292,8 @@
         essay.reviewMessage = "O arquivo ultrapassa 4 MB. Envie uma versão mais leve para continuar.";
       } else if (error?.code === "review_not_configured" && auditMode) {
         essay.reviewMessage = "Diagnóstico da auditoria: o servidor local está sem a credencial da banca inteligente. O texto foi preservado e nenhuma pontuação foi criada como substituta.";
+      } else if (error?.code === "review_busy") {
+        essay.reviewMessage = "A capacidade do plantão continua ocupada. Seu texto foi preservado; use o botão abaixo para reiniciar o atendimento quando desejar.";
       } else {
         essay.reviewMessage = "Os médicos plantonistas não conseguiram concluir a leitura agora. Seu texto foi preservado e nenhuma pontuação foi criada como substituta.";
       }

@@ -14,6 +14,9 @@ function loadEnemProtocol() {
 const MAX_ESSAY_LENGTH = 16000;
 const MAX_FILE_BYTES = 4 * 1024 * 1024;
 const ALLOWED_FILE_TYPES = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp"]);
+const TRANSIENT_PROVIDER_STATUSES = new Set([429, 500, 502, 503, 504]);
+const REDACTION_RETRY_DELAYS_MS = Object.freeze([1800, 5200, 14000]);
+const GEMINI_REVIEW_SPACING_MS = 1400;
 const EVALUATION_SCHEMA = {
   type: "object",
   additionalProperties: false,
@@ -127,6 +130,29 @@ function parseJson(text) {
 
 function safeText(value, max = 1000) {
   return String(value || "").trim().slice(0, max);
+}
+
+function wait(milliseconds) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+function durationToMilliseconds(value) {
+  const match = String(value || "").trim().match(/^(\d+(?:\.\d+)?)s$/i);
+  return match ? Math.round(Number(match[1]) * 1000) : 0;
+}
+
+function retryAfterMilliseconds(response, payload) {
+  const retryAfter = response?.headers?.get?.("retry-after");
+  if (retryAfter) {
+    const seconds = Number(retryAfter);
+    if (Number.isFinite(seconds) && seconds >= 0) return Math.round(seconds * 1000);
+    const date = Date.parse(retryAfter);
+    if (Number.isFinite(date)) return Math.max(0, date - Date.now());
+  }
+  const retryInfo = (payload?.error?.details || []).find((item) => (
+    String(item?.["@type"] || "").endsWith("google.rpc.RetryInfo")
+  ));
+  return durationToMilliseconds(retryInfo?.retryDelay);
 }
 
 function normalizeManuscript(value) {
@@ -246,6 +272,7 @@ async function requestGeminiEvaluation({ apiKey, model, instructions, input, man
       code: payload?.error?.status || "",
       type: payload?.error?.code || "",
     };
+    error.retryAfterMs = retryAfterMilliseconds(response, payload);
     throw error;
   }
   return parseJson(outputText);
@@ -272,9 +299,10 @@ async function requestEvaluation({ providers, instructions, input, manuscript, t
       providers.geminiModel,
       "gemini-3.6-flash",
       "gemini-3.5-flash",
+      "gemini-3.1-flash-lite",
     ].filter(Boolean)));
     for (const model of models) {
-      for (let attempt = 0; attempt < 2; attempt += 1) {
+      for (let attempt = 0; attempt <= REDACTION_RETRY_DELAYS_MS.length; attempt += 1) {
         try {
           return await requestGeminiEvaluation({
             apiKey: providers.geminiKey,
@@ -287,17 +315,38 @@ async function requestEvaluation({ providers, instructions, input, manuscript, t
         } catch (error) {
           lastError = error;
           const status = error?.upstream?.status;
-          if ([429, 503].includes(status) && attempt === 0) {
-            await new Promise((resolve) => setTimeout(resolve, 700));
-            continue;
-          }
-          if (![404, 429, 503].includes(status)) return Promise.reject(error);
-          break;
+          if (status === 404) break;
+          if (!TRANSIENT_PROVIDER_STATUSES.has(status)) throw error;
+          if (attempt >= REDACTION_RETRY_DELAYS_MS.length) throw error;
+          const providerDelay = Math.min(Math.max(Number(error?.retryAfterMs) || 0, 0), 30000);
+          await wait(Math.max(REDACTION_RETRY_DELAYS_MS[attempt], providerDelay));
         }
       }
     }
   }
   throw lastError || new Error("review_provider_unavailable");
+}
+
+async function requestInitialEvaluations({ providers, buildEvaluatorInstructions, input, manuscript }) {
+  const requestReader = (id) => requestEvaluation({
+    providers,
+    instructions: buildEvaluatorInstructions(id),
+    input,
+    manuscript,
+  });
+  const geminiIsPrimary = Boolean(
+    providers.geminiKey
+    && !(providers.openAIKey && providers.openAIModel),
+  );
+  if (!geminiIsPrimary) {
+    return Promise.all([requestReader("1"), requestReader("2")]);
+  }
+  // Mantem pareceres cegos e independentes, mas evita que duas requisicoes
+  // simultaneas disputem a mesma cota do plantao Gemini.
+  const first = await requestReader("1");
+  await wait(GEMINI_REVIEW_SPACING_MS);
+  const second = await requestReader("2");
+  return [first, second];
 }
 
 function publicEvaluator(evaluation) {
@@ -391,10 +440,12 @@ export default async function handler(req, res) {
   const baseInput = buildEssayInput(theme, essay, project);
 
   try {
-    const [rawA, rawB] = await Promise.all([
-      requestEvaluation({ providers, instructions: buildEvaluatorInstructions("1"), input: baseInput, manuscript }),
-      requestEvaluation({ providers, instructions: buildEvaluatorInstructions("2"), input: baseInput, manuscript }),
-    ]);
+    const [rawA, rawB] = await requestInitialEvaluations({
+      providers,
+      buildEvaluatorInstructions,
+      input: baseInput,
+      manuscript,
+    });
     const evaluatorA = sanitizeEvaluation(rawA, "1");
     const evaluatorB = sanitizeEvaluation(rawB, "2");
     const initialComparison = compareEvaluations(evaluatorA, evaluatorB);
@@ -476,9 +527,19 @@ export default async function handler(req, res) {
       message: error?.message || "",
       upstream: error?.upstream || null,
     });
-    return res.status(error?.message === "review_response_failed" ? 502 : 504).json({
-      error: error?.message === "review_response_failed" ? "review_response_failed" : "review_timeout",
-      message: "A banca não concluiu todas as leituras necessárias. Nenhuma nota foi registrada.",
+    const upstreamStatus = Number(error?.upstream?.status) || 0;
+    const providerBusy = upstreamStatus === 429 || upstreamStatus === 503;
+    if (providerBusy) res.setHeader("Retry-After", "45");
+    return res.status(providerBusy ? 503 : error?.message === "review_response_failed" ? 502 : 504).json({
+      error: providerBusy
+        ? "review_busy"
+        : error?.message === "review_response_failed"
+          ? "review_response_failed"
+          : "review_timeout",
+      message: providerBusy
+        ? "O corpo clínico está com a capacidade momentaneamente ocupada. O prontuário foi preservado para nova tentativa automática."
+        : "A banca não concluiu todas as leituras necessárias. Nenhuma nota foi registrada.",
+      ...(providerBusy ? { retryAfterSeconds: 45 } : {}),
     });
   }
 }

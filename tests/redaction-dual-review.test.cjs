@@ -82,8 +82,69 @@ test('student interface makes dual review and automatic third board explicit', (
   assert.doesNotMatch(endpoint, /^import\s+\{/m, 'o protocolo ESM nao pode virar require no runtime CommonJS da Vercel');
   assert.match(endpoint, /import\("\.\/_lib\/enem-redaction-2026\.mjs"\)/, 'o protocolo deve usar import dinamico compativel com a Vercel');
   assert.match(endpoint, /process\.env\.GEMINI_API_KEY/, 'a banca deve usar o provedor inteligente ja configurado como contingencia');
+  assert.match(endpoint, /REDACTION_RETRY_DELAYS_MS/, 'limites transitorios devem usar espera exponencial');
+  assert.match(endpoint, /requestInitialEvaluations/, 'a dupla deve respeitar a capacidade do provedor sem perder independência');
+  assert.match(endpoint, /review_busy/, 'o navegador deve distinguir plantao ocupado de falha definitiva');
   assert.match(endpoint, /maxDuration: 240/, 'a função deve permitir terceira leitura e junta médica quando necessárias');
   assert.match(adapter, /AbortSignal\.timeout\(230000\)/, 'o navegador deve aguardar o fluxo clínico completo');
+  assert.match(adapter, /setTimeout\(\(\) => requestEssayReview\(true\)/, 'a nova tentativa por capacidade deve ser automática');
+});
+
+test('Gemini transient capacity error is retried before abandoning the review', async () => {
+  const originalFetch = global.fetch;
+  const originalOpenAIKey = process.env.OPENAI_API_KEY;
+  const originalOpenAIModel = process.env.OPENAI_MODEL;
+  const originalRedactionModel = process.env.OPENAI_REDACTION_MODEL;
+  const originalGeminiKey = process.env.GEMINI_API_KEY;
+  let calls = 0;
+  try {
+    delete process.env.OPENAI_API_KEY;
+    delete process.env.OPENAI_MODEL;
+    delete process.env.OPENAI_REDACTION_MODEL;
+    process.env.GEMINI_API_KEY = 'test-gemini-key';
+    global.fetch = async () => {
+      calls += 1;
+      if (calls === 1) {
+        return {
+          ok: false,
+          status: 429,
+          headers: { get: () => '0' },
+          json: async () => ({ error: { status: 'RESOURCE_EXHAUSTED', code: 429 } }),
+        };
+      }
+      return {
+        ok: true,
+        status: 200,
+        headers: { get: () => null },
+        json: async () => ({
+          candidates: [{ content: { parts: [{ text: JSON.stringify(rawEvaluation([200, 200, 200, 200, 200])) }] } }],
+        }),
+      };
+    };
+    const endpoint = await import(`${pathToFileURL(endpointPath).href}?gemini-retry-test`);
+    const res = endpointResponse();
+    await endpoint.default({
+      method: 'POST',
+      body: {
+        theme: 'Desafios para ampliar a educação científica no Brasil',
+        essay: Array.from({ length: 90 }, (_, index) => `palavra${index}`).join(' '),
+        project: {},
+      },
+    }, res);
+    assert.equal(res.statusCode, 200);
+    assert.equal(calls, 3);
+    assert.equal(res.payload.review.total, 1000);
+  } finally {
+    global.fetch = originalFetch;
+    if (originalOpenAIKey === undefined) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = originalOpenAIKey;
+    if (originalOpenAIModel === undefined) delete process.env.OPENAI_MODEL;
+    else process.env.OPENAI_MODEL = originalOpenAIModel;
+    if (originalRedactionModel === undefined) delete process.env.OPENAI_REDACTION_MODEL;
+    else process.env.OPENAI_REDACTION_MODEL = originalRedactionModel;
+    if (originalGeminiKey === undefined) delete process.env.GEMINI_API_KEY;
+    else process.env.GEMINI_API_KEY = originalGeminiKey;
+  }
 });
 
 test('redaction review falls back to the configured Gemini provider', async () => {
