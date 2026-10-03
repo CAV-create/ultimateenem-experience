@@ -69,6 +69,6 @@ test('student interface makes dual review and automatic third board explicit', (
   assert.match(adapter, /process\.discrepancy\?\.detected \? "open"/);
   assert.match(endpoint, /Promise\.all\(\[/, 'os dois primeiros corretores devem trabalhar em paralelo');
   assert.match(endpoint, /buildEvaluatorInstructions\("3"\)/, 'a terceira leitura deve ser automática');
-  assert.match(endpoint, /maxDuration: 240/, 'a função deve comportar terceira leitura e junta médica');
-  assert.match(adapter, /AbortSignal\.timeout\(230000\)/, 'o navegador deve aguardar o fluxo clínico completo');
+  assert.match(endpoint, /maxDuration: 60/, 'a função deve respeitar o limite aceito pelo deployment');
+  assert.match(adapter, /AbortSignal\.timeout\(180000\)/, 'o navegador deve aguardar o fluxo clínico completo');
 });

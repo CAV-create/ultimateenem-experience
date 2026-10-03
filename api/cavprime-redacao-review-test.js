@@ -8,9 +8,7 @@ import {
   sanitizeEvaluation,
 } from "./_lib/enem-redaction-2026.mjs";
 
-// Duas leituras rodam em paralelo. Em caso de discrepância, a terceira leitura
-// e a junta médica podem ocorrer em sequência antes de qualquer nota ser liberada.
-export const config = { maxDuration: 240 };
+export const config = { maxDuration: 60 };
 
 const MAX_ESSAY_LENGTH = 16000;
 const MAX_FILE_BYTES = 4 * 1024 * 1024;
