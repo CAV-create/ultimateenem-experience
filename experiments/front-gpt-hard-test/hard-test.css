@@ -1,3 +1,21 @@
+.skip {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 1000;
+  padding: 10px 14px;
+  border-radius: 6px;
+  color: var(--ink, #1d251f);
+  background: var(--white, #fff);
+  box-shadow: 0 4px 18px rgba(16, 24, 18, 0.18);
+  transform: translateY(calc(-100% - 24px));
+  transition: transform 160ms ease;
+}
+
+.skip:focus-visible {
+  transform: translateY(0);
+}
+
 .question-crop {
   width: 100%;
   max-height: 560px;
@@ -5380,6 +5398,307 @@
   .cell-map-clinical i {
     width: 1px;
     height: 18px;
+  }
+}
+
+.admission-catalog-summary {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin: -4px 0 22px;
+  padding: 0 2px;
+}
+
+.admission-catalog-summary strong,
+.admission-catalog-summary p,
+.admission-selection-meta strong,
+.admission-selection-meta p {
+  display: block;
+}
+
+.admission-catalog-summary strong {
+  margin-top: 6px;
+  font-size: 17px;
+  line-height: 1.45;
+}
+
+.admission-catalog-summary p {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.admission-selector select {
+  text-overflow: ellipsis;
+}
+
+.admission-selection-meta {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 12px;
+  align-items: center;
+  margin-top: 17px;
+  padding: 14px 16px;
+  border-left: 3px solid #a9873e;
+  background: #f3efe3;
+}
+
+.admission-selection-meta > span {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  color: #6d5a2d;
+  border: 1px solid #d5c79d;
+  border-radius: 50%;
+}
+
+.admission-selection-meta strong {
+  margin-bottom: 3px;
+  font-size: 11px;
+}
+
+.admission-selection-meta p,
+.admission-coverage-note {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.65;
+}
+
+.admission-coverage-note {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.goal-card.admission-reference {
+  margin-top: 24px;
+  padding: 28px;
+  border: 1px solid #d9dcd2;
+  border-radius: 14px;
+  background: #eeeee3;
+}
+
+.admission-reference-empty {
+  min-height: 190px;
+  display: grid;
+  place-items: center;
+}
+
+.admission-reference-empty > div {
+  max-width: 560px;
+  text-align: center;
+}
+
+.admission-reference-empty h2 {
+  margin-top: 9px;
+}
+
+.admission-reference-empty p,
+.admission-reference-head p,
+.admission-weight-section p,
+.admission-method p {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.admission-reference-empty p {
+  margin-top: 8px;
+}
+
+.admission-reference-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 22px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid #d8dbd0;
+}
+
+.admission-reference-head h2 {
+  margin: 7px 0 4px;
+  font-size: 25px;
+  letter-spacing: 0;
+}
+
+.admission-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-bottom: 1px solid #d8dbd0;
+}
+
+.admission-metric {
+  min-width: 0;
+  padding: 24px 18px 24px 0;
+}
+
+.admission-metric + .admission-metric {
+  padding-left: 18px;
+  border-left: 1px solid #d8dbd0;
+}
+
+.admission-metric small,
+.admission-metric strong,
+.admission-metric span,
+.admission-weight small,
+.admission-weight strong {
+  display: block;
+}
+
+.admission-metric small,
+.admission-weight small {
+  color: #697366;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  line-height: 1.45;
+  text-transform: uppercase;
+}
+
+.admission-metric strong {
+  margin-top: 8px;
+  font-size: 27px;
+  font-weight: 500;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.admission-metric span {
+  min-height: 30px;
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.55;
+}
+
+.admission-weight-section {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.72fr) minmax(0, 1.7fr);
+  gap: 28px;
+  align-items: end;
+  padding: 24px 0;
+  border-bottom: 1px solid #d8dbd0;
+}
+
+.admission-weight-section p {
+  margin-top: 8px;
+}
+
+.admission-weights {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.admission-weight {
+  min-width: 0;
+  padding: 14px 10px;
+  border-top: 3px solid #a8873f;
+  background: #fff;
+}
+
+.admission-weight strong {
+  margin-top: 7px;
+  color: #314b38;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.admission-method {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.72fr) minmax(0, 1.7fr);
+  gap: 28px;
+  padding: 22px 0;
+}
+
+.admission-method strong {
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.admission-source {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding-top: 17px;
+  border-top: 1px solid #d8dbd0;
+  color: #657060;
+  font-size: 9px;
+}
+
+.admission-source a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #334f3a;
+  font-weight: 700;
+}
+
+.admission-source .icon {
+  width: 14px;
+  height: 14px;
+}
+
+@media (max-width: 760px) {
+  .admission-catalog-summary,
+  .admission-reference-head,
+  .admission-source {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admission-catalog-summary {
+    gap: 12px;
+  }
+
+  .goal-card.admission-reference {
+    padding: 20px;
+  }
+
+  .admission-reference-head h2 {
+    font-size: 21px;
+  }
+
+  .admission-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admission-metric {
+    padding: 19px 12px 19px 0;
+    border-bottom: 1px solid #d8dbd0;
+  }
+
+  .admission-metric + .admission-metric {
+    padding-left: 12px;
+  }
+
+  .admission-metric:nth-child(3) {
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .admission-metric:nth-last-child(-n + 2) {
+    border-bottom: 0;
+  }
+
+  .admission-metric strong {
+    font-size: 23px;
+  }
+
+  .admission-weight-section,
+  .admission-method {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .admission-weights {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admission-weight:last-child {
+    grid-column: 1 / -1;
   }
 }
 

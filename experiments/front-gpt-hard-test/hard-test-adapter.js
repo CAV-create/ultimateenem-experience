@@ -227,6 +227,7 @@
     state.focusIncidents ||= 0;
     state.newsArea ||= "todas";
     state.newsSelections ||= currentAffairsTopics.map((topic) => topic.id);
+    state.goalPreview ||= "";
     state.trials ||= {};
     state.examTimer ||= { key: "", duration: 0, remaining: 0, running: false, deadline: 0 };
     state.vaibemTrack ||= "start";
@@ -567,6 +568,81 @@
   login = function persistentDemoLogin() {
     const product = products[selectedProduct];
     return `<div class="login"><aside class="login-aside">${logo(selectedProduct)}<h2>Seu objetivo.<br>Seu ritmo.<br>Seu próximo passo.</h2><p>Uma experiência feita para você avançar, não para se perder em menus.</p></aside><main class="login-content" id="main">${link(icon("back") + "Voltar ao ecossistema", "portal")}${tag()}<h1>Seu acesso<br>já está preparado.</h1><p class="muted small">Use o acesso único do ${esc(product.name)}. Neste dispositivo, a sessão permanecerá salva.</p><form id="hard-login-form" class="space"><label class="field">Login<input id="hard-login" type="email" autocomplete="username" value="${DEMO_ACCESS.login}" required></label><label class="field space-sm">Senha<input id="hard-password" type="password" autocomplete="current-password" value="${DEMO_ACCESS.password}" required></label><label class="consent-line space-sm"><input id="hard-remember" type="checkbox" checked><span>Manter meu acesso neste dispositivo</span></label><button class="btn wfull" type="submit">Entrar no ${esc(product.name)} ${icon("arrow")}</button></form><p class="device-disclaimer">Seu acesso permanece salvo somente neste dispositivo.</p></main></div>`;
+  };
+
+  function medicineAdmissionCatalog() {
+    const catalog = window.CAV_MEDICINE_PUBLIC_ADMISSION;
+    return catalog && Array.isArray(catalog.offers)
+      ? catalog
+      : { edition: null, summary: { offers: 0, institutions: 0, states: 0, categories: {} }, offers: [], source: null };
+  }
+
+  function admissionNumber(value, fractionDigits = 2) {
+    if (value === null || value === undefined || value === "" || !Number.isFinite(Number(value))) return "Não publicada";
+    return Number(value).toLocaleString("pt-BR", {
+      minimumFractionDigits: fractionDigits,
+      maximumFractionDigits: fractionDigits,
+    });
+  }
+
+  function admissionCategory(category) {
+    return String(category || "Pública").replace(/^Publica\s+/i, "").replace(/^Pública\s+/i, "");
+  }
+
+  function admissionOfferOptions(offers, selectedId) {
+    const byState = offers.reduce((groups, offer) => {
+      groups[offer.uf] ||= [];
+      groups[offer.uf].push(offer);
+      return groups;
+    }, {});
+    return Object.keys(byState).sort().map((uf) => (
+      `<optgroup label="${esc(uf)}">${byState[uf].map((offer) => {
+        const label = `${offer.institution} · ${offer.city} · ${offer.campus}`;
+        return `<option value="${esc(offer.id)}" ${selectedId === offer.id ? "selected" : ""}>${esc(label)}</option>`;
+      }).join("")}</optgroup>`
+    )).join("");
+  }
+
+  function admissionMetric(label, value, detail = "") {
+    return `<div class="admission-metric"><small>${esc(label)}</small><strong>${esc(value)}</strong>${detail ? `<span>${esc(detail)}</span>` : ""}</div>`;
+  }
+
+  function admissionReference(offer, catalog) {
+    if (!offer) {
+      return `<section class="goal-card admission-reference admission-reference-empty"><div><span class="kicker">Referências de ingresso</span><h2>Escolha uma instituição e um campus.</h2><p>O primeiro corte, as vagas e os pesos do ENEM aparecerão aqui antes de você confirmar a meta.</p></div></section>`;
+    }
+    const publicSchool = offer.escolaPublica || {};
+    const publicCutoff = publicSchool.cutoff === null
+      ? "Não ofertada"
+      : admissionNumber(publicSchool.cutoff);
+    const publicDetail = publicSchool.components?.length > 1
+      ? "maior corte entre modalidades exclusivas"
+      : "modalidade exclusiva de escola pública";
+    const weights = [
+      ["Linguagens", offer.weights?.linguagens],
+      ["Humanas", offer.weights?.humanas],
+      ["Natureza", offer.weights?.natureza],
+      ["Matemática", offer.weights?.matematica],
+      ["Redação", offer.weights?.redacao],
+    ];
+    return `<section class="goal-card admission-reference"><header class="admission-reference-head"><div><span class="kicker">${esc(catalog.selectionStage || "Chamada regular")} · ${esc(catalog.edition || "")}</span><h2>${esc(offer.institution)} · ${esc(offer.city)}</h2><p>${esc(offer.campus)} · ${esc(offer.uf)} · ${esc(admissionCategory(offer.administrativeCategory))} · ${esc(offer.shift)}</p></div><span class="pill goldpill">Medicina</span></header><div class="admission-metrics">${admissionMetric("1º corte · ampla concorrência", admissionNumber(offer.ampla?.cutoff), "último classificado da chamada regular")}${admissionMetric("Vagas · ampla concorrência", admissionNumber(offer.ampla?.seats, 0))}${admissionMetric("1º corte · escola pública", publicCutoff, publicDetail)}${admissionMetric("Vagas · escola pública", admissionNumber(publicSchool.seats || 0, 0), "soma das modalidades exclusivas")}</div><div class="admission-weight-section"><div><span class="kicker">Pesos no ENEM</span><p>Os cinco componentes entram no cálculo desta oferta com os pesos oficiais abaixo.</p></div><div class="admission-weights">${weights.map(([label, value]) => `<div class="admission-weight"><small>${esc(label)}</small><strong>${admissionNumber(value, Number.isInteger(Number(value)) ? 0 : 1)}</strong></div>`).join("")}</div></div><div class="admission-method"><strong>Como lemos a cota de escola pública</strong><p>Mostramos somente as modalidades exclusivas de escola pública. Quando há dois cortes oficiais, usamos o maior como referência de planejamento e somamos as vagas. Outros recortes de cota não aparecem nesta tela.</p></div><footer class="admission-source"><span>Fonte oficial: SiSU/MEC · Chamada Regular ${esc(catalog.edition || "")}</span><a href="${esc(catalog.source?.urls?.indice_oficial_sisu || "https://sisu.mec.gov.br/")}" target="_blank" rel="noopener">Consultar fonte oficial ${icon("arrow")}</a></footer></section>`;
+  }
+
+  goal = function publicMedicineGoal() {
+    ensureHardState();
+    const catalog = medicineAdmissionCatalog();
+    const offers = catalog.offers;
+    const locked = Boolean(state.goalSince && (Date.now() - state.goalSince) < 21 * 86400000);
+    const storedOffer = offers.find((offer) => offer.id === state.goal)
+      || offers.find((offer) => offer.institution === state.goal);
+    const previewOffer = offers.find((offer) => offer.id === state.goalPreview);
+    const selectedOffer = locked ? storedOffer : (previewOffer || storedOffer);
+    const counts = catalog.summary?.categories || {};
+    const summary = catalog.summary || {};
+    const registered = locked && selectedOffer
+      ? `<div class="admission-selection-meta"><span>${icon("lock")}</span><p><strong>Meta protegida neste ciclo</strong>${esc(selectedOffer.institution)} · ${esc(selectedOffer.city)} · ${esc(selectedOffer.campus)}</p></div>`
+      : "";
+    return shell(`${pageHead("Universidade-alvo", "Uma meta estável.<br>Uma estratégia consistente.", "A escolha permanece por um ciclo de 21 dias e usa referências oficiais de ingresso.")}<div class="admission-catalog-summary"><div><span class="kicker">Medicina pública · ENEM/SiSU ${esc(catalog.edition || "")}</span><strong>${admissionNumber(summary.offers || 0, 0)} ofertas em ${admissionNumber(summary.institutions || 0, 0)} instituições</strong><p>${admissionNumber(summary.states || 0, 0)} UFs · ${admissionNumber(counts["Pública Federal"] || 0, 0)} federais · ${admissionNumber(counts["Pública Estadual"] || 0, 0)} estaduais · ${admissionNumber(counts["Pública Municipal"] || 0, 0)} municipais nesta edição</p></div><span class="pill">Base oficial</span></div><div class="card admission-selector"><label class="field">Curso<input value="Medicina" readonly></label><label class="field space-sm">Instituição e campus<select id="goal-select" ${locked ? "disabled" : ""}><option value="">Selecione uma universidade</option>${admissionOfferOptions(offers, selectedOffer?.id || "")}</select></label>${registered}<div class="space-sm">${btn(locked ? "Meta protegida neste ciclo" : "Confirmar universidade-alvo", "goal-save", "btn", locked || !offers.length ? "disabled" : "")}</div><p class="admission-coverage-note">Este catálogo reúne as ofertas públicas de Medicina com dados oficiais de ingresso pelo ENEM/SiSU. Instituições com vestibular próprio só entram quando corte, vagas e critérios forem publicados pela fonte oficial; nenhum valor é estimado.</p></div>${admissionReference(selectedOffer, catalog)}`, "progresso");
   };
 
   function mindMapEvolutionPage() {
@@ -1760,6 +1836,20 @@
     ? openDialog("Sobre esta auditoria", `<p>Os dados são fictícios e o progresso demonstrativo fica apenas neste navegador.</p><p>O teste preserva as marcas e os documentos homologados enquanto avalia uma nova experiência pós-login.</p>`, link("Ver mapa da jornada " + icon("arrow"), "mapa", "btn"))
     : openDialog("Sobre sua jornada", `<p>Seu histórico organiza resultados, orientações e próximas condutas sem expor cálculos ou parâmetros internos.</p>`, link("Ver mapa da jornada " + icon("arrow"), "mapa", "btn"));
   handlers.map = () => go("mapa");
+  handlers["goal-save"] = () => {
+    const value = $("#goal-select")?.value || "";
+    const offer = medicineAdmissionCatalog().offers.find((item) => item.id === value);
+    if (!offer) {
+      toast("Escolha uma instituição e um campus para registrar a meta.");
+      return;
+    }
+    state.goal = offer.id;
+    state.goalPreview = offer.id;
+    state.goalSince = Date.now();
+    originalSave();
+    render(false);
+    toast(`Meta registrada: ${offer.institution} · ${offer.city}.`);
+  };
   handlers["essay-review-ai"] = () => requestEssayReview();
   handlers["print-matrix"] = () => window.print();
   handlers["essay-input-mode"] = (button) => {
@@ -2090,6 +2180,11 @@
   });
 
   document.addEventListener("change", (event) => {
+    if (event.target.id === "goal-select") {
+      state.goalPreview = event.target.value || "";
+      render(false);
+      return;
+    }
     if (event.target.dataset.newsId) {
       const id = event.target.dataset.newsId;
       state.newsSelections = event.target.checked
