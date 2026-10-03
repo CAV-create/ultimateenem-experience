@@ -128,7 +128,7 @@
         <div class="vb-track-switch" role="group" aria-label="Escolha a etapa escolar">
           ${Object.entries(tracks).map(([key, item]) => `<button type="button" data-vb-track="${key}" class="${state.vaibemTrack === key ? "selected" : ""}" aria-pressed="${state.vaibemTrack === key}"><strong>${item.label.replace("VaiBem ", "")}</strong><small>${item.range}</small></button>`).join("")}
         </div>
-        <div class="vb-home-copy"><span class="kicker">${activeTrack.label}</span><h2>${activeTrack.description}</h2><p>Escolha a área e o especialista. A conversa continua na mesma sessão; não é preciso reabrir o microfone a cada pergunta.</p></div>
+        <div class="vb-home-copy"><span class="kicker">${activeTrack.label}</span><h2>${activeTrack.description}</h2><p>Escolha a área e o especialista.</p></div>
         <label class="vb-grade-select"><span>Ano escolar</span><select id="vb-grade-select">${grades[state.vaibemTrack].map((item) => `<option value="${item.id}" ${item.id === activeGrade.id ? "selected" : ""}>${item.label}</option>`).join("")}</select></label>
         <div class="vb-area-switch" role="group" aria-label="Escolha a área do conhecimento">${Object.entries(areas).map(([key, label]) => `<button type="button" data-vb-area="${key}" class="${state.vaibemArea === key ? "selected" : ""}" aria-pressed="${state.vaibemArea === key}">${label}</button>`).join("")}</div>
         <div class="vb-teacher-list">${teacherOptions(state)}</div>
