@@ -400,14 +400,43 @@
 .vb-study-history { margin: 30px 0 60px; }
 .vb-study-history > .kicker { margin-bottom: 12px; }
 
-.vb-review-score { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 34px; align-items: center; margin: 32px 0; padding: 24px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.vb-review-score { display: grid; grid-template-columns: minmax(0, 1fr) minmax(330px, 510px); gap: 34px; align-items: center; margin: 32px 0; padding: 24px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .vb-review-score p { max-width: 780px; margin: 9px 0 0; color: var(--muted); line-height: 1.6; }
+.vb-grade-summary { display: grid; gap: 10px; min-width: 0; }
+.vb-grade-card { padding: 18px 20px; border-left: 5px solid #c09a47; background: #f5efdf; }
+.vb-grade-card > span { display: block; color: #77643b; font: 800 9px/1.2 Arial, sans-serif; letter-spacing: 1.4px; }
+.vb-grade-card > strong { display: block; margin-top: 7px; color: #25442f; font: 500 42px/1 Georgia, serif; }
+.vb-grade-card > strong small { color: #657068; font: 500 18px/1 Georgia, serif; }
+.vb-grade-card > p { margin-top: 10px; color: #28332c; font-size: 12px; font-weight: 700; }
+.vb-grade-card > small { display: block; margin-top: 6px; color: #6d746e; font: 10px/1.45 Arial, sans-serif; }
 .vb-review-counts { display: grid; grid-template-columns: repeat(3, minmax(82px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); }
 .vb-review-counts span { display: grid; gap: 5px; padding: 17px 14px; background: #fffdf7; color: var(--muted); text-align: center; font: 10px/1.2 Arial, sans-serif; letter-spacing: 1px; text-transform: uppercase; }
 .vb-review-counts strong { color: var(--green); font: 500 32px/1 Georgia, serif; letter-spacing: 0; }
 .vb-review-workspace { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(340px, .65fr); gap: 28px; align-items: start; margin: 32px 0 50px; }
 .vb-document-column, .vb-comments-column { min-width: 0; }
 .vb-document-column > .kicker, .vb-comments-column > .kicker { margin-bottom: 12px; }
+.vb-document-review-shell { min-width: 0; border: 1px solid #d6d9d1; background: #f1f1eb; }
+.vb-ink-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; padding: 10px; border-bottom: 1px solid #d6d9d1; background: #fffdf7; }
+.vb-ink-tools, .vb-ink-colors { display: flex; align-items: center; gap: 4px; }
+.vb-ink-toolbar button { min-height: 36px; padding: 7px 10px; border: 1px solid #d3d7cf; border-radius: 5px; color: #4f5b53; background: #fff; font: 700 10px/1 Arial, sans-serif; }
+.vb-ink-toolbar button:hover, .vb-ink-toolbar button:focus-visible, .vb-ink-toolbar button.is-active { border-color: #8d733c; color: #352b17; background: #f8edcf; }
+.vb-ink-colors { padding-left: 4px; border-left: 1px solid #dde0d8; }
+.vb-ink-colors button { width: 36px; padding: 6px; }
+.vb-ink-colors span { display: block; width: 19px; height: 19px; margin: auto; border: 2px solid #fff; border-radius: 50%; background: var(--ink-color); box-shadow: 0 0 0 1px #9b9f98; }
+.vb-ink-clear { margin-left: auto; }
+.vb-document-review-surface { position: relative; min-height: 340px; isolation: isolate; overflow: hidden; background: #e9ebe5; }
+.vb-document-review-surface .vb-image-review, .vb-document-review-surface .vb-pdf-frame { border: 0; }
+.vb-document-review-surface.is-image, .vb-document-review-surface.is-image .vb-image-review { min-height: 0; }
+.vb-ink-canvas { position: absolute; inset: 0; z-index: 4; width: 100%; height: 100%; pointer-events: none; touch-action: none; }
+.vb-ink-canvas.is-active { pointer-events: auto; cursor: crosshair; }
+.vb-auto-ink { position: absolute; z-index: 3; display: inline-flex; align-items: center; gap: 3px; min-width: 36px; min-height: 30px; padding: 3px 7px; border: 2px solid currentColor; border-radius: 18px; color: #47594a; background: #fffc; box-shadow: 0 2px 7px #0002; font: 800 11px/1 Arial, sans-serif; transform: translate(-50%, -50%) rotate(-5deg); }
+.vb-auto-ink b { font-size: 18px; line-height: 1; }
+.vb-auto-ink span { padding-left: 3px; border-left: 1px solid currentColor; }
+.vb-auto-ink.status-correct { color: #397044; }
+.vb-auto-ink.status-partial { color: #a06f0d; }
+.vb-auto-ink.status-incorrect { color: #b23d35; }
+.vb-auto-ink.status-attention { color: #315f7a; }
+.vb-ink-preserved { display: block; padding: 9px 12px; border-top: 1px solid #d6d9d1; color: #687169; background: #fffdf7; }
 .vb-image-review { position: relative; min-height: 340px; padding: 10px; border: 1px solid #d6d9d1; background: #e9ebe5; }
 .vb-image-review img { display: block; width: 100%; height: auto; max-height: 1050px; object-fit: contain; background: #fff; }
 .vb-document-marker { position: absolute; z-index: 2; width: 32px; height: 32px; display: grid; place-items: center; border: 3px solid #fff; border-radius: 50%; color: #fff; background: #6f786f; box-shadow: 0 2px 8px #0004; font: 700 12px/1 Arial, sans-serif; transform: translate(-50%, -50%); cursor: pointer; }
@@ -548,11 +577,16 @@
   .vb-study-context strong { font-size: 24px; }
   .vb-upload-zone { min-height: 180px; padding: 22px 16px; }
   .vb-review-score { grid-template-columns: 1fr; gap: 20px; }
+  .vb-grade-card > strong { font-size: 36px; }
   .vb-review-counts { grid-template-columns: repeat(3, 1fr); }
   .vb-review-counts span { padding: 13px 7px; }
   .vb-review-counts strong { font-size: 27px; }
   .vb-review-workspace { gap: 34px; }
   .vb-pdf-frame { height: 68vh; min-height: 520px; }
+  .vb-ink-toolbar { align-items: stretch; }
+  .vb-ink-tools { width: 100%; overflow-x: auto; padding-bottom: 2px; }
+  .vb-ink-tools button { flex: 1 0 auto; }
+  .vb-ink-clear { margin-left: 0; }
   .vb-recovery-summary, .vb-worked-grid, .vb-lesson-objectives { grid-template-columns: 1fr; }
   .vb-printable-list > header, .vb-review-actions { align-items: stretch; flex-direction: column; }
   .vb-printable-list > header .btn, .vb-review-actions .btn { width: 100%; }
@@ -560,7 +594,7 @@
 }
 
 @media print {
-  .vb-live-header, .vb-live-teacher, .vb-board-actions, .sidebar, .topbar, .bottomnav, .vb-review-actions, .vb-printable-list .btn, .textbtn { display: none !important; }
+  .vb-live-header, .vb-live-teacher, .vb-board-actions, .sidebar, .topbar, .bottomnav, .vb-review-actions, .vb-printable-list .btn, .textbtn, .vb-ink-toolbar { display: none !important; }
   .vb-live-grid { display: block; }
   .vb-live-board { background: #fff; }
   .vb-paper, .vb-saved-paper { margin: 0; border: 0; min-height: auto; }

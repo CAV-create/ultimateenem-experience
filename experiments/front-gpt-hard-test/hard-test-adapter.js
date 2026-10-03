@@ -217,6 +217,7 @@
     state.errorAdvice ||= {};
     state.recoverySessions ||= {};
     state.recoveryHistory ||= [];
+    state.recoveryMapVariants ||= {};
     state.activeRecoveryKey ||= "";
     state.recoveryAuditCourse ||= "ultimate";
     state.recoveryAuditArea ||= "linguagens";
@@ -740,37 +741,102 @@
     return `<div class="anki-grid">${cards.map(([front, back], index) => `<button type="button" class="anki-card" data-action="flashcard-flip" aria-pressed="false" aria-label="Virar cartão de memória ${index + 1}"><span class="anki-card-inner"><span class="anki-face anki-front"><small>PERGUNTA ${index + 1}</small><strong>${scientificText(front.replace(/^Frente:\s*/i, ""))}</strong><em>Toque para ver a resposta</em></span><span class="anki-face anki-back"><small>RESPOSTA ${index + 1}</small><strong>${scientificText(back.replace(/^Verso:\s*/i, ""))}</strong><em>Toque para rever</em></span></span></button>`).join("")}</div>`;
   }
 
-  function recoveryMindBranches(curriculum) {
-    const cards = curriculum.flashcards || [];
-    const summary = curriculum.microSummary || [];
-    return (curriculum.map || []).map(([title, detail], index) => {
-      const card = cards[index % Math.max(cards.length, 1)] || [];
-      const candidates = [
+  const recoveryMapLenses = [
+    { label: "Estrutura do assunto", title: "Do núcleo às relações que sustentam a resposta." },
+    { label: "Pistas de prova", title: "Como reconhecer o assunto dentro de um novo contexto." },
+    { label: "Aplicação e repertório", title: "Conceito, exemplo e transferência para outra questão." },
+  ];
+
+  function compactMapText(value = "", max = 190) {
+    const clean = String(value).replace(/\s+/g, " ").trim();
+    return clean.length > max ? `${clean.slice(0, max - 1).trim()}…` : clean;
+  }
+
+  function uniqueMapLeaves(values = []) {
+    const seen = new Set();
+    return values.map((value) => compactMapText(value)).filter((value) => {
+      const key = normalizedText(value);
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).slice(0, 4);
+  }
+
+  function rotateMapValues(values, offset) {
+    if (!values.length) return [];
+    const shift = ((offset % values.length) + values.length) % values.length;
+    return values.slice(shift).concat(values.slice(0, shift));
+  }
+
+  function recoveryMindBranches(curriculum, variant = 0) {
+    const map = Array.isArray(curriculum.map) ? curriculum.map : [];
+    const cards = Array.isArray(curriculum.flashcards) ? curriculum.flashcards : [];
+    const summary = Array.isArray(curriculum.microSummary) ? curriculum.microSummary : [];
+    const examples = Array.isArray(curriculum.workedExamples) ? curriculum.workedExamples : [];
+    const mapCandidates = map.map(([title, detail], index) => ({
+      title,
+      leaves: [
         detail,
-        card.length ? `${String(card[0]).replace(/^Frente:\s*/i, "")}: ${String(card[1]).replace(/^Verso:\s*/i, "")}` : "",
-        summary[index % Math.max(summary.length, 1)] || "",
-      ];
-      const seen = new Set();
-      const leaves = candidates.filter((value) => {
-        const key = normalizedText(value);
-        if (!key || seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
-      return { title, leaves };
+        cards[(index + variant) % Math.max(cards.length, 1)]?.[1],
+        summary[(index + variant) % Math.max(summary.length, 1)],
+      ],
+    }));
+    const cardCandidates = cards.map(([front, back], index) => ({
+      title: String(front).replace(/^Frente:\s*/i, ""),
+      leaves: [
+        back,
+        map[(index + variant) % Math.max(map.length, 1)]?.[1],
+        summary[(index + variant + 1) % Math.max(summary.length, 1)],
+      ],
+    }));
+    const applicationCandidates = map.map(([title, detail], index) => ({
+      title: index % 2 ? `Aplicação · ${title}` : `Conexão · ${title}`,
+      leaves: [
+        summary[(index + variant + 2) % Math.max(summary.length, 1)],
+        detail,
+        examples[(index + variant) % Math.max(examples.length, 1)]?.result,
+        examples[(index + variant) % Math.max(examples.length, 1)]?.mirror,
+      ],
+    }));
+    const banks = [mapCandidates, cardCandidates, applicationCandidates];
+    const primary = banks[variant % banks.length].filter((item) => item.title);
+    const reserve = banks.flat().filter((item) => item.title);
+    const merged = [...rotateMapValues(primary, variant), ...rotateMapValues(reserve, variant + 1)];
+    const seenTitles = new Set();
+    const branches = [];
+    merged.forEach((item) => {
+      const titleKey = normalizedText(item.title);
+      if (!titleKey || seenTitles.has(titleKey) || branches.length >= 6) return;
+      seenTitles.add(titleKey);
+      const leaves = uniqueMapLeaves(item.leaves);
+      if (leaves.length) branches.push({ title: item.title, leaves });
     });
+    return branches;
   }
 
   function recoveryStudyTools(curriculum) {
-    const branches = recoveryMindBranches(curriculum).map(({ title, leaves }, index) => `<article class="mind-map-limb side-${index % 2 ? "right" : "left"} tone-${(index % 6) + 1}"><div class="mind-map-branch"><header><i>${String(index + 1).padStart(2, "0")}</i><strong>${scientificText(title)}</strong></header><ul>${leaves.map((leaf) => `<li>${scientificText(leaf)}</li>`).join("")}</ul></div></article>`).join("");
-    return `<section class="recovery-study-grid"><div class="mind-map"><header class="mind-map-heading"><div><div class="kicker">Mapa de raciocínio</div><h2>Uma espinha central. Vários caminhos de compreensão.</h2></div><small>RAMOS E SUBGALHOS CONECTADOS</small></header><div class="mind-map-canvas"><div class="mind-map-core"><small>Diagnóstico central</small><strong>${scientificText(curriculum.title)}</strong></div><div class="mind-map-trunk">${branches}</div></div></div><div class="flashcard-stack"><div class="kicker">Prescrição de memória · 3 vezes ao dia</div>${renderFlashcards(curriculum.flashcards)}</div></section>`;
+    const rotation = Number(state.recoveryMapVariants[state.activeRecoveryKey] || 0);
+    const variant = rotation % recoveryMapLenses.length;
+    const lens = recoveryMapLenses[variant];
+    const branchData = recoveryMindBranches(curriculum, rotation);
+    const connectorPaths = [
+      "M500 380 C430 380 410 150 325 150",
+      "M500 380 C570 380 590 150 675 150",
+      "M500 380 C430 380 410 380 325 380",
+      "M500 380 C570 380 590 380 675 380",
+      "M500 380 C430 380 410 610 325 610",
+      "M500 380 C570 380 590 610 675 610",
+    ];
+    const connectors = branchData.map((_, index) => `<path class="tone-${(index % 6) + 1}" d="${connectorPaths[index]}" pathLength="1"></path>`).join("");
+    const branches = branchData.map(({ title, leaves }, index) => `<article class="mind-map-limb slot-${index + 1} tone-${(index % 6) + 1}"><div class="mind-map-branch"><header><i>${String(index + 1).padStart(2, "0")}</i><strong>${scientificText(title)}</strong></header><ul>${leaves.map((leaf) => `<li>${scientificText(leaf)}</li>`).join("")}</ul></div></article>`).join("");
+    return `<section class="recovery-study-grid"><div class="mind-map"><header class="mind-map-heading"><div><div class="kicker">Mapa mental · ${esc(lens.label)}</div><h2>${esc(lens.title)}</h2></div><div class="mind-map-variant"><small>ABORDAGEM ${rotation + 1}</small>${btn("Ver outra abordagem", "recovery-map-next", "mind-map-refresh")}</div></header><div class="mind-map-canvas"><svg class="mind-map-connectors" viewBox="0 0 1000 760" preserveAspectRatio="none" aria-hidden="true">${connectors}</svg><div class="mind-map-core"><small>Diagnóstico central</small><strong>${scientificText(curriculum.title)}</strong><span>${scientificText(curriculum.microtheme)}</span></div><div class="mind-map-trunk">${branches}</div></div></div><div class="flashcard-stack"><div class="kicker">Prescrição de memória · 3 vezes ao dia</div>${renderFlashcards(curriculum.flashcards)}</div></section>`;
   }
 
   function recoveryInfographic(curriculum) {
     const map = curriculum.map || [];
     if (!map.length) return "";
     const actions = ["Reconheça o núcleo", "Relacione as pistas", "Aplique no contexto", "Confira a resposta", "Explique a escolha", "Retome o erro"];
-    const panels = map.slice(0, 6).map(([title, detail], index) => `<article class="review-infographic-panel tone-${(index % 6) + 1}"><span>${String(index + 1).padStart(2, "0")}</span><strong>${scientificText(title)}</strong><p>${scientificText(detail)}</p><small>${actions[index]}</small></article>`).join("");
+    const panels = map.slice(0, 6).map(([title, detail], index, items) => `<article class="review-infographic-panel tone-${(index % 6) + 1}"><span>${String(index + 1).padStart(2, "0")}</span><strong>${scientificText(title)}</strong><p>${scientificText(detail)}</p><small>${actions[index]}</small></article>${index < items.length - 1 ? '<i class="review-flow-arrow" aria-hidden="true"></i>' : ""}`).join("");
     return `<section class="review-infographic"><header><div><div class="kicker">Infográfico de revisão</div><h2>Do diagnóstico à resposta.</h2></div><small>LEITURA VISUAL DE 30 SEGUNDOS</small></header><div class="review-infographic-flow">${panels}</div><footer><span>Conduta final</span><strong>Use o percurso visual para explicar a ideia com suas próprias palavras antes de voltar à questão.</strong></footer></section>`;
   }
 
@@ -1700,6 +1766,14 @@
     recoveryRecord(key);
     originalSave();
     go("recuperacao");
+  };
+  handlers["recovery-map-next"] = () => {
+    if (!state.activeRecoveryKey) return;
+    const current = Number(state.recoveryMapVariants[state.activeRecoveryKey] || 0);
+    state.recoveryMapVariants[state.activeRecoveryKey] = current + 1;
+    originalSave();
+    render(false);
+    requestAnimationFrame(() => document.querySelector(".mind-map")?.scrollIntoView({ behavior: "smooth", block: "start" }));
   };
   handlers["recovery-answer"] = (button) => {
     const entry = activeRecoveryEntry();

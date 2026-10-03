@@ -14,6 +14,7 @@
   function ensureState(state) {
     state.vaibemActivities = Array.isArray(state.vaibemActivities) ? state.vaibemActivities : [];
     state.vaibemLessonPlans = state.vaibemLessonPlans && typeof state.vaibemLessonPlans === "object" ? state.vaibemLessonPlans : {};
+    state.vaibemInk = state.vaibemInk && typeof state.vaibemInk === "object" ? state.vaibemInk : {};
     return state;
   }
 
@@ -82,19 +83,68 @@
     return { correct: "Acertou", partial: "Parcial", incorrect: "Precisa rever", attention: "Confirmar leitura" }[status] || "Análise";
   }
 
+  function formatScore(value) {
+    return new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 }).format(Number(value) || 0);
+  }
+
+  function reviewGrade(review) {
+    const overview = review.overview || {};
+    const correct = Number(overview.correctCount) || 0;
+    const partial = Number(overview.partialCount) || 0;
+    const total = Number(overview.totalQuestions) || (review.annotations || []).length || correct + partial + (Number(overview.errorCount) || 0);
+    const storedPossible = Number(overview.possiblePoints);
+    const storedEarned = Number(overview.earnedPoints);
+    const possible = Number.isFinite(storedPossible) && storedPossible > 0 ? storedPossible : total;
+    const earned = Number.isFinite(storedEarned) ? storedEarned : correct + partial * 0.5;
+    const calculatedGrade = possible ? Math.round((earned / possible) * 100) / 10 : 0;
+    const storedGrade = Number(overview.grade);
+    const grade = Number.isFinite(storedGrade) ? storedGrade : calculatedGrade;
+    const scale = Number(overview.gradeScale) || 10;
+    const weighted = /identificados|pesos próprios|valor original|pontuação própria/i.test(String(overview.gradingBasis || ""));
+    return {
+      grade,
+      scale,
+      earned,
+      possible,
+      basis: overview.gradingBasis || "Peso igual por questão: acerto vale 1 ponto, resposta parcial vale 0,5 e erro vale 0.",
+      expression: weighted
+        ? `${formatScore(earned)} pontos obtidos de ${formatScore(possible)} possíveis`
+        : `${correct} acerto${correct === 1 ? "" : "s"} + ${partial} ${partial === 1 ? "parcial" : "parciais"} × 0,5 = ${formatScore(earned)} pontos`,
+    };
+  }
+
+  function inkToolbar(ctx) {
+    const colors = [
+      ["#b43e35", "Vermelha"],
+      ["#2e6584", "Azul"],
+      ["#3d7148", "Verde"],
+      ["#c18a19", "Dourada"],
+    ];
+    return `<div class="vb-ink-toolbar" data-vb-ink-toolbar aria-label="Ferramentas de anotação">
+      <div class="vb-ink-tools" role="group" aria-label="Instrumento"><button type="button" class="is-active" data-vb-ink-tool="navigate" title="Mover ou rolar o documento">Mover</button><button type="button" data-vb-ink-tool="pen" title="Escrever com caneta">Caneta</button><button type="button" data-vb-ink-tool="highlighter" title="Destacar sem cobrir o texto">Marca-texto</button><button type="button" data-vb-ink-tool="eraser" title="Apagar somente a camada CAVMED">Borracha</button></div>
+      <div class="vb-ink-colors" role="group" aria-label="Cor da caneta">${colors.map(([color, label], index) => `<button type="button" class="${index === 0 ? "is-active" : ""}" data-vb-ink-color="${color}" title="${label}" aria-label="Cor ${label}"><span style="--ink-color:${color}"></span></button>`).join("")}</div>
+      <button type="button" class="vb-ink-clear" data-vb-ink-clear>Limpar camada</button>
+    </div>`;
+  }
+
+  function automaticInk(ctx, review) {
+    const glyph = { correct: "✓", partial: "½", incorrect: "×", attention: "?" };
+    return (review.annotations || []).filter((item) => item.position).map((item, index) => `<button type="button" class="vb-auto-ink status-${item.status}" style="left:${item.position.x}%;top:${item.position.y}%" data-vb-annotation-link="${esc(ctx, item.id)}" aria-label="Abrir comentário da questão ${item.questionNumber}"><b>${glyph[item.status] || "•"}</b><span>${index + 1}</span></button>`).join("");
+  }
+
   function reviewSource(ctx, review) {
     const source = sourceFiles.get(review.id);
     if (!source) return `<div class="vb-source-missing"><strong>O documento original não está mais carregado neste navegador.</strong><p>A correção e a recuperação continuam disponíveis. Para rever a folha lado a lado, envie o arquivo novamente.</p></div>`;
-    if (review.mimeType === "application/pdf") {
-      return `<div class="vb-pdf-frame"><object data="${source.url}" type="application/pdf" aria-label="PDF original enviado"><p><a href="${source.url}" target="_blank" rel="noopener">Abrir o PDF original</a></p></object></div><a class="textbtn under" href="${source.url}" target="_blank" rel="noopener">Abrir original em outra aba</a>`;
-    }
-    const markers = review.annotations.filter((item) => item.position).map((item, index) => `<button type="button" class="vb-document-marker status-${item.status}" style="left:${item.position.x}%;top:${item.position.y}%" data-vb-annotation-link="${esc(ctx, item.id)}" aria-label="Abrir comentário da questão ${item.questionNumber}">${index + 1}</button>`).join("");
-    return `<div class="vb-image-review"><img src="${source.url}" alt="Atividade original enviada pelo aluno">${markers}</div>`;
+    const original = review.mimeType === "application/pdf"
+      ? `<div class="vb-pdf-frame"><object data="${source.url}" type="application/pdf" aria-label="PDF original enviado"><p><a href="${source.url}" target="_blank" rel="noopener">Abrir o PDF original</a></p></object></div>`
+      : `<div class="vb-image-review"><img src="${source.url}" alt="Atividade original enviada pelo aluno"></div>`;
+    const sourceClass = review.mimeType === "application/pdf" ? "is-pdf" : "is-image";
+    return `<div class="vb-document-review-shell">${inkToolbar(ctx)}<div class="vb-document-review-surface ${sourceClass}" data-vb-ink-surface data-review-id="${esc(ctx, review.id)}">${original}${automaticInk(ctx, review)}<canvas class="vb-ink-canvas" aria-label="Camada CAVMED de anotações coloridas"></canvas></div><small class="vb-ink-preserved">Camada CAVMED sobreposta. O documento e as correções originais permanecem preservados.</small></div><a class="textbtn under" href="${source.url}" target="_blank" rel="noopener">Abrir original em outra aba</a>`;
   }
 
   function annotationCards(ctx, annotations) {
     return annotations.map((item, index) => `<article class="vb-annotation-card status-${item.status}" id="${esc(ctx, item.id)}">
-      <header><span>${index + 1}</span><div><strong>${esc(ctx, item.anchor || `Questão ${item.questionNumber}`)}</strong><small>Página ${item.page} · ${statusLabel(item.status)}</small></div></header>
+      <header><span>${index + 1}</span><div><strong>${esc(ctx, item.anchor || `Questão ${item.questionNumber}`)}</strong><small>Página ${item.page} · ${statusLabel(item.status)}${Number.isFinite(Number(item.pointsEarned)) ? ` · ${formatScore(item.pointsEarned)}/${formatScore(item.pointsPossible || 1)} ponto(s)` : ""}</small></div></header>
       ${item.studentAnswer ? `<p><b>Resposta encontrada:</b> ${esc(ctx, item.studentAnswer)}</p>` : ""}
       ${item.expectedAnswer ? `<p><b>Resposta esperada:</b> ${esc(ctx, item.expectedAnswer)}</p>` : ""}
       <p>${esc(ctx, item.comment)}</p><p class="vb-annotation-why">${esc(ctx, item.why)}</p>
@@ -120,8 +170,9 @@
     const review = state.vaibemActivities.find((item) => item.id === id);
     if (!review) return renderActivity(ctx);
     const overview = review.overview || {};
+    const grade = reviewGrade(review);
     return ctx.shell(`<div class="vb-review-print-root">${ctx.pageHead("Folha comentada", esc(ctx, overview.title || review.fileName), `${esc(ctx, review.subject)} · ${esc(ctx, review.grade)} · ${esc(ctx, review.teacher)}`)}
-      <section class="vb-review-score"><div><span class="kicker">Leitura da atividade</span><p>${esc(ctx, overview.summary)}</p></div><div class="vb-review-counts"><span><strong>${overview.correctCount || 0}</strong>acertos</span><span><strong>${overview.partialCount || 0}</strong>parciais</span><span><strong>${overview.errorCount || 0}</strong>a rever</span></div></section>
+      <section class="vb-review-score"><div><span class="kicker">Leitura da atividade</span><p>${esc(ctx, overview.summary)}</p></div><div class="vb-grade-summary"><div class="vb-grade-card"><span>NOTA CALCULADA</span><strong>${formatScore(grade.grade)} <small>/ ${formatScore(grade.scale)}</small></strong><p>${esc(ctx, grade.expression)}</p><small>${esc(ctx, grade.basis)}</small></div><div class="vb-review-counts"><span><strong>${overview.correctCount || 0}</strong>acertos</span><span><strong>${overview.partialCount || 0}</strong>parciais</span><span><strong>${overview.errorCount || 0}</strong>a rever</span></div></div></section>
       <section class="vb-review-workspace"><div class="vb-document-column"><div class="kicker">Documento do aluno</div>${reviewSource(ctx, review)}</div><aside class="vb-comments-column"><div class="kicker">Comentários no documento</div>${annotationCards(ctx, review.annotations || [])}</aside></section>
       ${errorReport(ctx, review)}
       <div class="vb-review-actions"><a class="textbtn under" href="#/vaibem/atividade">Enviar outra atividade</a>${!review.needsRecovery ? `<button type="button" class="btn" id="vb-print-review">Imprimir correção</button>` : ""}</div></div>`, "caderno", "vaibem");
@@ -171,6 +222,111 @@
     if (!node) return;
     node.textContent = text;
     node.className = `vb-study-status${type ? ` ${type}` : ""}`;
+  }
+
+  function mountInkLayer(ctx, review) {
+    const surface = document.querySelector("[data-vb-ink-surface]");
+    const canvas = surface?.querySelector(".vb-ink-canvas");
+    const toolbar = document.querySelector("[data-vb-ink-toolbar]");
+    if (!surface || !canvas || !toolbar) return;
+    const state = ensureState(ctx.state);
+    const ink = state.vaibemInk[review.id] ||= { strokes: [] };
+    let tool = "navigate";
+    let color = "#b43e35";
+    let drawing = false;
+    let currentStroke = null;
+
+    const setupContext = () => {
+      const rect = surface.getBoundingClientRect();
+      const ratio = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.max(1, Math.round(rect.width * ratio));
+      canvas.height = Math.max(1, Math.round(rect.height * ratio));
+      canvas.style.width = `${rect.width}px`;
+      canvas.style.height = `${rect.height}px`;
+      const context = canvas.getContext("2d");
+      context.setTransform(ratio, 0, 0, ratio, 0, 0);
+      return { context, rect };
+    };
+
+    const drawStroke = (context, rect, stroke) => {
+      if (!stroke?.points?.length) return;
+      context.save();
+      context.globalCompositeOperation = stroke.tool === "eraser" ? "destination-out" : "source-over";
+      context.globalAlpha = stroke.tool === "highlighter" ? 0.28 : 1;
+      context.strokeStyle = stroke.color || color;
+      context.lineWidth = stroke.tool === "eraser" ? 28 : stroke.tool === "highlighter" ? 18 : 3.5;
+      context.lineCap = "round";
+      context.lineJoin = "round";
+      context.beginPath();
+      stroke.points.forEach((point, index) => {
+        const x = point.x * rect.width;
+        const y = point.y * rect.height;
+        if (index === 0) context.moveTo(x, y);
+        else context.lineTo(x, y);
+      });
+      if (stroke.points.length === 1) context.lineTo(stroke.points[0].x * rect.width + 0.01, stroke.points[0].y * rect.height + 0.01);
+      context.stroke();
+      context.restore();
+    };
+
+    const redraw = () => {
+      const { context, rect } = setupContext();
+      context.clearRect(0, 0, rect.width, rect.height);
+      [...ink.strokes, ...(currentStroke ? [currentStroke] : [])].forEach((stroke) => drawStroke(context, rect, stroke));
+    };
+
+    const selectTool = (nextTool) => {
+      tool = nextTool;
+      toolbar.querySelectorAll("[data-vb-ink-tool]").forEach((button) => button.classList.toggle("is-active", button.dataset.vbInkTool === tool));
+      canvas.classList.toggle("is-active", tool !== "navigate");
+      surface.dataset.inkTool = tool;
+    };
+
+    toolbar.querySelectorAll("[data-vb-ink-tool]").forEach((button) => button.addEventListener("click", () => selectTool(button.dataset.vbInkTool)));
+    toolbar.querySelectorAll("[data-vb-ink-color]").forEach((button) => button.addEventListener("click", () => {
+      color = button.dataset.vbInkColor;
+      toolbar.querySelectorAll("[data-vb-ink-color]").forEach((item) => item.classList.toggle("is-active", item === button));
+      if (tool === "navigate" || tool === "eraser") selectTool("pen");
+    }));
+    toolbar.querySelector("[data-vb-ink-clear]")?.addEventListener("click", () => {
+      if (!ink.strokes.length || !window.confirm("Limpar somente as anotações da camada CAVMED? O documento original será preservado.")) return;
+      ink.strokes = [];
+      ctx.save();
+      redraw();
+    });
+
+    const pointFromEvent = (event) => {
+      const rect = canvas.getBoundingClientRect();
+      return { x: Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width)), y: Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height)) };
+    };
+    canvas.addEventListener("pointerdown", (event) => {
+      if (tool === "navigate") return;
+      drawing = true;
+      canvas.setPointerCapture(event.pointerId);
+      currentStroke = { tool, color, points: [pointFromEvent(event)] };
+      redraw();
+    });
+    canvas.addEventListener("pointermove", (event) => {
+      if (!drawing || !currentStroke) return;
+      currentStroke.points.push(pointFromEvent(event));
+      redraw();
+    });
+    const finishStroke = () => {
+      if (!drawing || !currentStroke) return;
+      drawing = false;
+      ink.strokes.push(currentStroke);
+      currentStroke = null;
+      ctx.save();
+      redraw();
+    };
+    canvas.addEventListener("pointerup", finishStroke);
+    canvas.addEventListener("pointercancel", finishStroke);
+    const observer = new ResizeObserver(() => {
+      if (!document.body.contains(surface)) return observer.disconnect();
+      redraw();
+    });
+    observer.observe(surface);
+    redraw();
   }
 
   async function submitActivity(event, ctx) {
@@ -259,6 +415,9 @@
     if (route.startsWith("vaibem/atividade/")) {
       document.querySelectorAll("[data-vb-annotation-link]").forEach((button) => button.addEventListener("click", () => byId(button.dataset.vbAnnotationLink)?.scrollIntoView({ behavior: "smooth", block: "center" })));
       byId("vb-print-review")?.addEventListener("click", () => window.print());
+      const id = decodeURIComponent(route.slice("vaibem/atividade/".length));
+      const review = ctx.state.vaibemActivities.find((item) => item.id === id);
+      if (review) mountInkLayer(ctx, review);
       return;
     }
     if (route === "vaibem/preparar") {

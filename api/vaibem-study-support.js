@@ -105,6 +105,9 @@ function sanitizeReview(value, context) {
     const status = ["correct", "partial", "incorrect", "attention"].includes(annotation?.status) ? annotation.status : "attention";
     const x = Number.isFinite(Number(annotation?.position?.x)) ? number(annotation.position.x, 50, 3, 97) : null;
     const y = Number.isFinite(Number(annotation?.position?.y)) ? number(annotation.position.y, 50, 3, 97) : null;
+    const hasExplicitPoints = Number.isFinite(Number(annotation?.pointsPossible)) && Number(annotation.pointsPossible) > 0;
+    const pointsPossible = hasExplicitPoints ? number(annotation.pointsPossible, 1, 0.01, 1000) : 1;
+    const fallbackEarned = status === "correct" ? pointsPossible : status === "partial" ? pointsPossible / 2 : 0;
     return {
       id: `annotation-${index + 1}`,
       questionNumber: number(annotation?.questionNumber, index + 1, 1, 999),
@@ -119,6 +122,10 @@ function sanitizeReview(value, context) {
       skill: string(annotation?.skill, 240),
       topic: string(annotation?.topic, 180),
       position: x === null || y === null ? null : { x, y },
+      pointsPossible,
+      pointsEarned: number(annotation?.pointsEarned, fallbackEarned, 0, pointsPossible),
+      scoreReason: string(annotation?.scoreReason, 280),
+      hasExplicitPoints,
     };
   }).filter((annotation) => annotation.comment || annotation.why);
   const totalQuestions = number(overview?.totalQuestions, annotations.length, 0, 999);
@@ -126,6 +133,14 @@ function sanitizeReview(value, context) {
   const partialCount = number(overview?.partialCount, annotations.filter((item) => item.status === "partial").length, 0, totalQuestions || 999);
   const errorCount = number(overview?.errorCount, annotations.filter((item) => item.status === "incorrect").length, 0, totalQuestions || 999);
   const errorRate = totalQuestions ? errorCount / totalQuestions : 0;
+  const hasWeightedQuestions = annotations.some((item) => item.hasExplicitPoints);
+  const possiblePoints = hasWeightedQuestions
+    ? annotations.reduce((sum, item) => sum + item.pointsPossible, 0)
+    : totalQuestions || annotations.length;
+  const earnedPoints = hasWeightedQuestions
+    ? annotations.reduce((sum, item) => sum + item.pointsEarned, 0)
+    : correctCount + partialCount * 0.5;
+  const grade = possiblePoints ? Math.round((earnedPoints / possiblePoints) * 100) / 10 : 0;
   const errorReport = (Array.isArray(value?.errorReport) ? value.errorReport : []).slice(0, 12).map((error) => ({
     topic: string(error?.topic, 180),
     skill: string(error?.skill, 280),
@@ -173,8 +188,15 @@ function sanitizeReview(value, context) {
       correctCount,
       partialCount,
       errorCount,
+      earnedPoints: Math.round(earnedPoints * 100) / 100,
+      possiblePoints: Math.round(possiblePoints * 100) / 100,
+      grade,
+      gradeScale: 10,
+      gradingBasis: hasWeightedQuestions
+        ? "Pesos identificados na própria atividade foram preservados."
+        : "Peso igual por questão: acerto vale 1 ponto, resposta parcial vale 0,5 e erro vale 0.",
     },
-    annotations,
+    annotations: annotations.map(({ hasExplicitPoints: _hasExplicitPoints, ...annotation }) => annotation),
     needsRecovery,
     errorReport: needsRecovery ? errorReport : [],
     recovery: needsRecovery ? {
@@ -329,13 +351,14 @@ export default async function handler(req, res) {
         "Identifique as questões, as respostas efetivamente marcadas ou escritas e corrija com precisão adequada à disciplina e ao ano escolar.",
         "Não invente resposta do aluno quando a marcação estiver ausente ou ilegível: use status attention e explique o que precisa ser confirmado.",
         "Para cada questão, produza um comentário curto, a resposta esperada, a justificativa e a habilidade ou tópico envolvido.",
+        "Calcule também a nota. Se a atividade mostrar pesos, valores ou pontuação próprios, preserve-os exatamente. Caso não mostre pesos, use a regra: correct vale 1 ponto, partial vale 0,5 ponto e incorrect vale 0. Converta o total para nota de 0 a 10.",
         "Use status somente correct, partial, incorrect ou attention. Informe a página e o texto-âncora. Em imagem, estime position x e y de 0 a 100; em PDF, position pode ser null.",
         "Considere recuperação necessária quando houver pelo menos três erros, 30% ou mais de erros, ou uma lacuna conceitual recorrente.",
         "Quando houver recuperação, produza relatório dos erros, microresumo autoral, orientação, dois exemplos resolvidos progressivos e uma lista imprimível autoral com exatamente seis exercícios e gabarito comentado.",
         "A lista de recuperação deve ensinar o assunto, não copiar as questões enviadas. Não cite escolas presenciais, links privados, apostilas externas, fornecedores ou o motor de inteligência.",
         "Retorne somente JSON puro com: overview, annotations, needsRecovery, errorReport e recovery.",
-        "overview contém title, summary, totalQuestions, answeredQuestions, correctCount, partialCount e errorCount.",
-        "annotations contém questionNumber, page, anchor, status, studentAnswer, expectedAnswer, comment, why, competency, skill, topic e position.",
+        "overview contém title, summary, totalQuestions, answeredQuestions, correctCount, partialCount, errorCount, earnedPoints, possiblePoints, grade, gradeScale e gradingBasis.",
+        "annotations contém questionNumber, page, anchor, status, studentAnswer, expectedAnswer, comment, why, competency, skill, topic, position, pointsPossible, pointsEarned e scoreReason.",
         "errorReport contém topic, skill, evidence, frequency, priority e nextStep.",
         "recovery contém title, reason, microSummary, guidance, workedExamples e exercises. guidance deve ter de três a cinco orientações práticas. workedExamples deve conter exatamente dois objetos completos, cada um com title, problem, steps e answer. Cada exercise contém number, statement, support, answer e comment.",
       ].join(" ");
