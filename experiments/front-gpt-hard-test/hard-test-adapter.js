@@ -1239,7 +1239,7 @@
             repertory: essay.repertory,
           },
         }),
-        signal: AbortSignal.timeout(180000),
+        signal: AbortSignal.timeout(230000),
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok || !payload.review || !Array.isArray(payload.review.competencies)) {

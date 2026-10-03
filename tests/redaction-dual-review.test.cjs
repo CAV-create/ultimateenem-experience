@@ -16,6 +16,16 @@ function rawEvaluation(scores, resultStatus = 'valid') {
   };
 }
 
+function endpointResponse() {
+  return {
+    statusCode: 200,
+    headers: {},
+    setHeader(name, value) { this.headers[name] = value; },
+    status(code) { this.statusCode = code; return this; },
+    json(payload) { this.payload = payload; return payload; },
+  };
+}
+
 test('ENEM discrepancy respects the official strict thresholds', async () => {
   const protocol = await import(pathToFileURL(protocolPath));
   const base = protocol.sanitizeEvaluation(rawEvaluation([160, 160, 160, 160, 160]), '1');
@@ -71,6 +81,62 @@ test('student interface makes dual review and automatic third board explicit', (
   assert.match(endpoint, /buildEvaluatorInstructions\("3"\)/, 'a terceira leitura deve ser automática');
   assert.doesNotMatch(endpoint, /^import\s+\{/m, 'o protocolo ESM nao pode virar require no runtime CommonJS da Vercel');
   assert.match(endpoint, /import\("\.\/_lib\/enem-redaction-2026\.mjs"\)/, 'o protocolo deve usar import dinamico compativel com a Vercel');
-  assert.match(endpoint, /maxDuration: 60/, 'a função deve respeitar o limite aceito pelo deployment');
-  assert.match(adapter, /AbortSignal\.timeout\(180000\)/, 'o navegador deve aguardar o fluxo clínico completo');
+  assert.match(endpoint, /process\.env\.GEMINI_API_KEY/, 'a banca deve usar o provedor inteligente ja configurado como contingencia');
+  assert.match(endpoint, /maxDuration: 240/, 'a função deve permitir terceira leitura e junta médica quando necessárias');
+  assert.match(adapter, /AbortSignal\.timeout\(230000\)/, 'o navegador deve aguardar o fluxo clínico completo');
+});
+
+test('redaction review falls back to the configured Gemini provider', async () => {
+  const originalFetch = global.fetch;
+  const originalOpenAIKey = process.env.OPENAI_API_KEY;
+  const originalOpenAIModel = process.env.OPENAI_MODEL;
+  const originalRedactionModel = process.env.OPENAI_REDACTION_MODEL;
+  const originalGeminiKey = process.env.GEMINI_API_KEY;
+  let calls = 0;
+  try {
+    delete process.env.OPENAI_API_KEY;
+    delete process.env.OPENAI_MODEL;
+    delete process.env.OPENAI_REDACTION_MODEL;
+    process.env.GEMINI_API_KEY = 'test-gemini-key';
+    global.fetch = async (url, options) => {
+      calls += 1;
+      assert.match(String(url), /generativelanguage\.googleapis\.com/);
+      assert.equal(options.headers['x-goog-api-key'], 'test-gemini-key');
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          candidates: [{
+            content: {
+              parts: [{ text: JSON.stringify(rawEvaluation([160, 160, 160, 160, 160])) }],
+            },
+          }],
+        }),
+      };
+    };
+    const endpoint = await import(`${pathToFileURL(endpointPath).href}?gemini-fallback-test`);
+    const res = endpointResponse();
+    await endpoint.default({
+      method: 'POST',
+      body: {
+        theme: 'Desafios para ampliar a educação científica no Brasil',
+        essay: Array.from({ length: 90 }, (_, index) => `palavra${index}`).join(' '),
+        project: {},
+      },
+    }, res);
+    assert.equal(res.statusCode, 200);
+    assert.equal(calls, 2);
+    assert.equal(res.payload.review.total, 800);
+    assert.equal(res.payload.review.correctionProcess.resolution, 'mean_two');
+  } finally {
+    global.fetch = originalFetch;
+    if (originalOpenAIKey === undefined) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = originalOpenAIKey;
+    if (originalOpenAIModel === undefined) delete process.env.OPENAI_MODEL;
+    else process.env.OPENAI_MODEL = originalOpenAIModel;
+    if (originalRedactionModel === undefined) delete process.env.OPENAI_REDACTION_MODEL;
+    else process.env.OPENAI_REDACTION_MODEL = originalRedactionModel;
+    if (originalGeminiKey === undefined) delete process.env.GEMINI_API_KEY;
+    else process.env.GEMINI_API_KEY = originalGeminiKey;
+  }
 });

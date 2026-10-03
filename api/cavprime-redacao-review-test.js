@@ -1,4 +1,4 @@
-export const config = { maxDuration: 60 };
+export const config = { maxDuration: 240 };
 
 let enemProtocolPromise;
 
@@ -109,6 +109,15 @@ function readOutputText(payload) {
     .trim();
 }
 
+function readGeminiText(payload) {
+  return (payload?.candidates || [])
+    .flatMap((candidate) => candidate?.content?.parts || [])
+    .map((part) => typeof part?.text === "string" ? part.text.trim() : "")
+    .filter(Boolean)
+    .join("\n")
+    .trim();
+}
+
 function parseJson(text) {
   return JSON.parse(String(text || "")
     .replace(/^```(?:json)?\s*/i, "")
@@ -162,7 +171,7 @@ function buildContent(input, manuscript) {
   return content;
 }
 
-async function requestEvaluation({ apiKey, model, instructions, input, manuscript, timeout = 60000 }) {
+async function requestOpenAIEvaluation({ apiKey, model, instructions, input, manuscript, timeout = 60000 }) {
   const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
     signal: AbortSignal.timeout(timeout),
@@ -198,6 +207,97 @@ async function requestEvaluation({ apiKey, model, instructions, input, manuscrip
     throw error;
   }
   return parseJson(outputText);
+}
+
+async function requestGeminiEvaluation({ apiKey, model, instructions, input, manuscript, timeout = 60000 }) {
+  const cleanModel = String(model || "gemini-3.8-flash").replace(/^models\//, "");
+  if (!/^[a-z0-9._-]+$/i.test(cleanModel)) throw new Error("gemini_model_invalid");
+  const parts = [
+    { text: `${instructions}\nESQUEMA JSON OBRIGATORIO: ${JSON.stringify(EVALUATION_SCHEMA)}` },
+    { text: JSON.stringify(input) },
+  ];
+  if (manuscript) {
+    const match = manuscript.dataUrl.match(/^data:([^;,]+);base64,([A-Za-z0-9+/=]+)$/);
+    if (!match) throw new Error("invalid_manuscript");
+    parts.push({ inlineData: { mimeType: match[1], data: match[2] } });
+  }
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${cleanModel}:generateContent`, {
+    method: "POST",
+    signal: AbortSignal.timeout(timeout),
+    headers: {
+      "x-goog-api-key": apiKey,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      contents: [{ role: "user", parts }],
+      generationConfig: {
+        responseMimeType: "application/json",
+        maxOutputTokens: 6500,
+      },
+    }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  const outputText = readGeminiText(payload);
+  if (!response.ok || !outputText) {
+    const error = new Error("review_response_failed");
+    error.upstream = {
+      provider: "gemini",
+      status: response.status,
+      code: payload?.error?.status || "",
+      type: payload?.error?.code || "",
+    };
+    throw error;
+  }
+  return parseJson(outputText);
+}
+
+async function requestEvaluation({ providers, instructions, input, manuscript, timeout = 60000 }) {
+  let lastError = null;
+  if (providers.openAIKey && providers.openAIModel) {
+    try {
+      return await requestOpenAIEvaluation({
+        apiKey: providers.openAIKey,
+        model: providers.openAIModel,
+        instructions,
+        input,
+        manuscript,
+        timeout,
+      });
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  if (providers.geminiKey) {
+    const models = Array.from(new Set([
+      providers.geminiModel,
+      "gemini-3.6-flash",
+      "gemini-3.5-flash",
+    ].filter(Boolean)));
+    for (const model of models) {
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        try {
+          return await requestGeminiEvaluation({
+            apiKey: providers.geminiKey,
+            model,
+            instructions,
+            input,
+            manuscript,
+            timeout,
+          });
+        } catch (error) {
+          lastError = error;
+          const status = error?.upstream?.status;
+          if ([429, 503].includes(status) && attempt === 0) {
+            await new Promise((resolve) => setTimeout(resolve, 700));
+            continue;
+          }
+          if (status !== 404) return Promise.reject(error);
+          break;
+        }
+      }
+    }
+  }
+  throw lastError || new Error("review_provider_unavailable");
 }
 
 function publicEvaluator(evaluation) {
@@ -246,15 +346,20 @@ export default async function handler(req, res) {
     compareEvaluations,
     sanitizeEvaluation,
   } = protocol;
-  const apiKey = process.env.OPENAI_API_KEY;
-  const model = process.env.OPENAI_REDACTION_MODEL || process.env.OPENAI_MODEL;
+  const providers = {
+    openAIKey: process.env.OPENAI_API_KEY,
+    openAIModel: process.env.OPENAI_REDACTION_MODEL || process.env.OPENAI_MODEL,
+    geminiKey: process.env.GEMINI_API_KEY,
+    geminiModel: process.env.GEMINI_REDACTION_MODEL || process.env.GEMINI_VISION_MODEL || "gemini-3.8-flash",
+  };
+  const configured = Boolean(
+    (providers.openAIKey && providers.openAIModel)
+    || providers.geminiKey,
+  );
   if (req.method === "GET") {
-    const missing = [];
-    if (!apiKey) missing.push("OPENAI_API_KEY");
-    if (!model) missing.push("OPENAI_REDACTION_MODEL_OR_OPENAI_MODEL");
     return res.status(200).json({
-      configured: missing.length === 0,
-      missing,
+      configured,
+      missing: configured ? [] : ["REDACTION_REVIEW_PROVIDER"],
       protocolVersion: ENEM_REDACTION_PROTOCOL_VERSION,
     });
   }
@@ -263,7 +368,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "method_not_allowed" });
   }
 
-  if (!apiKey || !model) {
+  if (!configured) {
     return res.status(503).json({
       error: "review_not_configured",
       message: "A banca inteligente ainda não está configurada neste ambiente.",
@@ -287,8 +392,8 @@ export default async function handler(req, res) {
 
   try {
     const [rawA, rawB] = await Promise.all([
-      requestEvaluation({ apiKey, model, instructions: buildEvaluatorInstructions("1"), input: baseInput, manuscript }),
-      requestEvaluation({ apiKey, model, instructions: buildEvaluatorInstructions("2"), input: baseInput, manuscript }),
+      requestEvaluation({ providers, instructions: buildEvaluatorInstructions("1"), input: baseInput, manuscript }),
+      requestEvaluation({ providers, instructions: buildEvaluatorInstructions("2"), input: baseInput, manuscript }),
     ]);
     const evaluatorA = sanitizeEvaluation(rawA, "1");
     const evaluatorB = sanitizeEvaluation(rawB, "2");
@@ -303,8 +408,7 @@ export default async function handler(req, res) {
       finalReview = buildFinalFromPair(evaluatorA, evaluatorB);
     } else {
       const rawC = await requestEvaluation({
-        apiKey,
-        model,
+        providers,
         instructions: buildEvaluatorInstructions("3"),
         input: baseInput,
         manuscript,
@@ -325,8 +429,7 @@ export default async function handler(req, res) {
           competencies: evaluation.competencies,
         })));
         const rawBoard = await requestEvaluation({
-          apiKey,
-          model,
+          providers,
           instructions: buildBoardInstructions(),
           input: boardInput,
           manuscript,
