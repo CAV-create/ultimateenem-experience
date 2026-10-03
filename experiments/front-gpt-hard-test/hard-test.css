@@ -1887,6 +1887,56 @@
   margin-bottom: 16px;
 }
 
+.correction-waiting {
+  margin-bottom: 14px;
+}
+
+.correction-route {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.correction-route > div {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  min-height: 74px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  background: var(--white);
+}
+
+.correction-route > div > span {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 1px solid #c8cbbf;
+  border-radius: 50%;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.correction-route > div.active > span {
+  border-color: var(--green);
+  background: var(--green);
+  color: var(--white);
+}
+
+.correction-route strong,
+.correction-route small {
+  display: block;
+}
+
+.correction-route small {
+  margin-top: 3px;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
 .reader-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1935,6 +1985,16 @@
 .reader-scores strong {
   margin-top: 3px;
   font-size: 12px;
+}
+
+@media (max-width: 680px) {
+  .correction-route {
+    grid-template-columns: 1fr;
+  }
+
+  .correction-route > div {
+    min-height: 0;
+  }
 }
 
 .pdf-shell {

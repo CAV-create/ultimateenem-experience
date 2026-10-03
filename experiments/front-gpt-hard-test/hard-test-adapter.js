@@ -1068,10 +1068,10 @@
   function correctionProcessMarkup(process) {
     if (!process || !Array.isArray(process.evaluators)) return "";
     const resolutionCopy = process.resolution === "review_board"
-      ? { title: "Decisão por banca", text: "A divergência persistiu após a terceira leitura, e a nota final foi definida pela banca." }
+      ? { title: "Junta médica de Redação concluída", text: "A discrepância permaneceu após a terceira leitura. A Junta Médica CAVMED releu o caso e definiu o parecer final." }
       : process.resolution === "third_evaluator_closest_pair"
-        ? { title: "Terceira leitura concluída", text: `A discrepância acionou outra leitura. A nota final usa os pareceres ${process.selectedEvaluators?.join(" e ") || "mais próximos"}.` }
-        : { title: "Duas leituras concluídas", text: "Os dois pareceres ficaram dentro dos limites de concordância e foram consolidados pela média." };
+        ? { title: "Terceira banca concluída", text: `O protocolo chamou automaticamente o 3º médico corretor. A nota final usa os pareceres ${process.selectedEvaluators?.join(" e ") || "mais próximos"}, o par concordante mais próximo.` }
+        : { title: "Alta após dupla leitura", text: "O 1º e o 2º médico corretor ficaram dentro dos limites oficiais de concordância, e os dois pareceres foram consolidados pela média." };
     const statusLabels = {
       valid: "Texto válido",
       blank: "Em branco",
@@ -1082,11 +1082,22 @@
       unreadable: "Ilegível",
       foreign_language: "Língua estrangeira",
     };
-    const evaluatorCards = process.evaluators.map((evaluator) => `<article class="reader-card"><div class="between"><div><small>${evaluator.id === "Banca" ? "Decisão final" : `Avaliador ${esc(evaluator.id)}`}</small><strong>${Number(evaluator.total) || 0}</strong></div><span class="pill">${esc(statusLabels[evaluator.resultStatus] || "Leitura concluída")}</span></div><div class="reader-scores">${(evaluator.competencies || []).map((item) => `<span><small>${esc(item.code)}</small><strong>${Number(item.score) || 0}</strong></span>`).join("")}</div></article>`).join("");
+    const evaluatorLabel = (id) => {
+      if (id === "Banca") return "Junta médica final";
+      if (id === "1") return "1º médico corretor";
+      if (id === "2") return "2º médico corretor";
+      if (id === "3") return "3º médico corretor";
+      return `Médico corretor ${esc(id)}`;
+    };
+    const evaluatorCards = process.evaluators.map((evaluator) => `<article class="reader-card"><div class="between"><div><small>${evaluatorLabel(evaluator.id)}</small><strong>${Number(evaluator.total) || 0}</strong></div><span class="pill">${esc(statusLabels[evaluator.resultStatus] || "Leitura concluída")}</span></div><div class="reader-scores">${(evaluator.competencies || []).map((item) => `<span><small>${esc(item.code)}</small><strong>${Number(item.score) || 0}</strong></span>`).join("")}</div></article>`).join("");
     const discrepancy = process.discrepancy?.detected
-      ? `<div class="callout process-alert"><strong>Discrepância identificada na primeira dupla.</strong><br>${esc((process.discrepancy.reasons || []).join(" ") || "Uma nova leitura foi acionada automaticamente.")}</div>`
+      ? `<div class="callout process-alert"><strong>Interconsulta acionada automaticamente.</strong><br>${esc((process.discrepancy.reasons || []).join(" ") || "A primeira dupla apresentou discrepância.")} Os médicos da terceira banca trabalharam no caso sem exigir uma nova solicitação do aluno.</div>`
       : `<p class="note">Não houve discrepância: a diferença total não ultrapassou 100 pontos, nenhuma competência ultrapassou 80 pontos de diferença e não houve divergência de situação.</p>`;
-    return `<details class="library-row correction-process space"><summary>Como sua nota foi formada ${icon("chevron")}</summary><div class="process-intro"><span class="process-icon">${icon(process.discrepancy?.detected ? "book" : "check")}</span><div><h3>${resolutionCopy.title}</h3><p>${resolutionCopy.text}</p></div></div>${discrepancy}<div class="reader-grid">${evaluatorCards}</div><p class="note"><strong>Regra ENEM 2026:</strong> cada avaliador usa apenas 0, 40, 80, 120, 160 ou 200 por competência. A média de duas leituras pode gerar uma nota final em intervalos de 20 pontos.</p></details>`;
+    return `<details class="library-row correction-process space" ${process.discrepancy?.detected ? "open" : ""}><summary>Prontuário da dupla correção ${icon("chevron")}</summary><div class="process-intro"><span class="process-icon">${icon(process.discrepancy?.detected ? "book" : "check")}</span><div><h3>${resolutionCopy.title}</h3><p>${resolutionCopy.text}</p></div></div>${discrepancy}<div class="reader-grid">${evaluatorCards}</div><p class="note"><strong>Regra ENEM 2026:</strong> cada médico corretor usa apenas 0, 40, 80, 120, 160 ou 200 por competência. A média das duas leituras selecionadas pode gerar uma nota final em intervalos de 20 pontos.</p></details>`;
+  }
+
+  function dualReviewWaitingMarkup() {
+    return `<div class="callout green correction-waiting"><strong>O corpo clínico de Redação já iniciou o atendimento.</strong><br>As duas leituras são independentes e automáticas. Você não precisa chamar o segundo corretor.</div><div class="correction-route" aria-label="Etapas automáticas da correção"><div class="active"><span>1</span><div><strong>1º médico corretor</strong><small>Leitura independente em andamento</small></div></div><div class="active"><span>2</span><div><strong>2º médico corretor</strong><small>Leitura independente em andamento</small></div></div><div><span>3</span><div><strong>Terceira banca</strong><small>Entra automaticamente somente se houver discrepância oficial</small></div></div></div><p class="note">Se a terceira leitura ainda não resolver a divergência, a Junta Médica CAVMED assume o caso antes da liberação da nota.</p>`;
   }
 
   function reviewResult(review) {
@@ -1138,13 +1149,13 @@
       : null;
     const status = essay.reviewStatus;
     const statusMessage = status === "loading"
-      ? `<div class="callout green"><strong>Os médicos plantonistas estão trabalhando arduamente para lhe entregar os melhores resultados.</strong><br>Duas leituras independentes estão em andamento. Se houver discrepância, o próximo especialista será acionado automaticamente.</div>`
+      ? dualReviewWaitingMarkup()
       : status === "unavailable"
         ? `<div class="callout error"><strong>A leitura não foi concluída agora.</strong><br>${esc(essay.reviewMessage || "Seu texto foi preservado e nenhuma nota foi criada como substituta.")}</div>`
         : "";
     const primary = essay.aiReview
       ? `${reviewResult(essay.aiReview)}<div class="compare-actions space">${btn("Comparar texto e projeto " + icon("arrow"), "open-compare-tabs", "btn outline")}${link("Ver lado a lado nesta tela", "redacao/comparar", "textbtn under")}</div>`
-      : `${statusMessage}<section class="card specialist-card"><div><div class="kicker muted">Especialista designado</div><h2 class="space-sm">${esc(specialist.name)}</h2><p><strong>${esc(specialist.residency)}</strong><br>${esc(specialist.focus)}</p></div><div><div class="kicker muted">Texto aguardando leitura</div><h2 class="space-sm">Nenhuma nota foi atribuída.</h2><p>${hasSubmission ? "Seu texto está pronto para a visita do especialista." : essay.inputMode === "upload" ? "Envie o PDF ou a foto do manuscrito antes de solicitar a leitura." : "Escreva ao menos 80 palavras antes de solicitar a leitura."}</p><div class="space-sm">${btn(status === "loading" ? "Leitura em andamento…" : "Solicitar visita do especialista " + icon("arrow"), "essay-review-ai", "btn", status === "loading" || !hasSubmission ? "disabled" : "")}</div></div></section>`;
+      : `${statusMessage}<section class="card specialist-card"><div><div class="kicker muted">Coordenação do prontuário</div><h2 class="space-sm">${esc(specialist.name)}</h2><p><strong>${esc(specialist.residency)}</strong><br>${esc(specialist.focus)}</p></div><div><div class="kicker muted">Dupla correção automática</div><h2 class="space-sm">Nenhuma nota foi atribuída.</h2><p>${hasSubmission ? "Seu texto está pronto para duas leituras independentes. Se houver discrepância oficial, a terceira banca entra sem um novo pedido." : essay.inputMode === "upload" ? "Envie o PDF ou a foto do manuscrito antes de iniciar a dupla leitura." : "Escreva ao menos 80 palavras antes de iniciar a dupla leitura."}</p><div class="space-sm">${btn(status === "loading" ? "Corpo clínico em atendimento…" : "Enviar ao corpo clínico de Redação " + icon("arrow"), "essay-review-ai", "btn", status === "loading" || !hasSubmission ? "disabled" : "")}</div></div></section>`;
     const manual = `<details class="library-row space"><summary>Registrar uma correção recebida fora do nosso hospital ${icon("chevron")}</summary><p>Use somente quando um professor ou outra banca já tiver informado a <strong>nota final consolidada</strong>. Ela pode variar de 20 em 20 pela média dos avaliadores; a nota bruta de um único avaliador varia de 40 em 40.</p><form id="manual-assessment-form">${labels.map((label, index) => `<div class="rubric-row"><strong>C${index + 1}</strong><label for="manual-score-${index}">${label}</label><select id="manual-score-${index}" data-manual-score="${index}" required><option value="">Selecione</option>${Array.from({ length: 11 }, (_, value) => value * 20).map((scoreValue) => `<option value="${scoreValue}" ${manualScores[index] === scoreValue && essay.evaluationSource === "manual" ? "selected" : ""}>${scoreValue}</option>`).join("")}</select></div>`).join("")}<div class="rubric-score" id="manual-rubric-total">${manualTotal === null || essay.evaluationSource !== "manual" ? "—" : manualTotal} <span class="small muted">/ 1000</span></div><button type="submit" class="btn">Salvar correção recebida ${icon("check")}</button></form></details>`;
     return shell(`${pageHead("Correção da Redação", "A nota só aparece<br>depois da leitura.", "O checklist anterior foi sua revisão pessoal. Esta é a etapa de avaliação por competência.")}${primary}${manual}<div class="space-sm">${link("Voltar ao texto", "redacao/escrever", "textbtn under")}</div>`, "redacao");
   };
@@ -1228,7 +1239,7 @@
             repertory: essay.repertory,
           },
         }),
-        signal: AbortSignal.timeout(180000),
+        signal: AbortSignal.timeout(230000),
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok || !payload.review || !Array.isArray(payload.review.competencies)) {
